@@ -20,7 +20,7 @@
                 <StackPanel>
                     <Button Content="Recognize" Command="{Binding Path=RecognizeCommand}"/>
                     <Button Content="Noise" Command="{Binding Path=NoiseCommand}"/>
-                    <TextBox Text="{Binding LevelNoise}"/>
+                    <TextBox Text="{Binding Path=LevelNoise}"/>
                     <GroupBox Header="Sample will be recognized">
                         <StackPanel>
                             <RadioButton Content="1"/>
@@ -33,26 +33,26 @@
                 </StackPanel>
             </GroupBox>
             <GroupBox Header="Noised image">
-                <Image Source="{Binding Path=Sample1}"/>
+                <Image Source="{Binding Path=NoisedImage}"/>
             </GroupBox>
             <GroupBox Header="Recognized image">
-                <Image Source="{Binding Path=Sample1}"/>
+                <Image Source="{Binding Path=RecognizedImage}"/>
             </GroupBox>
         </StackPanel>
 
         <GroupBox Grid.Row="1" Header="Samples">
             <StackPanel Orientation="Horizontal">
                 <GroupBox Header="1">
-                    <Image Source="{Binding Path=Sample1}"/>
+                    <Image Source="{Binding Path=Sample1, Mode=OneWayToSource}" />
                 </GroupBox>
                 <GroupBox Header="2">
-                    <Image Source="{Binding Path=Sample2}"/>
+                    <Image Source="{Binding Path=Sample2, Mode=OneWayToSource}"/>
                 </GroupBox>
                 <GroupBox Header="3">
-                    <Image Source="{Binding Path=Sample3}"/>
+                    <Image Source="{Binding Path=Sample3, Mode=OneWayToSource}"/>
                 </GroupBox>
                 <GroupBox Header="Selected">
-                    <Image Source="{Binding Path=Selected}"/>
+                    <Image Source="{Binding Path=SelectedImage}"/>
                 </GroupBox>
             </StackPanel>
         </GroupBox>

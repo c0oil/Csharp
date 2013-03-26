@@ -10,58 +10,52 @@ namespace cosii5
 {
     public class ImageRedactorModel : ViewModelBase
     {
-        private const string SourcePath = @"D:\www_goodfon_ru\12828-1366x768.jpg";
+        private const string SourceName1 = "sample1";
+        private const string SourceName2 = "sample2";
+        private const string SourceName3 = "sample3";
+        private const string SourceFolderPath = @"D:\www_goodfon_ru";
+
         public DigitalSignalProcessor Dsp { get; set; }
-        public RelayCommand StartCommand { get; private set; }
-        public RelayCommand FullScreenCommand { get; private set; }
+        public RelayCommand RecognizeCommand { get; private set; }
+        public RelayCommand NoiseCommand { get; private set; }
 
         #region Bindble properties
-        private BitmapSource sourceImage;
-        public BitmapSource SourceImage 
+        public BitmapSource Sample1 { get; set; }
+        public BitmapSource Sample2 { get; set; }
+        public BitmapSource Sample3 { get; set; }
+
+        private BitmapSource selectedImage = new BitmapImage(new Uri(SourceFolderPath));
+        public BitmapSource SelectedImage 
         {
-            get { return sourceImage; }
+            get { return selectedImage; }
             set
             {
-                sourceImage = value;
-                OnPropertyChanged("SourceImage");
+                selectedImage = value;
+                OnPropertyChanged("SelectedImage");
             }
         }
 
-        private BitmapSource grayscaleImage;
-        public BitmapSource GrayscaleImage
+        private BitmapSource noisedImage;
+        public BitmapSource NoisedImage
         {
-            get { return grayscaleImage; }
+            get { return noisedImage; }
             set
             {
-                grayscaleImage = value;
-                OnPropertyChanged("GrayscaleImage");
+                noisedImage = value;
+                OnPropertyChanged("NoisedImage");
             }
         }
 
-        private BitmapSource binarImage;
-        public BitmapSource BinarImage
+        private BitmapSource recognizedImage;
+        public BitmapSource RecognizedImage
         {
-            get { return binarImage; }
+            get { return recognizedImage; }
             set
             {
-                binarImage = value;
-                OnPropertyChanged("BinarImage");
+                recognizedImage = value;
+                OnPropertyChanged("RecognizedImage");
             }
         }
-
-        private BitmapSource targetImage;
-        public BitmapSource TargetImage
-        {
-            get { return targetImage; }
-            set
-            {
-                targetImage = value;
-                OnPropertyChanged("TargetImage");
-            }
-        }
-
-        public string BinarScore { get; set; }
-        public string Clusters { get; set; }
         #endregion
 
         public ImageRedactorModel()
@@ -71,17 +65,23 @@ namespace cosii5
 
         public void Initialize()
         {
-            SourceImage = new BitmapImage(new Uri(SourcePath));
-            StartCommand = new RelayCommand(OnStart) { IsEnabled = true };
+            Sample1 = new BitmapImage(new Uri(SourceFolderPath + SourceName1));
+            Sample2 = new BitmapImage(new Uri(SourceFolderPath + SourceName2));
+            Sample3 = new BitmapImage(new Uri(SourceFolderPath + SourceName3));
+
+            RecognizeCommand = new RelayCommand(OnRecognize) { IsEnabled = true };
+            NoiseCommand = new RelayCommand(OnNoise) { IsEnabled = true };
             Dsp = new DigitalSignalProcessor();
-            BinarScore = "150";
-            Clusters = "4";
         }
 
-        private void OnStart()
+        private void OnNoise()
         {
-            Dsp.Width = SourceImage.PixelWidth;
-            Dsp.Height = SourceImage.PixelHeight;
+            
+        }
+
+        private void OnRecognize()
+        {
+
         }
 
         public void OpenExecuted(object sender, ExecutedRoutedEventArgs e)
@@ -89,7 +89,7 @@ namespace cosii5
             var ofd = new OpenFileDialog { InitialDirectory = @"D:\www_goodfon_ru" };
 	        if (ofd.ShowDialog() == true)
 	        {
-                SourceImage = new BitmapImage(new Uri(ofd.FileName));
+                SelectedImage = new BitmapImage(new Uri(ofd.FileName));
 	        }
         }
 
