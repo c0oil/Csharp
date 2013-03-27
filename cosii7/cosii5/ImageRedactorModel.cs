@@ -1,19 +1,21 @@
 ﻿using System;
+using System.Drawing;
 using System.IO;
-using System.Windows;
 using System.Windows.Media.Imaging;
 using System.Windows.Input;
+using MathNet.Numerics.LinearAlgebra.Single;
 using Microsoft.Win32;
 using cosii5.MVVMUtility;
+using Vector = System.Windows.Vector;
 
 namespace cosii5
 {
     public class ImageRedactorModel : ViewModelBase
     {
-        private const string SourceName1 = "sample1";
-        private const string SourceName2 = "sample2";
-        private const string SourceName3 = "sample3";
-        private const string SourceFolderPath = @"D:\www_goodfon_ru";
+        private const string SourceName1 = "sample1.bmp";
+        private const string SourceName2 = "sample2.bmp";
+        private const string SourceName3 = "sample3.bmp";
+        private const string SourceFolderPath = @"D:\repository\C#\cosii7\";
 
         public DigitalSignalProcessor Dsp { get; set; }
         public RelayCommand RecognizeCommand { get; private set; }
@@ -24,7 +26,7 @@ namespace cosii5
         public BitmapSource Sample2 { get; set; }
         public BitmapSource Sample3 { get; set; }
 
-        private BitmapSource selectedImage = new BitmapImage(new Uri(SourceFolderPath));
+        private BitmapSource selectedImage = new BitmapImage(new Uri(SourceFolderPath + SourceName1));
         public BitmapSource SelectedImage 
         {
             get { return selectedImage; }
@@ -66,8 +68,11 @@ namespace cosii5
         public void Initialize()
         {
             Sample1 = new BitmapImage(new Uri(SourceFolderPath + SourceName1));
+            OnPropertyChanged("Sample1");
             Sample2 = new BitmapImage(new Uri(SourceFolderPath + SourceName2));
+            OnPropertyChanged("Sample2");
             Sample3 = new BitmapImage(new Uri(SourceFolderPath + SourceName3));
+            OnPropertyChanged("Sample3");
 
             RecognizeCommand = new RelayCommand(OnRecognize) { IsEnabled = true };
             NoiseCommand = new RelayCommand(OnNoise) { IsEnabled = true };
@@ -81,7 +86,11 @@ namespace cosii5
 
         private void OnRecognize()
         {
-
+            Vector[] sampleVectors = NoisedImage.Select(bitmap => bitmap.ToMatrix().ToVectorByColumns()).ToArray();
+            Matrix weights = Recognizer.GenerateWeightsMatrix(sampleVectors);
+            Vector inputVector = recognizable.ToVectorByColumns();
+            Matrix recognized = Recognizer.RecognizeAsynchronously(weights, inputVector);
+            RecognizedImage = BitmapParser.Scale(recognized, DrawField.CellSize);
         }
 
         public void OpenExecuted(object sender, ExecutedRoutedEventArgs e)

@@ -8,6 +8,7 @@
             <Style TargetType="Image">
                 <Setter Property="Width" Value="200"/>
                 <Setter Property="Height" Value="200"/>
+                <Setter Property="RenderOptions.BitmapScalingMode" Value="NearestNeighbor"/>
             </Style>
         </Grid.Resources>
         <Grid.RowDefinitions>
@@ -23,7 +24,7 @@
                     <TextBox Text="{Binding Path=LevelNoise}"/>
                     <GroupBox Header="Sample will be recognized">
                         <StackPanel>
-                            <RadioButton Content="1"/>
+                            <RadioButton Content="1" IsChecked="True"/>
                             <RadioButton Content="2"/>
                             <RadioButton Content="3"/>
                             <RadioButton Content="selected"/>
@@ -43,13 +44,13 @@
         <GroupBox Grid.Row="1" Header="Samples">
             <StackPanel Orientation="Horizontal">
                 <GroupBox Header="1">
-                    <Image Source="{Binding Path=Sample1, Mode=OneWayToSource}" />
+                    <Image Source="{Binding Path=Sample1}" />
                 </GroupBox>
                 <GroupBox Header="2">
-                    <Image Source="{Binding Path=Sample2, Mode=OneWayToSource}"/>
+                    <Image Source="{Binding Path=Sample2}"/>
                 </GroupBox>
                 <GroupBox Header="3">
-                    <Image Source="{Binding Path=Sample3, Mode=OneWayToSource}"/>
+                    <Image Source="{Binding Path=Sample3}"/>
                 </GroupBox>
                 <GroupBox Header="Selected">
                     <Image Source="{Binding Path=SelectedImage}"/>
