@@ -58,13 +58,12 @@ namespace cosii5
             }
         }*/
 
-        
 
-        public BitmapSource DetectImages(BitmapSource input, int clusters)
+
+        public BitmapSource DetectImages(BitmapSource image, List<BitmapSource> samples)
         {
-            byte[] inputPixels = GetBytes(input);
-
-            return GetBitmap(inputPixels);
+            var recognizer = new Recognizer();
+            return GetBitmap(recognizer.RecognizeAsynchronously(GetBytes(image)));
         }
 
         private static BitmapSource TransformBgr24(BitmapSource input)

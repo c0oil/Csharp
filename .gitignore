@@ -1,0 +1,9 @@
+*.*
+!*.cs
+!*.xaml.cs
+!*.xaml
+!*.csproj
+!*.sln
+!*.resx
+!*.gitignore
+!*.bmp

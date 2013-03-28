@@ -81,16 +81,14 @@ namespace cosii5
 
         private void OnNoise()
         {
-            
+            var image = SelectedImage;
+            double per = 0.2;
+            NoisedImage = Dsp.Noize(image, per);
         }
 
         private void OnRecognize()
         {
-            Vector[] sampleVectors = NoisedImage.Select(bitmap => bitmap.ToMatrix().ToVectorByColumns()).ToArray();
-            Matrix weights = Recognizer.GenerateWeightsMatrix(sampleVectors);
-            Vector inputVector = recognizable.ToVectorByColumns();
-            Matrix recognized = Recognizer.RecognizeAsynchronously(weights, inputVector);
-            RecognizedImage = BitmapParser.Scale(recognized, DrawField.CellSize);
+            RecognizedImage = Dsp.DetectImages(NoisedImage);
         }
 
         public void OpenExecuted(object sender, ExecutedRoutedEventArgs e)
