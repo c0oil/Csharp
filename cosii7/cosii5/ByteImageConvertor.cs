@@ -14,8 +14,10 @@ namespace cosii5
     public class ByteImageConvertor : MarkupExtension, IValueConverter
     {
         public static ByteImageConvertor Instanse = new ByteImageConvertor();
-
-        #region IValueConverter Members
+        public override object ProvideValue(IServiceProvider serviceProvider)
+        {
+            return Instanse ?? (Instanse = new ByteImageConvertor());
+        }
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
@@ -42,12 +44,27 @@ namespace cosii5
         {
             throw new NotImplementedException();
         }
+    }
 
-        #endregion
-
+    public class StringToDoubleConverter : MarkupExtension, IValueConverter
+    {
+        public static StringToDoubleConverter Instanse = new StringToDoubleConverter();
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
-            return Instanse ?? (Instanse = new ByteImageConvertor());
+            return Instanse ?? (Instanse = new StringToDoubleConverter());
+        }
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return string.Format("{0:0.00}", value);
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (targetType != typeof(double))
+                throw new NotImplementedException();
+
+            return string.IsNullOrEmpty(value.ToString())? 0: System.Convert.ToDouble(value.ToString());
         }
     }
 }

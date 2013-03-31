@@ -11,6 +11,8 @@ namespace cosii5
 {
     public class DigitalSignalProcessor
     {
+        private const int Black = 0;
+        private const int White = 255;
         public int Width { get; set; }
         public int Height { get; set; }
         private const int BytePerPixel = 3;
@@ -62,8 +64,9 @@ namespace cosii5
 
         public BitmapSource DetectImages(BitmapSource image, List<BitmapSource> samples)
         {
-            var recognizer = new Recognizer();
-            return GetBitmap(recognizer.RecognizeAsynchronously(GetBytes(image)));
+            /*var recognizer = new Recognizer();
+            return GetBitmap(recognizer.RecognizeAsynchronously(GetBytes(image)));*/
+            return image;
         }
 
         private static BitmapSource TransformBgr24(BitmapSource input)
@@ -90,6 +93,37 @@ namespace cosii5
             writeableBitmap.WritePixels(new Int32Rect(0, 0, writeableBitmap.PixelWidth, writeableBitmap.PixelHeight), 
                                         buffer, writeableBitmap.PixelWidth * BytePerPixel, 0);
             return writeableBitmap;
+        }
+
+        public BitmapSource Noize(BitmapSource image, double per)
+        {
+            var bytes = GetBytes(TransformBgr24(image));
+
+            var indexNonNoizedPixels = new List<int>();
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                indexNonNoizedPixels.Add(i);
+            }
+
+            var rand = new Random();
+            int numNoizedPixels = (int)(bytes.Length * per) / BytePerPixel;
+            for (int i = 0; i < numNoizedPixels; i++)
+            {
+                int ind = rand.Next(0, indexNonNoizedPixels.Count - 1);
+                ind -= ind % BytePerPixel;
+                SetPixel(bytes, indexNonNoizedPixels[ind], (byte)(bytes[indexNonNoizedPixels[ind]] == Black ? White : Black));
+                indexNonNoizedPixels.RemoveRange(ind, BytePerPixel);
+            }
+
+            return GetBitmap(bytes);
+        }
+
+        private void SetPixel(byte[] pixels, int i, byte newValue)
+        {
+            for (int j = 0; j < BytePerPixel; j++)
+            {
+                pixels[i + j] = newValue;
+            }
         }
     }
 }

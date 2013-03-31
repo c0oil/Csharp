@@ -1,6 +1,7 @@
 ﻿<Window x:Class="cosii5.ImageRedactor"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+        xmlns:cosii5="clr-namespace:cosii5"
         Title="ImageRedactor"
         SizeToContent="WidthAndHeight">
     <Grid>
@@ -21,7 +22,7 @@
                 <StackPanel>
                     <Button Content="Recognize" Command="{Binding Path=RecognizeCommand}"/>
                     <Button Content="Noise" Command="{Binding Path=NoiseCommand}"/>
-                    <TextBox Text="{Binding Path=LevelNoise}"/>
+                    <TextBox Text="{Binding Path=LevelNoise, Mode=OneWayToSource, Converter={x:Static cosii5:StringToDoubleConverter.Instanse}}"/>
                     <GroupBox Header="Sample will be recognized">
                         <StackPanel>
                             <RadioButton Content="1" IsChecked="True"/>

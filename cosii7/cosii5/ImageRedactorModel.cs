@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Windows.Media.Imaging;
@@ -6,7 +7,6 @@ using System.Windows.Input;
 using MathNet.Numerics.LinearAlgebra.Single;
 using Microsoft.Win32;
 using cosii5.MVVMUtility;
-using Vector = System.Windows.Vector;
 
 namespace cosii5
 {
@@ -25,9 +25,10 @@ namespace cosii5
         public BitmapSource Sample1 { get; set; }
         public BitmapSource Sample2 { get; set; }
         public BitmapSource Sample3 { get; set; }
+        public double LevelNoise { get; set; }
 
         private BitmapSource selectedImage = new BitmapImage(new Uri(SourceFolderPath + SourceName1));
-        public BitmapSource SelectedImage 
+        public BitmapSource SelectedImage
         {
             get { return selectedImage; }
             set
@@ -82,22 +83,21 @@ namespace cosii5
         private void OnNoise()
         {
             var image = SelectedImage;
-            double per = 0.2;
-            NoisedImage = Dsp.Noize(image, per);
+            NoisedImage = Dsp.Noize(image, LevelNoise);
         }
 
         private void OnRecognize()
         {
-            RecognizedImage = Dsp.DetectImages(NoisedImage);
+            RecognizedImage = Dsp.DetectImages(NoisedImage, new List<BitmapSource> { Sample1, Sample2, Sample3 });
         }
 
         public void OpenExecuted(object sender, ExecutedRoutedEventArgs e)
         {
             var ofd = new OpenFileDialog { InitialDirectory = @"D:\www_goodfon_ru" };
-	        if (ofd.ShowDialog() == true)
-	        {
+            if (ofd.ShowDialog() == true)
+            {
                 SelectedImage = new BitmapImage(new Uri(ofd.FileName));
-	        }
+            }
         }
 
         public void CanOpen(object sender, CanExecuteRoutedEventArgs e)
