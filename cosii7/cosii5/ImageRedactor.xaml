@@ -36,6 +36,7 @@
                         </StackPanel>
                     </GroupBox>
                     <Button  Content="Select image" Command="ApplicationCommands.Open"/>
+                    <TextBlock Text="{Binding Path=Ticks}"/>
                 </StackPanel>
             </GroupBox>
             <GroupBox Header="Noised image">

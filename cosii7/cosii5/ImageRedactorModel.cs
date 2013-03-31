@@ -29,6 +29,17 @@ namespace cosii5
         public BitmapSource Sample3 { get; set; }
         public double LevelNoise { get; set; }
 
+        private int ticks;
+        public int Ticks
+        {
+            get { return ticks; }
+            set
+            {
+                ticks = value;
+                OnPropertyChanged("Ticks");
+            }
+        }
+
         private BitmapSource selectedImage;
         public BitmapSource SelectedImage
         {
@@ -113,6 +124,7 @@ namespace cosii5
         private void OnRecognize(object parametr)
         {
             RecognizedImage = Dsp.DetectImages(NoisedImage, new List<BitmapSource> {Sample1, Sample2, Sample3});
+            Ticks = Dsp.Recognizer.Ticks;
         }
 
         public void OpenExecuted(object sender, ExecutedRoutedEventArgs e)

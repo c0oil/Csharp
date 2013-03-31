@@ -63,7 +63,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="MatrixExtensions.cs" />
     <Compile Include="MVVMUtility\RelayCommand.cs" />
     <Compile Include="MVVMUtility\ViewModelBase.cs" />
     <Compile Include="Recognizer.cs" />

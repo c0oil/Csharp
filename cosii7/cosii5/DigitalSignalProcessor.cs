@@ -15,6 +15,7 @@ namespace cosii5
         private const int White = 255;
         public int Width { get; set; }
         public int Height { get; set; }
+        public Recognizer Recognizer { get; set; }
         private const int BytePerPixel = 3;
         private WriteableBitmap writeableBitmap;
         
@@ -64,8 +65,8 @@ namespace cosii5
 
         public BitmapSource DetectImages(BitmapSource image, List<BitmapSource> samples)
         {
-            var recognizer = new Recognizer(samples.Select(GetBytes));
-            return GetBitmap(recognizer.RecognizeAsynchronously(GetBytes(image)));
+            Recognizer = new Recognizer(samples.Select(GetBytes));
+            return GetBitmap(Recognizer.RecognizeAsynchronously(GetBytes(image)));
         }
 
         private static BitmapSource TransformBgr24(BitmapSource input)
