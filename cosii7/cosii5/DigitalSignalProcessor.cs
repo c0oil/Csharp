@@ -64,9 +64,8 @@ namespace cosii5
 
         public BitmapSource DetectImages(BitmapSource image, List<BitmapSource> samples)
         {
-            /*var recognizer = new Recognizer();
-            return GetBitmap(recognizer.RecognizeAsynchronously(GetBytes(image)));*/
-            return image;
+            var recognizer = new Recognizer(samples.Select(GetBytes));
+            return GetBitmap(recognizer.RecognizeAsynchronously(GetBytes(image)));
         }
 
         private static BitmapSource TransformBgr24(BitmapSource input)
@@ -82,7 +81,7 @@ namespace cosii5
 
         private byte[] GetBytes(BitmapSource imageSource)
         {
-            writeableBitmap = new WriteableBitmap(imageSource);
+            writeableBitmap = new WriteableBitmap(TransformBgr24(imageSource));
             var buffer = new byte[imageSource.PixelHeight * imageSource.PixelWidth * BytePerPixel];
             writeableBitmap.CopyPixels(buffer, imageSource.PixelWidth * BytePerPixel, 0);
             return buffer;
@@ -97,7 +96,7 @@ namespace cosii5
 
         public BitmapSource Noize(BitmapSource image, double per)
         {
-            var bytes = GetBytes(TransformBgr24(image));
+            var bytes = GetBytes(image);
 
             var indexNonNoizedPixels = new List<int>();
             for (int i = 0; i < bytes.Length; i++)

@@ -25,10 +25,14 @@
                     <TextBox Text="{Binding Path=LevelNoise, Mode=OneWayToSource, Converter={x:Static cosii5:StringToDoubleConverter.Instanse}}"/>
                     <GroupBox Header="Sample will be recognized">
                         <StackPanel>
-                            <RadioButton Content="1" IsChecked="True"/>
-                            <RadioButton Content="2"/>
-                            <RadioButton Content="3"/>
-                            <RadioButton Content="selected"/>
+                            <StackPanel.Resources>
+                                <Style TargetType="{x:Type RadioButton}">
+                                    <Setter Property="Command" Value="{Binding Path=SelectSampleCommand}"/>
+                                </Style>
+                            </StackPanel.Resources>
+                            <RadioButton Content="1" IsChecked="True" CommandParameter="1"/>
+                            <RadioButton Content="2" CommandParameter="2"/>
+                            <RadioButton Content="3" CommandParameter="3"/>
                         </StackPanel>
                     </GroupBox>
                     <Button  Content="Select image" Command="ApplicationCommands.Open"/>

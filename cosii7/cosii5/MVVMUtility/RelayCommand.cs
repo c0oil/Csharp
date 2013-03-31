@@ -5,10 +5,10 @@ namespace cosii5.MVVMUtility
 {
     public class RelayCommand : ICommand
     {
-        private readonly Action handler;
+        private readonly Action<object> handler;
         private bool isEnabled;
 
-        public RelayCommand(Action handler)
+        public RelayCommand(Action<object> handler)
         {
             this.handler = handler;
         }
@@ -38,7 +38,7 @@ namespace cosii5.MVVMUtility
 
         public void Execute(object parameter)
         {
-            handler();
+            handler(parameter);
         }
     }
 }
