@@ -32,6 +32,11 @@ namespace VKSiS_5
 			InitializeComponent();
 
 			this.CalculateDelay();
+
+            using (MemoryMappedViewAccessor fileMap = sharedFile_.CreateViewAccessor())
+            {
+                fileMap.Flush();
+            }
 		}
 
 		private void CalculateDelay()
@@ -60,58 +65,54 @@ namespace VKSiS_5
 			this.DebugMessage("Collision! [" + collisionCount_ + "]\n");
 		}
 
-        public void CollisionDetected1()
+        public void WareBusy()
         {
             collisionCount_ += 1;
             this.CalculateDelay();
-            this.DebugMessage("Begin Collision! [" + collisionCount_ + "]\n");
+            this.DebugMessage("Ware busy! [" + collisionCount_ + "]\n");
         }
 
-		public void Write(String message)
+		public bool Write(String message)
 		{
 			using (MemoryMappedViewAccessor fileMap = sharedFile_.CreateViewAccessor())
 			{
-			    /*string memory = this.Read(1);
+			    string memory = this.Read(1);
                 if (!this.CheckMessage(memory, null))
                 {
-                    this.CollisionDetected();
+                    this.WareBusy();
                     Thread.Sleep(delay_);
-                    return;
-                }*/
+                    return false;
+                }
 
                 fileMap.Write(0, JAM_SIGNAL);
-
+                this.DebugMessage("Take ware.\n");
                 Thread.Sleep(DEFAULT_DELAY);
 
+                fileMap.Flush();
 				int length = message.Length;
 				for (int i = 0; i < length; i++)
 				{
 				    fileMap.Write(i * sizeof(char), message[i]);
-
-                    //Thread.Sleep(DEFAULT_DELAY);
-
-                    string memory = this.Read(1);
+                    Thread.Sleep(DEFAULT_DELAY);
+                    memory = this.Read(1);
                     if (!this.CheckMessage(memory, null))
                     {
                         this.CollisionDetected();
                         Thread.Sleep(delay_);
-                        return;
+                        return false;
                     }
 				}
 			}
+		    return true;
 		}
 
 		private void WriteLoop()
 		{
-            using (MemoryMappedViewAccessor fileMap = sharedFile_.CreateViewAccessor())
-            {
-                fileMap.Write(0, '\n');
-            }
 			String message = this.inputBox.Text;
 			do
 			{
-				this.Write(message);
-				this.DebugMessage("Message \'" + message + "\' was successfully sent!\n");
+				if(this.Write(message))
+				    this.DebugMessage("Message \'" + message + "\' was successfully sent!\n");
 			}
 			while (this.loopCheckBox.Checked);
 		}
@@ -162,7 +163,10 @@ namespace VKSiS_5
 			else
 			{
 				this.debugBox.Text += message;
+                this.debugBox.SelectionStart = this.debugBox.Text.Length;
+                this.debugBox.ScrollToCaret();
 			}
+            
 		}
 
 		private void writeButton_Click(object sender, EventArgs e)
