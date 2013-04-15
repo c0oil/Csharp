@@ -99,6 +99,17 @@ namespace cosii5
             return writeableBitmap;
         }
 
+        public BitmapSource ToBinar(BitmapSource input)
+        {
+            const int bound = 127;
+            byte[] result = GetBytes(input);
+            for (int i = 0; i < result.Length; i++)
+            {
+                result[i] = (byte)(result[i] > bound ? 255 : 0);
+            }
+            return GetBitmap(result);
+        }
+
         public BitmapSource Noize(BitmapSource image, double per)
         {
             var bytes = GetBytes(image);

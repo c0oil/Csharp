@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.Windows.Input;
@@ -14,11 +15,8 @@ namespace cosii5
 {
     public class ImageRedactorModel : ViewModelBase
     {
-        private const string SourceName1 = "sample1.bmp";
-        private const string SourceName2 = "sample2.bmp";
-        private const string SourceName3 = "sample3.bmp";
+        private const string SourceName = "s{0}.bmp";
         private const string SourceFolderPath = @"D:\repository\C#\cosii8\";
-        private List<BitmapSource> samples;
 
         public DigitalSignalProcessor Dsp { get; set; }
         public RelayCommand RecognizeCommand { get; private set; }
@@ -27,13 +25,12 @@ namespace cosii5
         public RelayCommand SelectSampleCommand { get; private set; }
 
         #region Bindble properties
-        public BitmapSource Sample1 { get; set; }
-        public BitmapSource Sample2 { get; set; }
-        public BitmapSource Sample3 { get; set; }
-        public double LevelNoise { get; set; }
         public double Sample1Suiteble { get; set; }
         public double Sample2Suiteble { get; set; }
         public double Sample3Suiteble { get; set; }
+        public double LevelNoise { get; set; }
+
+        public Dictionary<int, BitmapSource> BitmapSamples { get; set; }
 
         private int ticks;
         public int Ticks
@@ -88,38 +85,26 @@ namespace cosii5
 
         public void Initialize()
         {
-            Sample1 = new BitmapImage(new Uri(SourceFolderPath + SourceName1));
-            OnPropertyChanged("Sample1");
-            Sample2 = new BitmapImage(new Uri(SourceFolderPath + SourceName2));
-            OnPropertyChanged("Sample2");
-            Sample3 = new BitmapImage(new Uri(SourceFolderPath + SourceName3));
-            OnPropertyChanged("Sample3");
-
-            SelectedImage = Sample1;
-
             RecognizeCommand = new RelayCommand(OnRecognize) { IsEnabled = true };
             TeachCommand = new RelayCommand(OnTeach) { IsEnabled = true };
             NoiseCommand = new RelayCommand(OnNoise) { IsEnabled = true };
             SelectSampleCommand = new RelayCommand(OnSelectSample) { IsEnabled = true };
             Dsp = new DigitalSignalProcessor();
+
+            BitmapSamples = new Dictionary<int, BitmapSource>();
+            for (int i = 1; i < 10; i++)
+            {
+                var sample = new BitmapImage(new Uri(SourceFolderPath + string.Format(SourceName, i)));
+                BitmapSamples.Add(i, Dsp.ToBinar(sample));
+            }
+            SelectedImage = BitmapSamples.FirstOrDefault().Value;
         }
 
         #region Command handlers
 
         private void OnSelectSample(object parametr)
         {
-            switch (Convert.ToInt32(parametr))
-            {
-                case 1:
-                    SelectedImage = Sample1;
-                    break;
-                case 2:
-                    SelectedImage = Sample2;
-                    break;
-                case 3:
-                    SelectedImage = Sample3;
-                    break;
-            }
+            SelectedImage = BitmapSamples[Convert.ToInt32(parametr) + 1];
         }
 
         private void OnNoise(object parametr)
@@ -130,8 +115,8 @@ namespace cosii5
 
         private void OnTeach(object parametr)
         {
-            samples = new List<BitmapSource> {Sample1, Sample2, Sample3};
-            Dsp.Teach(samples);
+            
+            Dsp.Teach(BitmapSamples.Select(x => x.Value).ToList());
             Ticks = Dsp.Recognizer.Ticks;
         }
 
@@ -144,7 +129,7 @@ namespace cosii5
             OnPropertyChanged("Sample2Suiteble");
             Sample3Suiteble = result[2];
             OnPropertyChanged("Sample3Suiteble");
-            RecognizedImage = samples[result.MaximumIndex()];
+            RecognizedImage = BitmapSamples[result.MaximumIndex() * 3 + 1];
             Ticks = Dsp.Recognizer.Ticks;
         }
 

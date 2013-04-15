@@ -7,13 +7,13 @@
     <Grid>
         <Grid.Resources>
             <Style TargetType="Image">
-                <Setter Property="Width" Value="200"/>
-                <Setter Property="Height" Value="200"/>
+                <Setter Property="Width" Value="150"/>
+                <Setter Property="Height" Value="150"/>
                 <Setter Property="RenderOptions.BitmapScalingMode" Value="NearestNeighbor"/>
             </Style>
         </Grid.Resources>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="200"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         
@@ -26,14 +26,7 @@
                     <TextBox Text="{Binding Path=LevelNoise, Mode=OneWayToSource, Converter={x:Static cosii5:StringToDoubleConverter.Instanse}}"/>
                     <GroupBox Header="Sample will be recognized">
                         <StackPanel>
-                            <StackPanel.Resources>
-                                <Style TargetType="{x:Type RadioButton}">
-                                    <Setter Property="Command" Value="{Binding Path=SelectSampleCommand}"/>
-                                </Style>
-                            </StackPanel.Resources>
-                            <RadioButton Content="1" IsChecked="True" CommandParameter="1"/>
-                            <RadioButton Content="2" CommandParameter="2"/>
-                            <RadioButton Content="3" CommandParameter="3"/>
+                            <ComboBox DisplayMemberPath="Key" SelectedValuePath="Value" ItemsSource="{Binding BitmapSamples}" SelectionChanged="Selector_OnSelectionChanged"/>
                         </StackPanel>
                     </GroupBox>
                     <Button  Content="Select image" Command="ApplicationCommands.Open"/>
@@ -47,34 +40,28 @@
                 <Image Source="{Binding Path=RecognizedImage}"/>
             </GroupBox>
         </StackPanel>
-
-        <GroupBox Grid.Row="1" Header="Samples">
-            <StackPanel Orientation="Horizontal">
-                <GroupBox Header="1">
-                    <StackPanel>
-                        <Image Source="{Binding Path=Sample1}" />
-                        <TextBlock Text="{Binding Path=Sample1Suiteble, Mode=OneWay, 
-                            Converter={x:Static cosii5:StringToPercentConverter.Instanse}}"/>
-                    </StackPanel>
-                </GroupBox>
-                <GroupBox Header="2">
-                    <StackPanel>
-                        <Image Source="{Binding Path=Sample2}"/>
-                        <TextBlock Text="{Binding Path=Sample2Suiteble, Mode=OneWay, 
-                            Converter={x:Static cosii5:StringToPercentConverter.Instanse}}"/>
-                    </StackPanel>
-                </GroupBox>
-                <GroupBox Header="3">
-                    <StackPanel>
-                        <Image Source="{Binding Path=Sample3}"/>
-                        <TextBlock Text="{Binding Path=Sample3Suiteble, Mode=OneWay, 
-                            Converter={x:Static cosii5:StringToPercentConverter.Instanse}}"/>
-                    </StackPanel>
-                </GroupBox>
-                <GroupBox Header="Selected" Visibility="Collapsed">
-                    <Image Source="{Binding Path=SelectedImage}"/>
-                </GroupBox>
-            </StackPanel>
-        </GroupBox>
+        <StackPanel Grid.Row="1" Orientation="Horizontal">
+            <GroupBox Header="1">
+                <StackPanel>
+                    <TextBlock Text="{Binding Path=Sample1Suiteble, Mode=OneWay, 
+                        Converter={x:Static cosii5:StringToPercentConverter.Instanse}}"/>
+                    <StackPanel x:Name="samples1"/>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="2">
+                <StackPanel>
+                    <TextBlock Text="{Binding Path=Sample2Suiteble, Mode=OneWay, 
+                        Converter={x:Static cosii5:StringToPercentConverter.Instanse}}"/>
+                    <StackPanel x:Name="samples2"/>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="3">
+                <StackPanel>
+                    <TextBlock Text="{Binding Path=Sample3Suiteble, Mode=OneWay, 
+                        Converter={x:Static cosii5:StringToPercentConverter.Instanse}}"/>
+                    <StackPanel x:Name="samples3"/>
+                </StackPanel>
+            </GroupBox>
+        </StackPanel>
     </Grid>
 </Window>

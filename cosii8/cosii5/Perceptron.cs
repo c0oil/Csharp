@@ -10,11 +10,12 @@ namespace cosii5
     {
         const double Alpha = 0.1;
         const double Beta = 0.1;
-        const double Accuracy = 0.05;
+        const double Accuracy = 0.02;
 
         private int distributionLayerSize;
         private int hiddenLayerSize;
         private int outputLayerSize;
+        private int numSamplesForClass;
 
         private readonly Matrix<double> v;
         private readonly Matrix<double> w;
@@ -22,11 +23,12 @@ namespace cosii5
         private readonly Vector<double> Q;
         private readonly Vector<double> T;
 
-        public Perceptron(int pixelsCount, int sampleAmmount)
+        public Perceptron(int pixelsCount, int sampleAmmount, int numSamples = 3)
         {
             distributionLayerSize = pixelsCount;
             hiddenLayerSize = pixelsCount / 2;
-            outputLayerSize = sampleAmmount;
+            outputLayerSize = sampleAmmount / numSamples;
+            numSamplesForClass = numSamples;
 
             v = new DenseMatrix(distributionLayerSize, hiddenLayerSize);
             w = new DenseMatrix(hiddenLayerSize, outputLayerSize);
@@ -79,7 +81,7 @@ namespace cosii5
             for (int i = 0; i < samples.Count; ++i)
             {
                 idealY = new DenseVector(outputLayerSize);
-                idealY[i] = 1.0;
+                idealY[i / numSamplesForClass] = 1.0;
                 allIdealYs.Add(idealY);
                 allds.Add(d);
             }
