@@ -1,0 +1,67 @@
+﻿<Window x:Class="cosii5.ImageRedactor"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+        xmlns:cosii5="clr-namespace:cosii5"
+        Title="ImageRedactor"
+        SizeToContent="WidthAndHeight">
+    <Grid>
+        <Grid.Resources>
+            <Style TargetType="Image">
+                <Setter Property="Width" Value="150"/>
+                <Setter Property="Height" Value="150"/>
+                <Setter Property="RenderOptions.BitmapScalingMode" Value="NearestNeighbor"/>
+            </Style>
+        </Grid.Resources>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="200"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <GroupBox Header="Control">
+                <StackPanel>
+                    <Button Content="Teach" Command="{Binding Path=TeachCommand}"/>
+                    <Button Content="Recognize" Command="{Binding Path=RecognizeCommand}"/>
+                    <Button Content="Noise" Command="{Binding Path=NoiseCommand}"/>
+                    <TextBox Text="{Binding Path=LevelNoise, Mode=OneWayToSource, Converter={x:Static cosii5:StringToDoubleConverter.Instanse}}"/>
+                    <GroupBox Header="Sample will be recognized">
+                        <StackPanel>
+                            <ComboBox DisplayMemberPath="Key" SelectedValuePath="Value" ItemsSource="{Binding BitmapSamples}" SelectionChanged="Selector_OnSelectionChanged"/>
+                        </StackPanel>
+                    </GroupBox>
+                    <Button  Content="Select image" Command="ApplicationCommands.Open"/>
+                    <TextBlock Text="{Binding Path=Ticks}"/>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="Noised image">
+                <Image Source="{Binding Path=NoisedImage}"/>
+            </GroupBox>
+            <GroupBox Header="Recognized image">
+                <Image Source="{Binding Path=RecognizedImage}"/>
+            </GroupBox>
+        </StackPanel>
+        <StackPanel Grid.Row="1" Orientation="Horizontal">
+            <GroupBox Header="1">
+                <StackPanel>
+                    <TextBlock Text="{Binding Path=Sample1Suiteble, Mode=OneWay, 
+                        Converter={x:Static cosii5:StringToPercentConverter.Instanse}}"/>
+                    <StackPanel x:Name="samples1"/>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="2">
+                <StackPanel>
+                    <TextBlock Text="{Binding Path=Sample2Suiteble, Mode=OneWay, 
+                        Converter={x:Static cosii5:StringToPercentConverter.Instanse}}"/>
+                    <StackPanel x:Name="samples2"/>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="3">
+                <StackPanel>
+                    <TextBlock Text="{Binding Path=Sample3Suiteble, Mode=OneWay, 
+                        Converter={x:Static cosii5:StringToPercentConverter.Instanse}}"/>
+                    <StackPanel x:Name="samples3"/>
+                </StackPanel>
+            </GroupBox>
+        </StackPanel>
+    </Grid>
+</Window>
