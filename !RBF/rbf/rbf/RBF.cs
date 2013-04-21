@@ -54,10 +54,10 @@ namespace RBFTry
             foreach (Selection selection in allSelections)
             {
                 Vector center = new Vector(n: pixelsCount);
-                for (int k = 0; k < outputLayerSize; k++)
+                /*for (int k = 0; k < outputLayerSize; k++)
                 {
                     center.Add(0.0);
-                }
+                }*/
 
                 for (int j = 0; j < selection.Count; j++)
                 {
@@ -69,8 +69,7 @@ namespace RBFTry
 
                 for (int j = 0; j < pixelsCount; j++)
                 {
-                    center[j] /= selection.Count;
-                    center[j] = center[j] > 0.5 ? 1 : 0;
+                    center[j] = (center[j] / selection.Count) > 0.5 ? 1 : 0;
                 }
 
                 //add center to selection
