@@ -1,4 +1,5 @@
 *.*
+TemporaryGeneratedFile*.cs
 !*.cs
 !*.xaml.cs
 !*.xaml
@@ -7,3 +8,8 @@
 !*.resx
 !*.gitignore
 !*.bmp
+**/!RBF
+**/cosii9
+**/COSII_LABA_6
+**/Debug
+**/Properties
