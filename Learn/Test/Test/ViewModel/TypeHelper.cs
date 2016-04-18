@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Test.ViewModel
 {
-    static class TypeHelper
+    public static class TypeHelper
     {
         public static string GetPropertyName<T>(Expression<Func<T>> p)
         {

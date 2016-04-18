@@ -1,66 +1,64 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Data;
 using System.Data.Linq;
+using System.Data.SqlClient;
 using System.Linq;
-using System.Windows.Controls;
+using System.Windows;
 using System.Windows.Input;
-using Test.Db;
+using Test.DbConnection;
+using Test.Table;
 using Test.ViewModel;
 
 namespace Test
 {
     public class MainWindowViewModel : ViewModelBase
     {
-        private string findTemplate = "London";
-        public string FindTemplate
+        private ICommand connectCommand;
+        public ICommand ConnectCommand
         {
-            get { return findTemplate; }
+            get { return GetDelegateCommand<object>(ref connectCommand, x => Connect()); }
+        }
+
+        private ICommand showTablesCommand;
+        public ICommand ShowTablesCommand
+        {
+            get { return GetDelegateCommand<object>(ref showTablesCommand, x => ShowTables()); }
+        }
+
+        private bool isConnected;
+        public bool IsConnected
+        {
+            get { return isConnected; }
             set
             {
-                findTemplate = value;
-                OnPropertyChanged(() => FindTemplate);
+                isConnected = value;
+                OnPropertyChanged(() => IsConnected);
             }
         }
 
-        private ICommand refreshCommand;
-        public ICommand RefreshCommand
+        private void ShowTables()
         {
-            get { return GetDelegateCommand<object>(ref refreshCommand, x => Refresh()); }
-        }
-
-        private ObservableCollection<Row> gridData = new ObservableCollection<Row>();
-        public ObservableCollection<Row> GridData
-        {
-            get { return gridData; }
-            set
+            bool? result = ShowDialog<TableView>(connectionView =>
             {
-                gridData = value;
-                OnPropertyChanged(() => GridData);
-            }
+                connectionView.ViewModel.ConnectionString = ConnectionString.ConnectionString;
+            });
         }
 
-        public void Refresh()
+        private void Connect()
         {
-            DataContext db = new DataContext(@"c:\linqtest5\NORTHWND.MDF");
-            Table<DbTables.Customer> customers = db.GetTable<DbTables.Customer>();
-            IQueryable<DbTables.Customer> custQuery = customers.Where(cust => cust.City.StartsWith(FindTemplate));
-
-            GridData.Clear();
-            foreach (DbTables.Customer customer in custQuery)
+            ConnectionViewModel viewModel = null;
+            bool? result = ShowDialog<ConnectionView>(connectionView =>
             {
-                GridData.Add(new Row
-                {
-                    City = customer.City,
-                    CustomerID = customer.CustomerID
-                });
-            }
+                viewModel = connectionView.ViewModel;
+                viewModel.ConnectionString = ConnectionString;
+            });
+
+            ConnectionString = viewModel.ConnectionString;
+            IsConnected = result == true;
         }
 
-        public class Row
-        {
-            public string CustomerID { get; set; }
-            public string City { get; set; }
-        }
-
+        public SqlConnectionStringBuilder ConnectionString { get; set; }
     }
 }
