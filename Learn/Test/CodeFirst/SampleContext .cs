@@ -1,8 +1,5 @@
-﻿using System;
-using System.Data.Common;
+﻿using System.Data.Common;
 using System.Data.Entity;
-using System.Linq.Expressions;
-using CodeFirst;
 
 namespace CodeFirst
 {
@@ -14,7 +11,7 @@ namespace CodeFirst
         }
 
         public SampleContext(DbConnection dbConnection)
-            : base(dbConnection, false)
+            : base(dbConnection.ConnectionString)
         {
         }
 
@@ -26,8 +23,6 @@ namespace CodeFirst
         public DbSet<FamilyStatus> FamilyStatuses { get; set; }
         public DbSet<Currency> Currencies { get; set; }
 
-        public DbSet<Residense> Residenses { get; set; }
-        public DbSet<Registration> Registrations { get; set; }
         public DbSet<Place> Places { get; set; }
         public DbSet<City> Cities { get; set; }
     }

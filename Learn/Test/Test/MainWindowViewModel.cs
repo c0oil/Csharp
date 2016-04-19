@@ -5,9 +5,12 @@ using System.Data;
 using System.Data.Linq;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Test.DbConnection;
+using Test.DbConnection.Smo;
 using Test.Table;
 using Test.ViewModel;
 
@@ -26,6 +29,17 @@ namespace Test
         {
             get { return GetDelegateCommand<object>(ref showTablesCommand, x => ShowTables()); }
         }
+        
+        private bool isConnecting;
+        public bool IsConnecting
+        {
+            get { return isConnecting; }
+            set
+            {
+                isConnecting = value;
+                OnPropertyChanged(() => IsConnecting);
+            }
+        }
 
         private bool isConnected;
         public bool IsConnected
@@ -38,11 +52,30 @@ namespace Test
             }
         }
 
+        public MainWindowViewModel()
+        {
+            ConnectionBuilder = new SqlConnectionStringBuilder
+            {
+                DataSource = @"C0_OIL-ПК\SQLEXPRESS",
+                InitialCatalog = "Default",
+                IntegratedSecurity = true,
+            };
+            CheckConnection();
+        }
+
+        private async void CheckConnection()
+        {
+            IsConnecting = true;
+            IsConnected = await Task<bool>.Factory.StartNew(() => 
+                SqlConnectionControlViewModel.TestConnection(ConnectionBuilder.ConnectionString));
+            IsConnecting = false;
+        }
+
         private void ShowTables()
         {
             bool? result = ShowDialog<TableView>(connectionView =>
             {
-                connectionView.ViewModel.ConnectionString = ConnectionString.ConnectionString;
+                connectionView.ViewModel.ConnectionString = ConnectionBuilder.ConnectionString;
             });
         }
 
@@ -52,13 +85,16 @@ namespace Test
             bool? result = ShowDialog<ConnectionView>(connectionView =>
             {
                 viewModel = connectionView.ViewModel;
-                viewModel.ConnectionString = ConnectionString;
+                viewModel.ConnectionBuilder = ConnectionBuilder;
             });
+            if (result == true)
+            {
+                ConnectionBuilder = viewModel.ConnectionBuilder;
+            }
 
-            ConnectionString = viewModel.ConnectionString;
-            IsConnected = result == true;
+            CheckConnection();
         }
 
-        public SqlConnectionStringBuilder ConnectionString { get; set; }
+        public SqlConnectionStringBuilder ConnectionBuilder { get; set; }
     }
 }

@@ -1,5 +1,7 @@
-﻿using System.Data.SqlClient;
+﻿using System;
+using System.Data.SqlClient;
 using System.Windows;
+using System.Windows.Controls;
 using Test.BaseUI;
 
 namespace Test.DbConnection.Smo
@@ -16,13 +18,13 @@ namespace Test.DbConnection.Smo
         private static object CoerceValueCallback(DependencyObject d, object basevalue)
         {
             var sqlConnectionControl = d as SqlConnectionControl;
-            return sqlConnectionControl.ViewModel.ConnectionString;
+            return sqlConnectionControl.ViewModel.ConnectionBuilder;
         }
 
         private static void PropertyChangedCallback(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var sqlConnectionControl = d as SqlConnectionControl;
-            sqlConnectionControl.ViewModel.ConnectionString = (SqlConnectionStringBuilder)e.NewValue;
+            sqlConnectionControl.ViewModel.ConnectionBuilder = (SqlConnectionStringBuilder)e.NewValue;
         }
 
         public SqlConnectionStringBuilder SqlConnectionString
@@ -34,6 +36,11 @@ namespace Test.DbConnection.Smo
         public SqlConnectionControl()
         {
             InitializeComponent();
+        }
+
+        private void OnDatabasesDropDownOpened(object sender, EventArgs e)
+        {
+            ViewModel.LoadDatabasesAsync();
         }
     }
 

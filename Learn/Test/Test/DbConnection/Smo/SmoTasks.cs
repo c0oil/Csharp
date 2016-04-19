@@ -18,19 +18,19 @@ namespace Test.DbConnection.Smo
 
     public class AsyncSmoTasks : SmoTasks
     {
-        public new Task<IEnumerable<string>> SqlServers
+        public Task<IEnumerable<string>> SqlServersAsync
         {
-            get { return Task<IEnumerable<string>>.Factory.StartNew(() => base.SqlServers); }
+            get { return Task<IEnumerable<string>>.Factory.StartNew(() => SqlServers); }
         }
 
-        public new Task<List<string>> GetDatabases(SqlConnectionStringBuilder connectionString)
+        public Task<List<string>> GetDatabasesAsync(SqlConnectionStringBuilder connectionString)
         {
-            return Task<List<string>>.Factory.StartNew(() => base.GetDatabases(connectionString));
+            return Task<List<string>>.Factory.StartNew(() => GetDatabases(connectionString));
         }
 
-        public new Task<List<DatabaseTable>> GetTables(SqlConnectionStringBuilder connectionString)
+        public Task<List<DatabaseTable>> GetTablesAsync(SqlConnectionStringBuilder connectionString)
         {
-            return Task<List<DatabaseTable>>.Factory.StartNew(() => base.GetTables(connectionString));
+            return Task<List<DatabaseTable>>.Factory.StartNew(() => GetTables(connectionString));
         }
     }
 
@@ -51,7 +51,11 @@ namespace Test.DbConnection.Smo
         {
             var databases = new List<string>();
 
-            using (var conn = new SqlConnection(connectionString.ConnectionString))
+            var temp = connectionString.InitialCatalog;
+            connectionString.InitialCatalog = string.Empty;
+            var str = connectionString.ConnectionString;
+            connectionString.InitialCatalog = temp;
+            using (var conn = new SqlConnection(str))
             {
                 try
                 {
@@ -59,10 +63,10 @@ namespace Test.DbConnection.Smo
                     var serverConnection = new ServerConnection(conn);
                     var server = new Server(serverConnection);
                     databases.AddRange(from Database database in server.Databases select database.Name);
-
                 }
                 catch (SqlException)
                 {
+                    return new List<string>();
                 }
             }
 

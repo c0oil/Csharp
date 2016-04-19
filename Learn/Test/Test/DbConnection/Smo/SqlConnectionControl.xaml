@@ -32,7 +32,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <ComboBox Margin="3" x:Name="SqlServerName" IsEditable="True" ItemsSource="{Binding Path=Servers}"
-                          Text="{Binding Server}" />
+                          Text="{Binding Server}"/>
                 <smo:LoadingCircle Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
                                     Visibility="{Binding Path=ServersLoading, Converter={StaticResource BooleanToVisibilityConverter}}" />
             </Grid>
@@ -42,24 +42,30 @@
                     <ColumnDefinition Width="1*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <ComboBox Margin="3" x:Name="SqlDatabaseName" IsEditable="True" ItemsSource="{Binding Path=Databases}"
-                          Text="{Binding Database}" Height="22"/>
-                <Button Width="30" Height="30" Command="{Binding CreateDbCommand}" Grid.Column="1">
-                    <Image Source="../new db.png" SnapsToDevicePixels="True"/>
-                </Button>
-                <smo:LoadingCircle HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="2"
+                          Text="{Binding Database}" Height="22" DropDownOpened="OnDatabasesDropDownOpened"/>
+                <StackPanel Orientation="Horizontal" Grid.Column="1">
+                    <smo:LoadingCircle HorizontalAlignment="Center" VerticalAlignment="Center" 
                                    Visibility="{Binding Path=DatabasesLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <Button Width="30" Height="30" Command="{Binding CreateDbCommand}">
+                        <Image Source="../new db.png" SnapsToDevicePixels="True"/>
+                    </Button>
+                    <Button Width="30" Height="30" Command="{Binding DeleteDbCommand}">
+                        <Image Source="../Delete_Icon.png" SnapsToDevicePixels="True"/>
+                    </Button>
+                </StackPanel>
 
             </Grid>
 
             <GroupBox Header="Authentication:" Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2">
                 <StackPanel>
                     <RadioButton Content="Windows Authentication" Margin="3" x:Name="SqlAuthTypeWindows"
-                                 IsChecked="{Binding Path=ConnectionString.IntegratedSecurity}">
+                                 IsChecked="{Binding Path=IntegratedSecurity}">
                     </RadioButton>
                     <RadioButton Content="Sql Authentication" Margin="3" x:Name="SqlAuthTypeSql" 
-                                 IsChecked="{Binding Path=ConnectionString.IntegratedSecurity, Converter={StaticResource BooleanToInvertConverter}}"/>
+                                 IsChecked="{Binding Path=IntegratedSecurity, Converter={StaticResource BooleanToInvertConverter}}"/>
                     <Grid Visibility="{Binding ElementName=SqlAuthTypeSql, Path=IsChecked, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />

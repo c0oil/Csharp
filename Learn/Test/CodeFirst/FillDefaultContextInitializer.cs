@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace CodeFirst
 {
-    public class FillDefaultContextInitializer : DropCreateDatabaseAlways<SampleContext>
+    public class FillDefaultContextInitializer : CreateDatabaseIfNotExists<SampleContext>
     {
         #region Default data
 
@@ -68,12 +68,10 @@ namespace CodeFirst
                 MiddleName = "Папкин",
                 BirthDate = new DateTime(1992, 9, 19),
                 BirthPlace = "Дом",
-                HomePhone = "",
-                MobilePhone = "",
-                Email = "",
                 IsPensioner = true,
                 IsReservist = true,
                 MonthlyIncome = 90000,
+                Sex = Sex.Male,
             },
             new Client
             {
@@ -82,12 +80,10 @@ namespace CodeFirst
                 MiddleName = "Васькин",
                 BirthDate = new DateTime(1995, 3, 10),
                 BirthPlace = "Дом",
-                HomePhone = "",
-                MobilePhone = "",
-                Email = "",
                 IsPensioner = true,
                 IsReservist = true,
                 MonthlyIncome = 100000,
+                Sex = Sex.Male,
             },
             new Client
             {
@@ -96,12 +92,10 @@ namespace CodeFirst
                 MiddleName = "Мамкин",
                 BirthDate = new DateTime(1993, 5, 1),
                 BirthPlace = "Дом",
-                HomePhone = "",
-                MobilePhone = "",
-                Email = "",
                 IsPensioner = true,
                 IsReservist = true,
                 MonthlyIncome = 80000,
+                Sex = Sex.Male,
             },
             new Client
             {
@@ -110,12 +104,10 @@ namespace CodeFirst
                 MiddleName = "Браткин",
                 BirthDate = new DateTime(1994, 9, 5),
                 BirthPlace = "Дом",
-                HomePhone = "",
-                MobilePhone = "",
-                Email = "",
                 IsPensioner = true,
                 IsReservist = false,
                 MonthlyIncome = 70000,
+                Sex = Sex.Female,
             },
             new Client
             {
@@ -124,12 +116,10 @@ namespace CodeFirst
                 MiddleName = "Анатольевич",
                 BirthDate = new DateTime(1996, 1, 8),
                 BirthPlace = "Дом",
-                HomePhone = "",
-                MobilePhone = "",
-                Email = "",
                 IsPensioner = true,
                 IsReservist = false,
                 MonthlyIncome = 50000,
+                Sex = Sex.Male,
             }
         };
 
@@ -138,6 +128,7 @@ namespace CodeFirst
         protected override void Seed(SampleContext context)
         {
             FillDefaultData(context);
+            base.Seed(context);
         }
 
         private void FillDefaultData(SampleContext context)
@@ -147,7 +138,7 @@ namespace CodeFirst
             var disabilities = disabilityNames.Select(x => new Disability { DisabilityId = x }).ToArray();
             var familyStatuses = familyStatusNames.Select(x => new FamilyStatus { FamilyStatusId = x }).ToArray();
             var cities = cityNames.Select(x => new City { CityId = x }).ToArray();
-            var places = cities.Select(x => new Place { City = x, Adress = "дом пушкина"}).ToArray();
+            var places = cities.Select(x => new Place { City = x, Adress = "Дом пушкина"}).ToArray();
             
             context.Cities.AddRange(cities);
             context.Disabilities.AddRange(disabilities);
@@ -155,11 +146,8 @@ namespace CodeFirst
             context.Nationalities.AddRange(nationalities);
             context.Currencies.AddRange(currencyies);
             context.Places.AddRange(places);
-            context.SaveChanges();
 
             var passports = new List<Passport>();
-            var residenses = new List<Residense>();
-            var registrations = new List<Registration>();
             for (int i = 0; i < clients.Count; i++)
             {
                 var client = clients[i];
@@ -168,15 +156,11 @@ namespace CodeFirst
                     Client = client, IssueDate = new DateTime(1996, 1, 8),
                     IssuedBy = "Belarusia", PassportSeries = "AB", PassportNumber = "123456", IdentNumber = "1111111aaaa"
                 };
-                var residense = new Residense { Client = client, Place = TakeItem(i, 3, places) };
-                var registration = new Registration { Client = client, Place = TakeItem(i, 3, places) };
                 passports.Add(passport);
-                residenses.Add(residense);
-                registrations.Add(registration);
 
                 client.Passport = passport;
-                client.Residense = residense;
-                client.Registration = registration;
+                client.Residense = TakeItem(i, 3, places);
+                client.Registration = TakeItem(i, 2, places);
                 client.Disability = TakeItem(i, 3, disabilities);
                 client.Nationality = TakeItem(i, 4, nationalities);
                 client.FamilyStatus = TakeItem(i, 3, familyStatuses);
@@ -184,8 +168,6 @@ namespace CodeFirst
             }
 
             context.Passports.AddRange(passports);
-            context.Residenses.AddRange(residenses);
-            context.Registrations.AddRange(registrations); 
             context.Clients.AddRange(clients);
             context.SaveChanges();
         }

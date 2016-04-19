@@ -33,10 +33,10 @@ namespace CodeFirst
 
         [Required]
         public virtual Passport Passport { get; set; }
-        [Required]
-        public virtual Registration Registration { get; set; }
-        [Required]
-        public virtual Residense Residense { get; set; }
+        [InverseProperty("Residenses")]
+        public virtual Place Registration { get; set; }
+        [InverseProperty("Registrations")]
+        public virtual Place Residense { get; set; }
         [Required]
         public virtual Disability Disability { get; set; }
         [Required]
@@ -64,32 +64,12 @@ namespace CodeFirst
         public virtual Client Client { get; set; }
     }
 
-    public class Residense
-    {
-        [Key, ForeignKey("Client")]
-        public int ResidenseId { get; set; }
-
-        [Required]
-        public virtual Place Place { get; set; }
-        public virtual Client Client { get; set; }
-    }
-
-    public class Registration
-    {
-        [Key, ForeignKey("Client")]
-        public int RegistrationId { get; set; }
-
-        [Required]
-        public virtual Place Place { get; set; }
-        public virtual Client Client { get; set; }
-    }
-
     public class Place
     {
         public Place()
         {
-            Residenses = new List<Residense>();
-            Registrations = new List<Registration>();
+            Residenses = new List<Client>();
+            Registrations = new List<Client>();
         }
 
         public int PlaceId { get; set; }
@@ -98,8 +78,8 @@ namespace CodeFirst
 
         [Required]
         public virtual City City { get; set; }
-        public virtual List<Residense> Residenses { get; set; }
-        public virtual List<Registration> Registrations { get; set; }
+        public virtual List<Client> Residenses { get; set; }
+        public virtual List<Client> Registrations { get; set; }
     }
 
     public class City

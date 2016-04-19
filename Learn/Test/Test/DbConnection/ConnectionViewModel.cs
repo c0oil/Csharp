@@ -20,16 +20,16 @@ namespace Test.DbConnection
             get { return GetDelegateCommand<object>(ref cancelCommand, x => OnCancel()); }
         }
 
-        private SqlConnectionStringBuilder connectionString;
-        public SqlConnectionStringBuilder ConnectionString
+        private SqlConnectionStringBuilder connectionBuilder;
+        public SqlConnectionStringBuilder ConnectionBuilder
         {
-            get { return connectionString; }
+            get { return connectionBuilder; }
             set
             {
-                connectionString = value;
+                connectionBuilder = value;
                 if (ConnectionControl != null)
                 {
-                    ConnectionControl.ViewModel.ConnectionString = value;
+                    ConnectionControl.ViewModel.ConnectionBuilder = value;
                 }
             }
         }
@@ -45,7 +45,7 @@ namespace Test.DbConnection
             {
                 OnCancel();
             }
-            ConnectionString = ConnectionControl.ViewModel.ConnectionString;
+            ConnectionBuilder = ConnectionControl.ViewModel.ConnectionBuilder;
             CloseView(true);
         }
 

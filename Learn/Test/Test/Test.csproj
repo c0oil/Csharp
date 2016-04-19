@@ -230,7 +230,10 @@
   <ItemGroup>
     <Resource Include="DbConnection\new db.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="DbConnection\delete.svg" />
+    <Resource Include="DbConnection\Delete_Icon.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

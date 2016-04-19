@@ -19,6 +19,7 @@ namespace Test.DbConnection.Smo
         private static readonly SqlConnectionStringBuilder DefaultValue = new SqlConnectionStringBuilder { IntegratedSecurity = true };
 
         private readonly AsyncSmoTasks smoTasks;
+        private bool needUpdateDatabases = true;
 
         public SqlConnectionControlViewModel() : this(new AsyncSmoTasks())
         {
@@ -27,9 +28,13 @@ namespace Test.DbConnection.Smo
         public SqlConnectionControlViewModel(AsyncSmoTasks smoTasks)
         {
             this.smoTasks = smoTasks;
-            Server = @"C0_OIL-ПК\SQLEXPRESS";
-            Database = DefaultDbName;
-            //LoadServersAsync();
+            LoadServersAsync();
+        }
+
+        private ICommand deleteDbCommand;
+        public ICommand DeleteDbCommand
+        {
+            get { return GetDelegateCommand<object>(ref deleteDbCommand, x => DeleteDb()); }
         }
 
         private ICommand createDbCommand;
@@ -57,68 +62,68 @@ namespace Test.DbConnection.Smo
 
         public string Server
         {
-            get { return ConnectionString.DataSource; }
+            get { return ConnectionBuilder.DataSource; }
             set
             {
-                if (ConnectionString.DataSource == value)
+                if (ConnectionBuilder.DataSource == value)
                 {
                     return;
                 }
-                ConnectionString.DataSource = value;
+                ConnectionBuilder.DataSource = value;
+                needUpdateDatabases = true;
                 OnPropertyChanged(() => Server);
-
-                //LoadDatabasesAsync(ConnectionString);
             }
         }
 
         public string Database
         {
-            get { return ConnectionString.InitialCatalog; }
+            get { return ConnectionBuilder.InitialCatalog; }
             set
             {
-                ConnectionString.InitialCatalog = value;
+                ConnectionBuilder.InitialCatalog = value;
                 OnPropertyChanged(() => Database);
             }
         }
         
         public bool IntegratedSecurity
         {
-            get { return ConnectionString.IntegratedSecurity; }
+            get { return ConnectionBuilder.IntegratedSecurity; }
             set
             {
-                ConnectionString.IntegratedSecurity = value;
+                ConnectionBuilder.IntegratedSecurity = value;
                 OnPropertyChanged(() => IntegratedSecurity);
             }
         }
 
         public string UserName
         {
-            get { return ConnectionString.UserID; }
+            get { return ConnectionBuilder.UserID; }
             set
             {
-                ConnectionString.UserID = value;
+                ConnectionBuilder.UserID = value;
                 OnPropertyChanged(() => UserName);
             }
         }
 
         public string Password
         {
-            get { return ConnectionString.Password; }
+            get { return ConnectionBuilder.Password; }
             set
             {
-                ConnectionString.Password = value;
+                ConnectionBuilder.Password = value;
                 OnPropertyChanged(() => Password);
             }
         }
 
-        private SqlConnectionStringBuilder connectionString = DefaultValue;
-        public SqlConnectionStringBuilder ConnectionString
+        private SqlConnectionStringBuilder connectionBuilder = DefaultValue;
+        public SqlConnectionStringBuilder ConnectionBuilder
         {
-            get { return connectionString; }
+            get { return connectionBuilder; }
             set
             {
-                connectionString = value ?? DefaultValue;
-                OnPropertyChanged(() => ConnectionString);
+                connectionBuilder = value ?? DefaultValue;
+                needUpdateDatabases = true;
+                OnPropertyChanged(() => ConnectionBuilder);
 
                 OnPropertyChanged(() => IntegratedSecurity);
                 OnPropertyChanged(() => Password);
@@ -150,16 +155,44 @@ namespace Test.DbConnection.Smo
             }
         }
 
-        private async void LoadDatabasesAsync(SqlConnectionStringBuilder connString)
+        public void LoadDatabases()
         {
+            if (!needUpdateDatabases)
+            {
+                return;
+            }
+            SqlConnectionStringBuilder connString = ConnectionBuilder;
             if (connString == null || string.IsNullOrEmpty(connString.DataSource))
             {
                 return;
             }
 
+            Databases.Clear();
+            foreach (var database in smoTasks.GetDatabases(ConnectionBuilder).OrderBy(d => d))
+            {
+                Databases.Add(database);
+            }
+            needUpdateDatabases = false;
+        }
+
+        public async void LoadDatabasesAsync()
+        {
+            if (!needUpdateDatabases)
+            {
+                return;
+            }
+
+            SqlConnectionStringBuilder connString = ConnectionBuilder;
+            if (connString == null || string.IsNullOrEmpty(connString.DataSource))
+            {
+                return;
+            }
+
+            needUpdateDatabases = false;
             DatabasesLoading = true;
 
-            List<string> serverDatabases = await smoTasks.GetDatabases(connString);
+            List<string> serverDatabases = await smoTasks.GetDatabasesAsync(connString);
+            Databases.Clear();
             foreach (var database in serverDatabases.OrderBy(d => d))
             {
                 Databases.Add(database);
@@ -167,23 +200,33 @@ namespace Test.DbConnection.Smo
 
             DatabasesLoading = false;
         }
-        
-        private async void LoadServersAsync()
+
+        public async void LoadServersAsync()
         {
+            if (Servers.Count > 0)
+            {
+                return;
+            }
             ServersLoading = true;
 
-            IEnumerable<string> sqlServers = await smoTasks.SqlServers;
+            IEnumerable<string> sqlServers = await smoTasks.SqlServersAsync;
+            Servers.Clear();
             foreach (var server in sqlServers.OrderBy(r => r))
             {
-                servers.Add(server);
+                Servers.Add(server);
             }
 
             ServersLoading = false;
         }
-        
+
         public bool TestConnection()
         {
-            using (SqlConnection conn = new SqlConnection(ConnectionString.ConnectionString))
+            return TestConnection(ConnectionBuilder.ConnectionString);
+        }
+
+        public static bool TestConnection(string connectionString)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 try
                 {
@@ -200,10 +243,6 @@ namespace Test.DbConnection.Smo
         private const string DefaultDbName = "Default";
         private string GetNewDbName(string name = null)
         {
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                return DefaultDbName;
-            }
             string newDbName = string.IsNullOrWhiteSpace(name) ? DefaultDbName : name;
             string result = newDbName;
             int num = 1;
@@ -215,20 +254,61 @@ namespace Test.DbConnection.Smo
             return result;
         }
 
+        public void DeleteDb()
+        {
+            using (SqlConnection connection = new SqlConnection(ConnectionBuilder.ConnectionString))
+            {
+                try
+                {
+                    using (var context = new SampleContext(connection))
+                    {
+                        context.Database.Delete();
+                    }
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e.ToString(), "Exception stacktrace", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            needUpdateDatabases = true;
+        }
+
         public void CreateDb()
         {
-            var copy = new SqlConnectionStringBuilder(ConnectionString.ConnectionString);
+            var copy = new SqlConnectionStringBuilder(ConnectionBuilder.ConnectionString);
+            LoadDatabases();
+
+            bool needRewrite = false;
             if (!Databases.Contains(Database))
             {
                 copy.InitialCatalog = GetNewDbName(Database);
             }
+            else
+            {
+                var isRewrite = MessageBox.Show(string.Format("Do you want rewrite {0} db?", Database),
+                    "Database information", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+                if (isRewrite != MessageBoxResult.Yes)
+                {
+                    return;
+                }
+                needRewrite = true;
+            }
+
 
             using (SqlConnection connection = new SqlConnection(copy.ConnectionString))
             {
                 try
                 {
-                    var context = new SampleContext(connection);
-                    context.SaveChanges();
+                    using (var context = new SampleContext(connection))
+                    {
+                        if (needRewrite)
+                        {
+                            context.Database.Delete();
+                            context.SaveChanges();
+                        }
+                        context.Database.Initialize(false);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -236,7 +316,8 @@ namespace Test.DbConnection.Smo
                     return;
                 }
             }
-            ConnectionString = copy;
+            ConnectionBuilder = copy;
+            needUpdateDatabases = true;
         }
     }
 }
