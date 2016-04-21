@@ -6,6 +6,7 @@ using System.Linq;
 namespace CodeFirst
 {
     public class FillDefaultContextInitializer : CreateDatabaseIfNotExists<SampleContext>
+    //public class FillDefaultContextInitializer : DropCreateDatabaseIfModelChanges<SampleContext>
     {
         #region Default data
 

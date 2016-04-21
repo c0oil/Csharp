@@ -51,11 +51,7 @@ namespace Test.DbConnection.Smo
         {
             var databases = new List<string>();
 
-            var temp = connectionString.InitialCatalog;
-            connectionString.InitialCatalog = string.Empty;
-            var str = connectionString.ConnectionString;
-            connectionString.InitialCatalog = temp;
-            using (var conn = new SqlConnection(str))
+            using (var conn = new SqlConnection(connectionString.ConnectionString))
             {
                 try
                 {

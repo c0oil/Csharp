@@ -16,7 +16,7 @@ namespace Test.DbConnection.Smo
 {
     public class SqlConnectionControlViewModel: ViewModelBase
     {
-        private static readonly SqlConnectionStringBuilder DefaultValue = new SqlConnectionStringBuilder { IntegratedSecurity = true };
+        private static readonly SqlConnectionStringBuilder DefaultValue = new SqlConnectionStringBuilder { IntegratedSecurity = true, MultipleActiveResultSets = true };
 
         private readonly AsyncSmoTasks smoTasks;
         private bool needUpdateDatabases = true;
@@ -233,8 +233,9 @@ namespace Test.DbConnection.Smo
                     conn.Open();
                     return true;
                 }
-                catch (SqlException)
+                catch (SqlException e)
                 {
+                    MessageBox.Show(e.ToString(), "Test connection", MessageBoxButton.OK, MessageBoxImage.Information);
                     return false;
                 }
             }
@@ -256,20 +257,18 @@ namespace Test.DbConnection.Smo
 
         public void DeleteDb()
         {
-            using (SqlConnection connection = new SqlConnection(ConnectionBuilder.ConnectionString))
+            try
             {
-                try
+                using (var context = new SampleContext(ConnectionBuilder.ConnectionString))
                 {
-                    using (var context = new SampleContext(connection))
-                    {
-                        context.Database.Delete();
-                    }
-                }
-                catch (Exception e)
-                {
-                    MessageBox.Show(e.ToString(), "Exception stacktrace", MessageBoxButton.OK, MessageBoxImage.Information);
+                    context.Database.Delete();
                 }
             }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.ToString(), "Exception stacktrace", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+
             needUpdateDatabases = true;
         }
 
@@ -277,6 +276,9 @@ namespace Test.DbConnection.Smo
         {
             var copy = new SqlConnectionStringBuilder(ConnectionBuilder.ConnectionString);
             LoadDatabases();
+            
+            //if (!TestConnection(new SqlConnectionStringBuilder { DataSource = copy.DataSource }.ConnectionString))
+            //    return;
 
             bool needRewrite = false;
             if (!Databases.Contains(Database))
@@ -295,27 +297,24 @@ namespace Test.DbConnection.Smo
                 needRewrite = true;
             }
 
-
-            using (SqlConnection connection = new SqlConnection(copy.ConnectionString))
+            try
             {
-                try
+                using (var context = new SampleContext(copy.ConnectionString))
                 {
-                    using (var context = new SampleContext(connection))
+                    if (needRewrite)
                     {
-                        if (needRewrite)
-                        {
-                            context.Database.Delete();
-                            context.SaveChanges();
-                        }
-                        context.Database.Initialize(false);
+                        context.Database.Delete();
+                        context.SaveChanges();
                     }
-                }
-                catch (Exception e)
-                {
-                    MessageBox.Show(e.ToString(), "Exception stacktrace", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
+                    context.Database.Initialize(false);
                 }
             }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.ToString(), "Exception stacktrace", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
             ConnectionBuilder = copy;
             needUpdateDatabases = true;
         }

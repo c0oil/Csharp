@@ -4,11 +4,13 @@
         xmlns:table="clr-namespace:Test.Table"
         Title="Table" Height="500" Width="800">
     <Grid>
+        
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <DataGrid x:Name="grid" ItemsSource="{Binding DataGrid}" Margin="4, 0"/>
+        <DataGrid x:Name="grid" AutoGenerateColumns="False" ItemsSource="{Binding DataGrid}" Margin="4, 0">
+        </DataGrid>
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Ok" Command="{Binding OkCommand}"/>
             <Button Content="Cancel" Command="{Binding CancelCommand}"/>

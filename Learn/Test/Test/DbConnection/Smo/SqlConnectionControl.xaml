@@ -56,7 +56,6 @@
                         <Image Source="../Delete_Icon.png" SnapsToDevicePixels="True"/>
                     </Button>
                 </StackPanel>
-
             </Grid>
 
             <GroupBox Header="Authentication:" Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2">
@@ -76,11 +75,9 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <TextBlock Text="Username: " Grid.Column="0" Grid.Row="0" Margin="3" VerticalAlignment="Center" />
-                        <TextBox Grid.Column="1" Grid.Row="0" Margin="3"
-                                 Text="{Binding Path=UserName}" />
+                        <TextBox Grid.Column="1" Grid.Row="0" Margin="3" Text="{Binding Path=UserName}" />
                         <TextBlock Text="Password: " Grid.Column="0" Grid.Row="1" Margin="3" VerticalAlignment="Center" />
-                        <TextBox Grid.Column="1" Grid.Row="1" Margin="3" 
-                                 Text="{Binding Path=Password}" />
+                        <TextBox Grid.Column="1" Grid.Row="1" Margin="3" Text="{Binding Path=Password}" />
                     </Grid>
                 </StackPanel>
             </GroupBox>

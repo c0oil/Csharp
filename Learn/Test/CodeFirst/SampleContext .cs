@@ -10,8 +10,8 @@ namespace CodeFirst
             Database.SetInitializer(new FillDefaultContextInitializer());
         }
 
-        public SampleContext(DbConnection dbConnection)
-            : base(dbConnection.ConnectionString)
+        public SampleContext(string dbConnection)
+            : base(dbConnection)
         {
         }
 

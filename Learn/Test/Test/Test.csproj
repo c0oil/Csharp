@@ -132,6 +132,8 @@
     </Compile>
     <Compile Include="DbConnection\Smo\SqlConnectionControlViewModel.cs" />
     <Compile Include="MainWindowViewModel.cs" />
+    <Compile Include="Table\ClientObj.cs" />
+    <Compile Include="Table\ObservableRow.cs" />
     <Compile Include="Table\TableView.xaml.cs">
       <DependentUpon>TableView.xaml</DependentUpon>
     </Compile>
@@ -231,7 +233,6 @@
     <Resource Include="DbConnection\new db.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="DbConnection\delete.svg" />
     <Resource Include="DbConnection\Delete_Icon.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -11,7 +11,7 @@
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
             <Button Content="Connect to Db" Command="{Binding ConnectCommand}" Style="{StaticResource ConnectButton}"/>
             <smo:LoadingCircle HorizontalAlignment="Center" VerticalAlignment="Center"
-                                    Visibility="{Binding Path=IsConnecting, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                               Visibility="{Binding Path=IsConnecting, Converter={StaticResource BooleanToVisibilityConverter}}" />
             <Button Content="Show Tables" Command="{Binding ShowTablesCommand}" Style="{StaticResource ColoredButton}"/>
         </StackPanel>
     </Grid>

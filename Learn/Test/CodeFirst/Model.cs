@@ -126,9 +126,9 @@ namespace CodeFirst
 
     public enum Sex
     {
-        [Description("Мужской")]
+        [Description("Male")]
         Male = 1,
-        [Description("Женский")]
+        [Description("Female")]
         Female = 2,
     }
 }

@@ -58,6 +58,7 @@ namespace Test
             {
                 DataSource = @"C0_OIL-ПК\SQLEXPRESS",
                 InitialCatalog = "Default",
+                MultipleActiveResultSets = true,
                 IntegratedSecurity = true,
             };
             CheckConnection();

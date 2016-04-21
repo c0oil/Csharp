@@ -1,20 +1,59 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Data.Entity;
-using System.Data.SqlClient;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using CodeFirst;
-using Test.DbConnection.Smo;
+using Test.BaseUI;
 using Test.ViewModel;
 
 namespace Test.Table
 {
     public class TableViewModel : ViewModelBase
     {
+        private readonly ColumnInfo[] columns =
+        {
+            GetColumnInfo(x => x.Surname),
+            GetColumnInfo(x => x.Name),
+            GetColumnInfo(x => x.MiddleName),
+            GetColumnInfo(x => x.BirthDate, ColumnType.DateTime),
+            GetColumnInfo(x => x.BirthPlace),
+            GetColumnInfo(x => x.Sex, ColumnType.ComboBox),
+
+            GetColumnInfo(x => x.HomePhone),
+            GetColumnInfo(x => x.MobilePhone),
+            GetColumnInfo(x => x.Email, ColumnType.Hyperlink),
+
+            GetColumnInfo(x => x.PassportSeries),
+            GetColumnInfo(x => x.PassportNumber),
+            GetColumnInfo(x => x.IdentNumber),
+            GetColumnInfo(x => x.IssuedBy),
+            GetColumnInfo(x => x.IssueDate, ColumnType.DateTime),
+
+            GetColumnInfo(x => x.RegistrationCity, ColumnType.ComboBox),
+            GetColumnInfo(x => x.RegistrationAdress),
+            GetColumnInfo(x => x.ResidenseCity, ColumnType.ComboBox),
+            GetColumnInfo(x => x.ResidenseAdress),
+
+            GetColumnInfo(x => x.Disability, ColumnType.ComboBox),
+            GetColumnInfo(x => x.Nationality, ColumnType.ComboBox),
+            GetColumnInfo(x => x.FamilyStatus, ColumnType.ComboBox),
+
+            GetColumnInfo(x => x.IsPensioner, ColumnType.CheckBox),
+            GetColumnInfo(x => x.IsReservist, ColumnType.CheckBox),
+
+            GetColumnInfo(x => x.MonthlyIncome, ColumnType.Double),
+            GetColumnInfo(x => x.Currency, ColumnType.ComboBox),
+        };
+
+        private static ColumnInfo GetColumnInfo<T>(Expression<Func<ObservableRow, T>> p, ColumnType columnType = ColumnType.Text)
+        {
+            return new ColumnInfo(TypeHelper.GetPropertyName(new ObservableRow(), p), columnType);
+        }
+
         private ICommand okCommand;
         public ICommand OkCommand
         {
@@ -27,10 +66,17 @@ namespace Test.Table
             get { return GetDelegateCommand<object>(ref cancelCommand, x => OnCancel()); }
         }
 
-        public DataGrid Grid { get; set; }
+        private ICommand saveChangesCommand;
+        public ICommand SaveChangesCommand
+        {
+            get { return GetDelegateCommand<object>(ref saveChangesCommand, x => OnSaveChanges()); }
+        }
 
-        private List<Row> dataGrid;
-        public List<Row> DataGrid
+        public DataGrid Grid { get; set; }
+        public string ConnectionString { get; set; }
+
+        private List<ObservableRow> dataGrid;
+        public List<ObservableRow> DataGrid
         {
             get { return dataGrid; }
             set
@@ -40,24 +86,51 @@ namespace Test.Table
             }
         }
 
-        public string ConnectionString { get; set; }
-
+        public void OnSaveChanges()
+        {
+            var context = new SampleContext(ConnectionString);
+            context.Database.Log = (s => System.Diagnostics.Debug.WriteLine(s));
+        }
 
         public void Refresh()
         {
-            using (SqlConnection connection = new SqlConnection(ConnectionString))
+            try
             {
-                try
-                {
-                    var context = new SampleContext(connection);
-                    List<Client> clients = context.Clients.ToList();
-                    DataGrid = clients.Select(ConvertToRow).ToList();
-                }
-                catch (Exception e)
-                {
-                    MessageBox.Show(e.ToString(), "Exception stacktrace", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return;
-                }
+                var context = new SampleContext(ConnectionString);
+                context.Database.Log = (s => System.Diagnostics.Debug.WriteLine(s));
+                IEnumerable<Sex> sexes = (IEnumerable<Sex>) Enum.GetValues(typeof(Sex));
+                IEnumerable<string> cities = context.Cities.Select(x => x.CityId);
+                IEnumerable<string> disabilities = context.Disabilities.Select(x => x.DisabilityId);
+                IEnumerable<string> nationalities = context.Nationalities.Select(x => x.NationalityId);
+                IEnumerable<string> familyStatuses = context.FamilyStatuses.Select(x => x.FamilyStatusId);
+                IEnumerable<string> currencies = context.Currencies.Select(x => x.CurrencyId);
+                IEnumerable<ClientObj> clientsObj = context.Clients.
+                    Include(x => x.Passport).
+                    Include(x => x.Currency).
+                    Include(x => x.FamilyStatus).
+                    Include(x => x.Disability).
+                    Include(x => x.Nationality).
+                    Include(x => x.Residense).
+                    Include(x => x.Residense.City).
+                    Include(x => x.Registration).
+                    Include(x => x.Registration.City).
+                    Select(ClientObj.ConvertToRow).AsEnumerable();
+                DataGrid = clientsObj.Select(x => ConvertToRow(x, sexes, cities, disabilities, nationalities, familyStatuses, currencies)).ToList();
+                
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.ToString(), "Exception stacktrace", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+        }
+
+        public void CreateLayaout()
+        {
+            Grid.Columns.Clear();
+            foreach (ColumnInfo columnInfo in columns)
+            {
+                Grid.Columns.Add(columnInfo.GetColumn());
             }
         }
 
@@ -71,90 +144,11 @@ namespace Test.Table
             CloseView(false);
         }
 
-        private Row ConvertToRow(Client client)
+        private ObservableRow ConvertToRow(ClientObj client,
+            IEnumerable<Sex> sexes, IEnumerable<string> cities, IEnumerable<string> disabilities,
+            IEnumerable<string> nationalities, IEnumerable<string> familyStatuses, IEnumerable<string> currencies)
         {
-            return Row.ConvertToRow(client);
+            return ObservableRow.ConvertToRow(client, sexes, cities, disabilities, nationalities, familyStatuses, currencies);
         }
-        
-    }
-
-    public class Row
-    {
-        public string Surname { get; set; }
-        public string Name { get; set; }
-        public string MiddleName { get; set; }
-        public DateTime BirthDate { get; set; }
-        public string BirthPlace { get; set; }
-        public string Sex { get; set; }
-
-        public string HomePhone { get; set; } //mask
-        public string MobilePhone { get; set; } //mask
-        public string Email { get; set; }
-
-        public string PassportSeries { get; set; }
-        public string PassportNumber { get; set; } //mask
-        public string IdentNumber { get; set; } //mask
-        public string IssuedBy { get; set; }
-        public DateTime IssueDate { get; set; }
-
-        public string RegistrationCity { get; set; }
-        public string RegistrationAdress { get; set; }
-        public string ResidenseCity { get; set; }
-        public string ResidenseAdress { get; set; }
-
-        public string Disability { get; set; }
-        public string Nationality { get; set; }
-        public string FamilyStatus { get; set; }
-
-        public bool IsPensioner { get; set; }
-        public bool IsReservist { get; set; }
-
-        public Money MonthlyIncome { get; set; }
-
-        public static Row ConvertToRow(Client client)
-        {
-            return new Row
-            {
-                Surname = client.Surname,
-                Name = client.Name,
-                MiddleName = client.MiddleName,
-                BirthDate = client.BirthDate,
-                BirthPlace = client.BirthPlace,
-                Sex = client.Sex.GetDescription(),
-
-                HomePhone = client.HomePhone,
-                MobilePhone = client.MobilePhone,
-                Email = client.Email,
-
-                PassportSeries = client.Passport.PassportSeries,
-                PassportNumber = client.Passport.PassportNumber,
-                IdentNumber = client.Passport.IdentNumber,
-                IssuedBy = client.Passport.IssuedBy,
-                IssueDate = client.Passport.IssueDate,
-
-                RegistrationCity = client.Registration.City.CityId,
-                RegistrationAdress = client.Registration.Adress,
-                ResidenseCity = client.Residense.City.CityId,
-                ResidenseAdress = client.Residense.Adress,
-
-                Disability = client.Disability.DisabilityId,
-                Nationality = client.Nationality.NationalityId,
-                FamilyStatus = client.FamilyStatus.FamilyStatusId,
-
-                IsPensioner = client.IsPensioner,
-                IsReservist = client.IsReservist,
-                MonthlyIncome = new Money
-                {
-                    Value = client.MonthlyIncome,
-                    Currency = client.Currency.CurrencyId
-                },
-            };
-        }
-    }
-
-    public class Money
-    {
-        public double? Value { get; set; }
-        public string Currency { get; set; }
     }
 }

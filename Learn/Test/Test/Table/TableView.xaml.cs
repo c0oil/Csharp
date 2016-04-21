@@ -11,6 +11,8 @@ namespace Test.Table
             InitializeComponent();
             ViewModel.Grid = grid;
             Loaded += OnLoaded;
+
+            ViewModel.CreateLayaout();
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
