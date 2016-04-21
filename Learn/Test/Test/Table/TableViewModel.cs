@@ -99,11 +99,11 @@ namespace Test.Table
                 var context = new SampleContext(ConnectionString);
                 context.Database.Log = (s => System.Diagnostics.Debug.WriteLine(s));
                 IEnumerable<Sex> sexes = (IEnumerable<Sex>) Enum.GetValues(typeof(Sex));
-                IEnumerable<string> cities = context.Cities.Select(x => x.CityId);
-                IEnumerable<string> disabilities = context.Disabilities.Select(x => x.DisabilityId);
-                IEnumerable<string> nationalities = context.Nationalities.Select(x => x.NationalityId);
-                IEnumerable<string> familyStatuses = context.FamilyStatuses.Select(x => x.FamilyStatusId);
-                IEnumerable<string> currencies = context.Currencies.Select(x => x.CurrencyId);
+                IEnumerable<string> cities = context.Cities.Select(x => x.CityId).ToList();
+                IEnumerable<string> disabilities = context.Disabilities.Select(x => x.DisabilityId).ToList();
+                IEnumerable<string> nationalities = context.Nationalities.Select(x => x.NationalityId).ToList();
+                IEnumerable<string> familyStatuses = context.FamilyStatuses.Select(x => x.FamilyStatusId).ToList();
+                IEnumerable<string> currencies = context.Currencies.Select(x => x.CurrencyId).ToList();
                 IEnumerable<ClientObj> clientsObj = context.Clients.
                     Include(x => x.Passport).
                     Include(x => x.Currency).
