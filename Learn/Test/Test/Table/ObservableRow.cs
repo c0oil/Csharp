@@ -3,16 +3,15 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Windows.Controls;
-using System.Windows.Data;
 using CodeFirst;
-using Test.BaseUI;
 using Test.ViewModel;
 
 namespace Test.Table
 {
     public class ObservableRow
     {
+        public int ClientId { get; set; }
+
         public ObservableValue<string> Surname { get; set; }
         public ObservableValue<string> Name { get; set; }
         public ObservableValue<string> MiddleName { get; set; }
@@ -51,6 +50,8 @@ namespace Test.Table
         {
             return new ObservableRow
             {
+                ClientId = client.ClientId,
+
                 Surname = new ObservableValue<string>(client.Surname),
                 Name = new ObservableValue<string>(client.Name),
                 MiddleName = new ObservableValue<string>(client.MiddleName),
@@ -81,10 +82,90 @@ namespace Test.Table
                 Currency = new ObservableItemSourseValue<string>(client.Currency, currencies),
             };
         }
+
+        public static ClientObj ConvertToObj(ObservableRow client)
+        {
+            return new ClientObj
+            {
+                ClientId = client.ClientId,
+
+                Surname = (client.Surname.Value),
+                Name = (client.Name.Value),
+                MiddleName = (client.MiddleName.Value),
+                BirthDate = (client.BirthDate.Value),
+                BirthPlace = (client.BirthPlace.Value),
+                Sex = (client.Sex.Value),
+
+                HomePhone = (client.HomePhone.Value),
+                MobilePhone = (client.MobilePhone.Value),
+                Email = (client.Email.Value),
+
+                PassportSeries = (client.PassportSeries.Value),
+                PassportNumber = (client.PassportNumber.Value),
+                IdentNumber = (client.IdentNumber.Value),
+                IssuedBy = (client.IssuedBy.Value),
+                IssueDate = (client.IssueDate.Value),
+
+                RegistrationCity = (client.RegistrationCity.Value),
+                RegistrationAdress = (client.RegistrationAdress.Value),
+                ResidenseCity = (client.ResidenseCity.Value),
+                ResidenseAdress = (client.ResidenseAdress.Value),
+                Disability = (client.Disability.Value),
+                Nationality = (client.Nationality.Value),
+                FamilyStatus = (client.FamilyStatus.Value),
+                IsPensioner = (client.IsPensioner.Value),
+                IsReservist = (client.IsReservist.Value),
+                MonthlyIncome = (client.MonthlyIncome.Value),
+                Currency = (client.Currency.Value),
+            };
+        }
+
+        public static ObservableRow GetEmptyRow(IEnumerable<Sex> sexes, IEnumerable<string> cities, IEnumerable<string> disabilities,
+                                                IEnumerable<string> nationalities, IEnumerable<string> familyStatuses, IEnumerable<string> currencies)
+        {
+            return new ObservableRow
+            {
+                ClientId = -1,
+
+                Surname = new ObservableValue<string>(),
+                Name = new ObservableValue<string>(),
+                MiddleName = new ObservableValue<string>(),
+                BirthDate = new ObservableValue<DateTime>(),
+                BirthPlace = new ObservableValue<string>(),
+                Sex = new ObservableItemSourseValue<Sex>(sexes),
+
+                HomePhone = new ObservableValue<string>(),
+                MobilePhone = new ObservableValue<string>(),
+                Email = new ObservableValue<string>(),
+
+                PassportSeries = new ObservableValue<string>(),
+                PassportNumber = new ObservableValue<string>(),
+                IdentNumber = new ObservableValue<string>(),
+                IssuedBy = new ObservableValue<string>(),
+                IssueDate = new ObservableValue<DateTime>(),
+
+                RegistrationCity = new ObservableItemSourseValue<string>(cities),
+                RegistrationAdress = new ObservableValue<string>(),
+                ResidenseCity = new ObservableItemSourseValue<string>(cities),
+                ResidenseAdress = new ObservableValue<string>(),
+                Disability = new ObservableItemSourseValue<string>(disabilities),
+                Nationality = new ObservableItemSourseValue<string>(nationalities),
+                FamilyStatus = new ObservableItemSourseValue<string>(familyStatuses),
+                IsPensioner = new ObservableValue<bool>(),
+                IsReservist = new ObservableValue<bool>(),
+                MonthlyIncome = new ObservableValue<double>(0.0),
+                Currency = new ObservableItemSourseValue<string>(currencies),
+            };
+        }
     }
 
     public class ObservableItemSourseValue<T> : ObservableValue<T>
     {
+        public ObservableItemSourseValue(IEnumerable<T> itemSource)
+        {
+            ItemSource = itemSource.Select(x => new KeyValuePair<T, string>(x, x.ToString()));
+        }
+
         public ObservableItemSourseValue(T initValue, IEnumerable<T> itemSource)
             : base(initValue)
         {
@@ -111,6 +192,11 @@ namespace Test.Table
 
     public class ObservableValue<T> : ObservableObject
     {
+        public ObservableValue()
+        {
+            Value = default(T);
+        }
+
         public ObservableValue(T initValue)
         {
             Value = initValue;

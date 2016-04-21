@@ -26,7 +26,7 @@ namespace Test.DbConnection.Smo
         }
 
         public SqlConnectionControlViewModel(AsyncSmoTasks smoTasks)
-        {
+        { 
             this.smoTasks = smoTasks;
             LoadServersAsync();
         }

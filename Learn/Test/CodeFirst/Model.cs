@@ -31,17 +31,29 @@ namespace CodeFirst
 
         public double? MonthlyIncome { get; set; }
 
-        [Required]
+        [ForeignKey("Passport")]
+        public int PassportId { get; set; }
+        [ForeignKey("Registration")]
+        public int? RegistrationId { get; set; }
+        [ForeignKey("Residense")]
+        public int? ResidenseId { get; set; }
+        [Required, ForeignKey("Disability")]
+        public int DisabilityId { get; set; }
+        [Required, ForeignKey("Nationality")]
+        public int NationalityId { get; set; }
+        [Required, ForeignKey("FamilyStatus")]
+        public int FamilyStatusId { get; set; }
+        [Required, ForeignKey("Currency")]
+        public int CurrencyId { get; set; }
+        
+        
         public virtual Passport Passport { get; set; }
         [InverseProperty("Residenses")]
         public virtual Place Registration { get; set; }
         [InverseProperty("Registrations")]
         public virtual Place Residense { get; set; }
-        [Required]
         public virtual Disability Disability { get; set; }
-        [Required]
         public virtual Nationality Nationality { get; set; }
-        [Required]
         public virtual FamilyStatus FamilyStatus { get; set; }
         public virtual Currency Currency { get; set; }
     }
@@ -71,10 +83,13 @@ namespace CodeFirst
             Residenses = new List<Client>();
             Registrations = new List<Client>();
         }
-
+        
         public int PlaceId { get; set; }
         [Required]
         public string Adress { get; set; }
+
+        [ForeignKey("City")]
+        public int CityId { get; set; }
 
         [Required]
         public virtual City City { get; set; }
@@ -89,29 +104,30 @@ namespace CodeFirst
             Places = new List<Place>();
         }
 
-        public string CityId { get; set; }
+        public int CityId { get; set; }
+        public string Name { get; set; }
 
         public virtual List<Place> Places { get; set; }
     }
 
     public class Currency : BaseEntity
     {
-        public string CurrencyId { get; set; }
+        public int CurrencyId { get; set; }
     }
 
     public class Disability : BaseEntity
     {
-        public string DisabilityId { get; set; }
+        public int DisabilityId { get; set; }
     }
 
     public class Nationality : BaseEntity
     {
-        public string NationalityId { get; set; }
+        public int NationalityId { get; set; }
     }
 
     public class FamilyStatus : BaseEntity
     {
-        public string FamilyStatusId { get; set; }
+        public int FamilyStatusId { get; set; }
     }
 
     public class BaseEntity
@@ -121,14 +137,71 @@ namespace CodeFirst
             Clients = new List<Client>();
         }
 
+        public string Name { get; set; }
         public virtual List<Client> Clients { get; set; }
     }
 
     public enum Sex
     {
-        [Description("Male")]
         Male = 1,
-        [Description("Female")]
         Female = 2,
+    }
+
+    public static class ClientExtension
+    {
+        public static void CopyTo(this Client orig, Client copy)
+        {
+            copy.Surname = orig.Surname;
+            copy.Name = orig.Name;
+            copy.MiddleName = orig.MiddleName;
+            copy.BirthDate = orig.BirthDate;
+            copy.BirthPlace = orig.BirthPlace;
+            copy.Sex = orig.Sex;
+
+            copy.HomePhone = orig.HomePhone;
+            copy.MobilePhone = orig.MobilePhone;
+            copy.Email = orig.Email;
+
+            copy.Passport = orig.Passport;
+            copy.IsPensioner = orig.IsPensioner;
+            copy.IsReservist = orig.IsReservist;
+            copy.MonthlyIncome = orig.MonthlyIncome;
+
+
+            copy.Registration = orig.Registration;
+            copy.Residense = orig.Residense;
+
+            copy.DisabilityId = orig.DisabilityId;
+            copy.CurrencyId = orig.CurrencyId;
+            copy.FamilyStatusId = orig.FamilyStatusId;
+            copy.NationalityId = orig.NationalityId;
+            copy.FamilyStatusId = orig.FamilyStatusId;
+        }
+
+        public static bool NotValid(this Place entity)
+        {
+            return entity == null ||
+                   string.IsNullOrWhiteSpace(entity.Adress);
+        }
+
+        public static bool NotValid(this Passport entity)
+        {
+            return entity ==null ||
+                   string.IsNullOrWhiteSpace(entity.IdentNumber) ||
+                   string.IsNullOrWhiteSpace(entity.IssuedBy) ||
+                   string.IsNullOrWhiteSpace(entity.PassportNumber) ||
+                   string.IsNullOrWhiteSpace(entity.PassportSeries);
+        }
+
+        public static bool NotValid(this Client entity)
+        {
+            return string.IsNullOrWhiteSpace(entity.Surname) ||
+                   string.IsNullOrWhiteSpace(entity.Name) ||
+                   string.IsNullOrWhiteSpace(entity.MiddleName) ||
+                   string.IsNullOrWhiteSpace(entity.BirthPlace) ||
+                   entity.Registration.NotValid() ||
+                   entity.Residense.NotValid() ||
+                   entity.Passport.NotValid();
+        }
     }
 }

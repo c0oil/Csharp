@@ -1,10 +1,14 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using CodeFirst;
 
 namespace Test.Table
 {
     public class ClientObj
     {
+        public int ClientId { get; set; }
+
         public string Surname { get; set; }
         public string Name { get; set; }
         public string MiddleName { get; set; }
@@ -36,11 +40,62 @@ namespace Test.Table
 
         public double? MonthlyIncome { get; set; }
         public string Currency { get; set; }
+        
+        public static Client ConvertToDataSet(ClientObj clientObj,
+            IEnumerable<Sex> sexes, IEnumerable<City> cities, IEnumerable<Disability> disabilities,
+            IEnumerable<Nationality> nationalities, IEnumerable<FamilyStatus> familyStatuses, IEnumerable<Currency> currencies)
+        {
+            return new Client
+            {
+                ClientId = clientObj.ClientId,
 
-        public static ClientObj ConvertToRow(Client client)
+                Surname = (clientObj.Surname),
+                Name = (clientObj.Name),
+                MiddleName = (clientObj.MiddleName),
+                BirthDate = (clientObj.BirthDate),
+                BirthPlace = (clientObj.BirthPlace),
+                Sex = (clientObj.Sex),
+
+                HomePhone = (clientObj.HomePhone),
+                MobilePhone = (clientObj.MobilePhone),
+                Email = (clientObj.Email),
+
+                Passport = new Passport
+                {
+                    PassportSeries = clientObj.PassportSeries,
+                    PassportNumber = clientObj.PassportNumber,
+                    IdentNumber = clientObj.IdentNumber,
+                    IssuedBy = clientObj.IssuedBy,
+                    IssueDate = clientObj.IssueDate,
+                },
+
+                Registration = new Place
+                {
+                    CityId = cities.First(x => x.Name == clientObj.RegistrationCity).CityId,
+                    Adress = clientObj.RegistrationAdress,
+                },
+                Residense = new Place
+                {
+                    CityId = cities.First(x => x.Name == clientObj.ResidenseCity).CityId,
+                    Adress = clientObj.ResidenseAdress,
+                },
+
+                DisabilityId = disabilities.First(x => x.Name == clientObj.Disability).DisabilityId,
+                NationalityId = nationalities.First(x => x.Name == clientObj.Nationality).NationalityId,
+                FamilyStatusId = familyStatuses.First(x => x.Name == clientObj.FamilyStatus).FamilyStatusId,
+                IsPensioner = (clientObj.IsPensioner),
+                IsReservist = (clientObj.IsReservist),
+                MonthlyIncome = (clientObj.MonthlyIncome),
+                CurrencyId = currencies.First(x => x.Name == clientObj.Currency).CurrencyId,
+            };
+        }
+
+        public static ClientObj ConvertToObj(Client client)
         {
             return new ClientObj
             {
+                ClientId = client.ClientId,
+
                 Surname = (client.Surname),
                 Name = (client.Name),
                 MiddleName = (client.MiddleName),
@@ -58,17 +113,17 @@ namespace Test.Table
                 IssuedBy = (client.Passport.IssuedBy),
                 IssueDate = (client.Passport.IssueDate),
 
-                RegistrationCity = (client.Registration.City.CityId),
+                RegistrationCity = (client.Registration.City.Name),
                 RegistrationAdress = (client.Registration.Adress),
-                ResidenseCity = (client.Residense.City.CityId),
+                ResidenseCity = (client.Residense.City.Name),
                 ResidenseAdress = (client.Residense.Adress),
-                Disability = (client.Disability.DisabilityId),
-                Nationality = (client.Nationality.NationalityId),
-                FamilyStatus = (client.FamilyStatus.FamilyStatusId),
+                Disability = (client.Disability.Name),
+                Nationality = (client.Nationality.Name),
+                FamilyStatus = (client.FamilyStatus.Name),
                 IsPensioner = (client.IsPensioner),
                 IsReservist = (client.IsReservist),
                 MonthlyIncome = (client.MonthlyIncome),
-                Currency = (client.Currency.CurrencyId),
+                Currency = (client.Currency.Name),
             };
         }
     }

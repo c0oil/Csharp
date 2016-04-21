@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data.Entity;
 using System.Linq;
 using System.Linq.Expressions;
@@ -14,6 +15,25 @@ namespace Test.Table
 {
     public class TableViewModel : ViewModelBase
     {
+        private SampleRepository sampleRepository;
+
+        private IEnumerable<ClientObj> clientsFromDbAsObj;
+
+        private List<City> cities;
+        private List<Disability> disabilities;
+        private List<Nationality> nationalities;
+        private List<FamilyStatus> familyStatuses;
+        private List<Currency> currencies;
+        private IEnumerable<Sex> sexes;
+
+        private List<string> cityNames;
+        private List<string> disabilityNames;
+        private List<string> nationalityNames;
+        private List<string> familyStatusNames;
+        private List<string> currencyNames;
+
+        #region Default Columns
+
         private readonly ColumnInfo[] columns =
         {
             GetColumnInfo(x => x.Surname),
@@ -54,29 +74,73 @@ namespace Test.Table
             return new ColumnInfo(TypeHelper.GetPropertyName(new ObservableRow(), p), columnType);
         }
 
+        #endregion
+
+        #region Commands
+
+        private ICommand addRowCommand;
+
+        public ICommand AddRowCommand
+        {
+            get { return GetDelegateCommand<object>(ref addRowCommand, x => OnAddRow()); }
+        }
+
+        private ICommand updateRowCommand;
+
+        public ICommand UpdateRowCommand
+        {
+            get { return GetDelegateCommand<object>(ref updateRowCommand, x => OnUpdateRow()); }
+        }
+
+        private ICommand deleteRowCommand;
+
+        public ICommand DeleteRowCommand
+        {
+            get { return GetDelegateCommand<object>(ref deleteRowCommand, x => OnDeleteRow()); }
+        }
+
         private ICommand okCommand;
+
         public ICommand OkCommand
         {
             get { return GetDelegateCommand<object>(ref okCommand, x => OnOk()); }
         }
 
         private ICommand cancelCommand;
+
         public ICommand CancelCommand
         {
             get { return GetDelegateCommand<object>(ref cancelCommand, x => OnCancel()); }
         }
 
         private ICommand saveChangesCommand;
+
         public ICommand SaveChangesCommand
         {
             get { return GetDelegateCommand<object>(ref saveChangesCommand, x => OnSaveChanges()); }
         }
 
-        public DataGrid Grid { get; set; }
-        public string ConnectionString { get; set; }
+        #endregion
 
-        private List<ObservableRow> dataGrid;
-        public List<ObservableRow> DataGrid
+        public DataGrid Grid { get; set; }
+
+        private string connectionString;
+
+        public string ConnectionString
+        {
+            get { return connectionString; }
+            set
+            {
+                connectionString = value;
+                if (ConnectionString != null)
+                {
+                    sampleRepository = new SampleRepository(ConnectionString);
+                }
+            }
+        }
+
+        private ObservableCollection<ObservableRow> dataGrid;
+        public ObservableCollection<ObservableRow> DataGrid
         {
             get { return dataGrid; }
             set
@@ -86,43 +150,61 @@ namespace Test.Table
             }
         }
 
-        public void OnSaveChanges()
+        public TableViewModel()
         {
-            var context = new SampleContext(ConnectionString);
-            context.Database.Log = (s => System.Diagnostics.Debug.WriteLine(s));
+            if (ConnectionString != null)
+            {
+                sampleRepository = new SampleRepository(ConnectionString);
+            }
         }
 
-        public void Refresh()
+        public static void ExecuteAndCatchException(Action method)
         {
             try
             {
-                var context = new SampleContext(ConnectionString);
-                context.Database.Log = (s => System.Diagnostics.Debug.WriteLine(s));
-                IEnumerable<Sex> sexes = (IEnumerable<Sex>) Enum.GetValues(typeof(Sex));
-                IEnumerable<string> cities = context.Cities.Select(x => x.CityId).ToList();
-                IEnumerable<string> disabilities = context.Disabilities.Select(x => x.DisabilityId).ToList();
-                IEnumerable<string> nationalities = context.Nationalities.Select(x => x.NationalityId).ToList();
-                IEnumerable<string> familyStatuses = context.FamilyStatuses.Select(x => x.FamilyStatusId).ToList();
-                IEnumerable<string> currencies = context.Currencies.Select(x => x.CurrencyId).ToList();
-                IEnumerable<ClientObj> clientsObj = context.Clients.
-                    Include(x => x.Passport).
-                    Include(x => x.Currency).
-                    Include(x => x.FamilyStatus).
-                    Include(x => x.Disability).
-                    Include(x => x.Nationality).
-                    Include(x => x.Residense).
-                    Include(x => x.Residense.City).
-                    Include(x => x.Registration).
-                    Include(x => x.Registration.City).
-                    Select(ClientObj.ConvertToRow).AsEnumerable();
-                DataGrid = clientsObj.Select(x => ConvertToRow(x, sexes, cities, disabilities, nationalities, familyStatuses, currencies)).ToList();
-                
+                if (method != null)
+                {
+                    method();
+                }
             }
             catch (Exception e)
             {
                 MessageBox.Show(e.ToString(), "Exception stacktrace", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
             }
+        }
+
+        public void Refresh()
+        {
+            RefreshLists();
+            clientsFromDbAsObj = sampleRepository.Select<Client>().
+                Include(x => x.Passport).
+                Include(x => x.Currency).
+                Include(x => x.FamilyStatus).
+                Include(x => x.Disability).
+                Include(x => x.Nationality).
+                Include(x => x.Residense).
+                Include(x => x.Residense.City).
+                Include(x => x.Registration).
+                Include(x => x.Registration.City).
+                Select(ClientObj.ConvertToObj).AsEnumerable();
+            DataGrid = new ObservableCollection<ObservableRow>(clientsFromDbAsObj.Select(ConvertToRow));
+        }
+
+        private void RefreshLists()
+        {
+            sexes = (IEnumerable<Sex>)Enum.GetValues(typeof(Sex));
+
+            cities = sampleRepository.Select<City>().ToList();
+            disabilities = sampleRepository.Select<Disability>().ToList();
+            nationalities = sampleRepository.Select<Nationality>().ToList();
+            familyStatuses = sampleRepository.Select<FamilyStatus>().ToList();
+            currencies = sampleRepository.Select<Currency>().ToList();
+
+            cityNames = cities.Select(x => x.Name).ToList();
+            disabilityNames = disabilities.Select(x => x.Name).ToList();
+            nationalityNames = nationalities.Select(x => x.Name).ToList();
+            familyStatusNames = familyStatuses.Select(x => x.Name).ToList();
+            currencyNames = currencies.Select(x => x.Name).ToList();
         }
 
         public void CreateLayaout()
@@ -132,6 +214,45 @@ namespace Test.Table
             {
                 Grid.Columns.Add(columnInfo.GetColumn());
             }
+        }
+
+        public void OnSaveChanges()
+        {
+        }
+
+        private void OnAddRow()
+        {
+            var row = ObservableRow.GetEmptyRow(sexes, cityNames, disabilityNames, nationalityNames, familyStatusNames, currencyNames);
+            DataGrid.Add(row);
+        }
+
+        private void OnUpdateRow()
+        {
+            if (Grid.SelectedIndex < 0)
+            {
+                return;
+            }
+
+            if (Grid.SelectedIndex >= clientsFromDbAsObj.Count())
+            {
+                
+            }
+            else
+            {
+                ClientObj selectedRow = ObservableRow.ConvertToObj(DataGrid[Grid.SelectedIndex]);
+                Client newClient = ClientObj.ConvertToDataSet(selectedRow, sexes, cities, disabilities, nationalities, familyStatuses, currencies);
+                Client origClient = sampleRepository.Select<Client>().FirstOrDefault(x => x.ClientId == newClient.ClientId);
+                newClient.CopyTo(origClient);
+                if (origClient.NotValid())
+                {
+                    return;
+                }
+                sampleRepository.Update(origClient);
+            }
+        }
+
+        private void OnDeleteRow()
+        {
         }
 
         private void OnOk()
@@ -144,11 +265,9 @@ namespace Test.Table
             CloseView(false);
         }
 
-        private ObservableRow ConvertToRow(ClientObj client,
-            IEnumerable<Sex> sexes, IEnumerable<string> cities, IEnumerable<string> disabilities,
-            IEnumerable<string> nationalities, IEnumerable<string> familyStatuses, IEnumerable<string> currencies)
+        private ObservableRow ConvertToRow(ClientObj client)
         {
-            return ObservableRow.ConvertToRow(client, sexes, cities, disabilities, nationalities, familyStatuses, currencies);
+            return ObservableRow.ConvertToRow(client, sexes, cityNames, disabilityNames, nationalityNames, familyStatusNames, currencyNames);
         }
     }
 }

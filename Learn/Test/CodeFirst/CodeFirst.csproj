@@ -51,6 +51,7 @@
     <Compile Include="FillDefaultContextInitializer.cs" />
     <Compile Include="Model.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Repository.cs" />
     <Compile Include="SampleContext .cs" />
   </ItemGroup>
   <ItemGroup>

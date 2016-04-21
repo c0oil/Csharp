@@ -17,7 +17,7 @@ namespace Test.Table
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            ViewModel.Refresh();
+            TableViewModel.ExecuteAndCatchException(ViewModel.Refresh);
         }
     }
 

@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
+using System.Data.Entity.Validation;
 using System.Linq;
+using System.Text;
 
 namespace CodeFirst
 {
-    public class FillDefaultContextInitializer : CreateDatabaseIfNotExists<SampleContext>
-    //public class FillDefaultContextInitializer : DropCreateDatabaseIfModelChanges<SampleContext>
+    //public class FillDefaultContextInitializer : CreateDatabaseIfNotExists<SampleContext>
+    public class FillDefaultContextInitializer : DropCreateDatabaseIfModelChanges<SampleContext>
+    //public class FillDefaultContextInitializer : DropCreateDatabaseAlways<SampleContext>
     {
         #region Default data
 
@@ -134,11 +137,11 @@ namespace CodeFirst
 
         private void FillDefaultData(SampleContext context)
         {
-            var currencyies = currencyNames.Select(x => new Currency {CurrencyId = x}).ToArray();
-            var nationalities = nationalityNames.Select(x => new Nationality {NationalityId = x}).ToArray();
-            var disabilities = disabilityNames.Select(x => new Disability { DisabilityId = x }).ToArray();
-            var familyStatuses = familyStatusNames.Select(x => new FamilyStatus { FamilyStatusId = x }).ToArray();
-            var cities = cityNames.Select(x => new City { CityId = x }).ToArray();
+            var currencyies = currencyNames.Select(x => new Currency { Name = x }).ToArray();
+            var nationalities = nationalityNames.Select(x => new Nationality { Name = x }).ToArray();
+            var disabilities = disabilityNames.Select(x => new Disability { Name = x }).ToArray();
+            var familyStatuses = familyStatusNames.Select(x => new FamilyStatus { Name = x }).ToArray();
+            var cities = cityNames.Select(x => new City { Name = x }).ToArray();
             var places = cities.Select(x => new Place { City = x, Adress = "Дом пушкина"}).ToArray();
             
             context.Cities.AddRange(cities);
@@ -171,6 +174,30 @@ namespace CodeFirst
             context.Passports.AddRange(passports);
             context.Clients.AddRange(clients);
             context.SaveChanges();
+        }
+
+        private void SaveChanges(DbContext context)
+        {
+            try
+            {
+                context.SaveChanges();
+            }
+            catch (DbEntityValidationException ex)
+            {
+                StringBuilder sb = new StringBuilder();
+
+                foreach (var failure in ex.EntityValidationErrors)
+                {
+                    sb.AppendFormat("{0} failed validation\n", failure.Entry.Entity.GetType());
+                    foreach (var error in failure.ValidationErrors)
+                    {
+                        sb.AppendFormat("- {0} : {1}", error.PropertyName, error.ErrorMessage).AppendLine();
+                    }
+                }
+
+                throw new DbEntityValidationException("Entity Validation Failed - errors follow:\n" + sb, ex); 
+                // Add the original exception as the innerException
+            }
         }
 
         private T TakeItem<T>(int index, int mul, IEnumerable<T> array)
