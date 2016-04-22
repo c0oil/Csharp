@@ -1,20 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data.Entity;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CodeFirst
 {
     public class SampleRepository
     {
-        private string dbConnection;
-        private readonly SampleContext context;
+        protected readonly ClientContext context;
 
         public SampleRepository(string dbConnection)
         {
-            context = new SampleContext(dbConnection);
+            context = new ClientContext(dbConnection);
             context.Database.Log = (s => System.Diagnostics.Debug.WriteLine(s));
         }
 
@@ -22,6 +19,12 @@ namespace CodeFirst
             where TEntity : class
         {
             return context.Set<TEntity>();
+        }
+
+        public ObservableCollection<TEntity> SelectLocal<TEntity>()
+            where TEntity : class
+        {
+            return context.Set<TEntity>().Local;
         }
 
         public void Insert<TEntity>(TEntity entity) where TEntity : class
@@ -47,6 +50,13 @@ namespace CodeFirst
             where TEntity : class
         {
             context.Entry(entity).State = EntityState.Modified;
+            context.SaveChanges();
+        }
+
+        public void Delete<TEntity>(TEntity entity)
+            where TEntity : class
+        {
+            context.Set<TEntity>().Remove(entity);
             context.SaveChanges();
         }
     }

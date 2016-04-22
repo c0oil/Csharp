@@ -9,72 +9,14 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using CodeFirst;
 using Test.BaseUI;
+using Test.BaseUI.Columns;
 using Test.ViewModel;
 
 namespace Test.Table
 {
     public class TableViewModel : ViewModelBase
     {
-        private SampleRepository sampleRepository;
-
-        private IEnumerable<ClientObj> clientsFromDbAsObj;
-
-        private List<City> cities;
-        private List<Disability> disabilities;
-        private List<Nationality> nationalities;
-        private List<FamilyStatus> familyStatuses;
-        private List<Currency> currencies;
-        private IEnumerable<Sex> sexes;
-
-        private List<string> cityNames;
-        private List<string> disabilityNames;
-        private List<string> nationalityNames;
-        private List<string> familyStatusNames;
-        private List<string> currencyNames;
-
-        #region Default Columns
-
-        private readonly ColumnInfo[] columns =
-        {
-            GetColumnInfo(x => x.Surname),
-            GetColumnInfo(x => x.Name),
-            GetColumnInfo(x => x.MiddleName),
-            GetColumnInfo(x => x.BirthDate, ColumnType.DateTime),
-            GetColumnInfo(x => x.BirthPlace),
-            GetColumnInfo(x => x.Sex, ColumnType.ComboBox),
-
-            GetColumnInfo(x => x.HomePhone),
-            GetColumnInfo(x => x.MobilePhone),
-            GetColumnInfo(x => x.Email, ColumnType.Hyperlink),
-
-            GetColumnInfo(x => x.PassportSeries),
-            GetColumnInfo(x => x.PassportNumber),
-            GetColumnInfo(x => x.IdentNumber),
-            GetColumnInfo(x => x.IssuedBy),
-            GetColumnInfo(x => x.IssueDate, ColumnType.DateTime),
-
-            GetColumnInfo(x => x.RegistrationCity, ColumnType.ComboBox),
-            GetColumnInfo(x => x.RegistrationAdress),
-            GetColumnInfo(x => x.ResidenseCity, ColumnType.ComboBox),
-            GetColumnInfo(x => x.ResidenseAdress),
-
-            GetColumnInfo(x => x.Disability, ColumnType.ComboBox),
-            GetColumnInfo(x => x.Nationality, ColumnType.ComboBox),
-            GetColumnInfo(x => x.FamilyStatus, ColumnType.ComboBox),
-
-            GetColumnInfo(x => x.IsPensioner, ColumnType.CheckBox),
-            GetColumnInfo(x => x.IsReservist, ColumnType.CheckBox),
-
-            GetColumnInfo(x => x.MonthlyIncome, ColumnType.Double),
-            GetColumnInfo(x => x.Currency, ColumnType.ComboBox),
-        };
-
-        private static ColumnInfo GetColumnInfo<T>(Expression<Func<ObservableRow, T>> p, ColumnType columnType = ColumnType.Text)
-        {
-            return new ColumnInfo(TypeHelper.GetPropertyName(new ObservableRow(), p), columnType);
-        }
-
-        #endregion
+        private ClientRepository repository;
 
         #region Commands
 
@@ -134,7 +76,8 @@ namespace Test.Table
                 connectionString = value;
                 if (ConnectionString != null)
                 {
-                    sampleRepository = new SampleRepository(ConnectionString);
+                    repository = new ClientRepository(ConnectionString);
+                    CreateLayaout();
                 }
             }
         }
@@ -154,61 +97,54 @@ namespace Test.Table
         {
             if (ConnectionString != null)
             {
-                sampleRepository = new SampleRepository(ConnectionString);
-            }
-        }
-
-        public static void ExecuteAndCatchException(Action method)
-        {
-            try
-            {
-                if (method != null)
-                {
-                    method();
-                }
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show(e.ToString(), "Exception stacktrace", MessageBoxButton.OK, MessageBoxImage.Information);
+                repository = new ClientRepository(ConnectionString);
+                CreateLayaout();
             }
         }
 
         public void Refresh()
         {
-            RefreshLists();
-            clientsFromDbAsObj = sampleRepository.Select<Client>().
-                Include(x => x.Passport).
-                Include(x => x.Currency).
-                Include(x => x.FamilyStatus).
-                Include(x => x.Disability).
-                Include(x => x.Nationality).
-                Include(x => x.Residense).
-                Include(x => x.Residense.City).
-                Include(x => x.Registration).
-                Include(x => x.Registration.City).
-                Select(ClientObj.ConvertToObj).AsEnumerable();
-            DataGrid = new ObservableCollection<ObservableRow>(clientsFromDbAsObj.Select(ConvertToRow));
-        }
-
-        private void RefreshLists()
-        {
-            sexes = (IEnumerable<Sex>)Enum.GetValues(typeof(Sex));
-
-            cities = sampleRepository.Select<City>().ToList();
-            disabilities = sampleRepository.Select<Disability>().ToList();
-            nationalities = sampleRepository.Select<Nationality>().ToList();
-            familyStatuses = sampleRepository.Select<FamilyStatus>().ToList();
-            currencies = sampleRepository.Select<Currency>().ToList();
-
-            cityNames = cities.Select(x => x.Name).ToList();
-            disabilityNames = disabilities.Select(x => x.Name).ToList();
-            nationalityNames = nationalities.Select(x => x.Name).ToList();
-            familyStatusNames = familyStatuses.Select(x => x.Name).ToList();
-            currencyNames = currencies.Select(x => x.Name).ToList();
+            IEnumerable<ClientObj> allClients = repository.GetAll();
+            DataGrid = new ObservableCollection<ObservableRow>(allClients.Select(ObservableRow.ConvertToRow));
         }
 
         public void CreateLayaout()
         {
+            ColumnInfo[] columns =
+            {
+                GetColumnInfo(x => x.Surname),
+                GetColumnInfo(x => x.Name),
+                GetColumnInfo(x => x.MiddleName),
+                GetColumnInfo(x => x.BirthDate, ColumnType.DateTime),
+                GetColumnInfo(x => x.BirthPlace),
+                GetColumnInfo(x => x.Sex, ColumnType.ComboBox, new ObservableCollection<object>(Enum.GetValues(typeof(Sex)).Cast<object>())),
+
+                GetColumnInfo(x => x.HomePhone, ColumnType.MaskedText, stringMask: "0 - 00 - 00"),
+                GetColumnInfo(x => x.MobilePhone, ColumnType.MaskedText, stringMask: "(000) 000 00 - 00"),
+                GetColumnInfo(x => x.Email, ColumnType.Hyperlink),
+
+                GetColumnInfo(x => x.PassportSeries),
+                GetColumnInfo(x => x.PassportNumber),
+                GetColumnInfo(x => x.IdentNumber),
+                GetColumnInfo(x => x.IssuedBy),
+                GetColumnInfo(x => x.IssueDate, ColumnType.DateTime),
+
+                GetColumnInfo(x => x.RegistrationCity, ColumnType.ComboBox, repository.GetNames<City>()),
+                GetColumnInfo(x => x.RegistrationAdress),
+                GetColumnInfo(x => x.ResidenseCity, ColumnType.ComboBox, repository.GetNames<City>()),
+                GetColumnInfo(x => x.ResidenseAdress),
+
+                GetColumnInfo(x => x.Disability, ColumnType.ComboBox, repository.GetNames<Disability>()),
+                GetColumnInfo(x => x.Nationality, ColumnType.ComboBox, repository.GetNames<Nationality>()),
+                GetColumnInfo(x => x.FamilyStatus, ColumnType.ComboBox, repository.GetNames<FamilyStatus>()),
+
+                GetColumnInfo(x => x.IsPensioner, ColumnType.CheckBox),
+                GetColumnInfo(x => x.IsReservist, ColumnType.CheckBox),
+
+                GetColumnInfo(x => x.MonthlyIncome, ColumnType.Double),
+                GetColumnInfo(x => x.Currency, ColumnType.ComboBox, repository.GetNames<Currency>()),
+            };
+
             Grid.Columns.Clear();
             foreach (ColumnInfo columnInfo in columns)
             {
@@ -222,7 +158,7 @@ namespace Test.Table
 
         private void OnAddRow()
         {
-            var row = ObservableRow.GetEmptyRow(sexes, cityNames, disabilityNames, nationalityNames, familyStatusNames, currencyNames);
+            var row = ObservableRow.GetEmptyRow();
             DataGrid.Add(row);
         }
 
@@ -233,26 +169,20 @@ namespace Test.Table
                 return;
             }
 
-            if (Grid.SelectedIndex >= clientsFromDbAsObj.Count())
-            {
-                
-            }
-            else
-            {
-                ClientObj selectedRow = ObservableRow.ConvertToObj(DataGrid[Grid.SelectedIndex]);
-                Client newClient = ClientObj.ConvertToDataSet(selectedRow, sexes, cities, disabilities, nationalities, familyStatuses, currencies);
-                Client origClient = sampleRepository.Select<Client>().FirstOrDefault(x => x.ClientId == newClient.ClientId);
-                newClient.CopyTo(origClient);
-                if (origClient.NotValid())
-                {
-                    return;
-                }
-                sampleRepository.Update(origClient);
-            }
+            ObservableRow selectedRow = DataGrid[Grid.SelectedIndex];
+            repository.UpdateOrAdd(ObservableRow.ConvertToObj(selectedRow));
         }
 
         private void OnDeleteRow()
         {
+            if (Grid.SelectedIndex < 0)
+            {
+                return;
+            }
+
+            ObservableRow selectedRow = DataGrid[Grid.SelectedIndex];
+            repository.Delete(selectedRow.ClientId);
+            DataGrid.Remove(selectedRow);
         }
 
         private void OnOk()
@@ -265,9 +195,29 @@ namespace Test.Table
             CloseView(false);
         }
 
-        private ObservableRow ConvertToRow(ClientObj client)
+        public static void ExecuteAndCatchException(Action method)
         {
-            return ObservableRow.ConvertToRow(client, sexes, cityNames, disabilityNames, nationalityNames, familyStatusNames, currencyNames);
+            try
+            {
+                if (method != null)
+                {
+                    method();
+                }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.ToString(), "Exception stacktrace", MessageBoxButton.OK, MessageBoxImage.Hand);
+            }
+        }
+
+        private static ColumnInfo GetColumnInfo<T>(Expression<Func<ObservableRow, T>> p, ColumnType columnType = ColumnType.Text,
+            IEnumerable<object> itemSource = null, string stringMask = null)
+        {
+            return new ColumnInfo(TypeHelper.GetPropertyName(new ObservableRow(), p), columnType)
+            {
+                ItemSource = itemSource,
+                InputMask = stringMask,
+            };
         }
     }
 }

@@ -3,14 +3,14 @@ using System.Data.Entity;
 
 namespace CodeFirst
 {
-    public class SampleContext : DbContext
+    public class ClientContext : DbContext
     {
-        static SampleContext()
+        static ClientContext()
         {
             Database.SetInitializer(new FillDefaultContextInitializer());
         }
 
-        public SampleContext(string dbConnection)
+        public ClientContext(string dbConnection)
             : base(dbConnection)
         {
         }

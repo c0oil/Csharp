@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using CodeFirst;
 
-namespace Test.Table
+namespace CodeFirst
 {
     public class ClientObj
     {
@@ -71,22 +70,22 @@ namespace Test.Table
 
                 Registration = new Place
                 {
-                    CityId = cities.First(x => x.Name == clientObj.RegistrationCity).CityId,
+                    City = cities.FirstOrDefault(x => x.Name == clientObj.RegistrationCity),
                     Adress = clientObj.RegistrationAdress,
                 },
                 Residense = new Place
                 {
-                    CityId = cities.First(x => x.Name == clientObj.ResidenseCity).CityId,
+                    City = cities.FirstOrDefault(x => x.Name == clientObj.ResidenseCity),
                     Adress = clientObj.ResidenseAdress,
                 },
 
-                DisabilityId = disabilities.First(x => x.Name == clientObj.Disability).DisabilityId,
-                NationalityId = nationalities.First(x => x.Name == clientObj.Nationality).NationalityId,
-                FamilyStatusId = familyStatuses.First(x => x.Name == clientObj.FamilyStatus).FamilyStatusId,
+                Disability = disabilities.FirstOrDefault(x => x.Name == clientObj.Disability),
+                Nationality = nationalities.FirstOrDefault(x => x.Name == clientObj.Nationality),
+                FamilyStatus = familyStatuses.FirstOrDefault(x => x.Name == clientObj.FamilyStatus),
                 IsPensioner = (clientObj.IsPensioner),
                 IsReservist = (clientObj.IsReservist),
                 MonthlyIncome = (clientObj.MonthlyIncome),
-                CurrencyId = currencies.First(x => x.Name == clientObj.Currency).CurrencyId,
+                Currency = currencies.FirstOrDefault(x => x.Name == clientObj.Currency),
             };
         }
 

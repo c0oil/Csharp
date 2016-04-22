@@ -17,36 +17,34 @@ namespace Test.Table
         public ObservableValue<string> MiddleName { get; set; }
         public ObservableValue<DateTime> BirthDate { get; set; }
         public ObservableValue<string> BirthPlace { get; set; }
-        public ObservableItemSourseValue<Sex> Sex { get; set; }
+        public ObservableValue<Sex> Sex { get; set; }
 
-        public ObservableValue<string> HomePhone { get; set; } //mask
-        public ObservableValue<string> MobilePhone { get; set; } //mask
+        public ObservableValue<string> HomePhone { get; set; }
+        public ObservableValue<string> MobilePhone { get; set; }
         public ObservableValue<string> Email { get; set; }
 
         public ObservableValue<string> PassportSeries { get; set; }
-        public ObservableValue<string> PassportNumber { get; set; } //mask
-        public ObservableValue<string> IdentNumber { get; set; } //mask
+        public ObservableValue<string> PassportNumber { get; set; }
+        public ObservableValue<string> IdentNumber { get; set; }
         public ObservableValue<string> IssuedBy { get; set; }
         public ObservableValue<DateTime> IssueDate { get; set; }
 
-        public ObservableItemSourseValue<string> RegistrationCity { get; set; }
+        public ObservableValue<string> RegistrationCity { get; set; }
         public ObservableValue<string> RegistrationAdress { get; set; }
-        public ObservableItemSourseValue<string> ResidenseCity { get; set; }
+        public ObservableValue<string> ResidenseCity { get; set; }
         public ObservableValue<string> ResidenseAdress { get; set; }
 
-        public ObservableItemSourseValue<string> Disability { get; set; }
-        public ObservableItemSourseValue<string> Nationality { get; set; }
-        public ObservableItemSourseValue<string> FamilyStatus { get; set; }
+        public ObservableValue<string> Disability { get; set; }
+        public ObservableValue<string> Nationality { get; set; }
+        public ObservableValue<string> FamilyStatus { get; set; }
 
         public ObservableValue<bool> IsPensioner { get; set; }
         public ObservableValue<bool> IsReservist { get; set; }
 
         public ObservableValue<double> MonthlyIncome { get; set; }
-        public ObservableItemSourseValue<string> Currency { get; set; }
+        public ObservableValue<string> Currency { get; set; }
 
-        public static ObservableRow ConvertToRow(ClientObj client, 
-            IEnumerable<Sex> sexes, IEnumerable<string> cities, IEnumerable<string> disabilities,
-            IEnumerable<string> nationalities, IEnumerable<string> familyStatuses, IEnumerable<string> currencies)
+        public static ObservableRow ConvertToRow(ClientObj client)
         {
             return new ObservableRow
             {
@@ -57,7 +55,7 @@ namespace Test.Table
                 MiddleName = new ObservableValue<string>(client.MiddleName),
                 BirthDate = new ObservableValue<DateTime>(client.BirthDate),
                 BirthPlace = new ObservableValue<string>(client.BirthPlace),
-                Sex = new ObservableItemSourseValue<Sex>(client.Sex, sexes),
+                Sex = new ObservableValue<Sex>(client.Sex),
 
                 HomePhone = new ObservableValue<string>(client.HomePhone),
                 MobilePhone = new ObservableValue<string>(client.MobilePhone),
@@ -69,17 +67,17 @@ namespace Test.Table
                 IssuedBy = new ObservableValue<string>(client.IssuedBy),
                 IssueDate = new ObservableValue<DateTime>(client.IssueDate),
 
-                RegistrationCity = new ObservableItemSourseValue<string>(client.RegistrationCity, cities),
+                RegistrationCity = new ObservableValue<string>(client.RegistrationCity),
                 RegistrationAdress = new ObservableValue<string>(client.RegistrationAdress),
-                ResidenseCity = new ObservableItemSourseValue<string>(client.ResidenseCity, cities),
+                ResidenseCity = new ObservableValue<string>(client.ResidenseCity),
                 ResidenseAdress = new ObservableValue<string>(client.ResidenseAdress),
-                Disability = new ObservableItemSourseValue<string>(client.Disability, disabilities),
-                Nationality = new ObservableItemSourseValue<string>(client.Nationality, nationalities),
-                FamilyStatus = new ObservableItemSourseValue<string>(client.FamilyStatus, familyStatuses),
+                Disability = new ObservableValue<string>(client.Disability),
+                Nationality = new ObservableValue<string>(client.Nationality),
+                FamilyStatus = new ObservableValue<string>(client.FamilyStatus),
                 IsPensioner = new ObservableValue<bool>(client.IsPensioner),
                 IsReservist = new ObservableValue<bool>(client.IsReservist),
                 MonthlyIncome = new ObservableValue<double>(client.MonthlyIncome ?? 0.0),
-                Currency = new ObservableItemSourseValue<string>(client.Currency, currencies),
+                Currency = new ObservableValue<string>(client.Currency),
             };
         }
 
@@ -120,8 +118,7 @@ namespace Test.Table
             };
         }
 
-        public static ObservableRow GetEmptyRow(IEnumerable<Sex> sexes, IEnumerable<string> cities, IEnumerable<string> disabilities,
-                                                IEnumerable<string> nationalities, IEnumerable<string> familyStatuses, IEnumerable<string> currencies)
+        public static ObservableRow GetEmptyRow()
         {
             return new ObservableRow
             {
@@ -132,7 +129,7 @@ namespace Test.Table
                 MiddleName = new ObservableValue<string>(),
                 BirthDate = new ObservableValue<DateTime>(),
                 BirthPlace = new ObservableValue<string>(),
-                Sex = new ObservableItemSourseValue<Sex>(sexes),
+                Sex = new ObservableValue<Sex>(),
 
                 HomePhone = new ObservableValue<string>(),
                 MobilePhone = new ObservableValue<string>(),
@@ -144,49 +141,18 @@ namespace Test.Table
                 IssuedBy = new ObservableValue<string>(),
                 IssueDate = new ObservableValue<DateTime>(),
 
-                RegistrationCity = new ObservableItemSourseValue<string>(cities),
+                RegistrationCity = new ObservableValue<string>(),
                 RegistrationAdress = new ObservableValue<string>(),
-                ResidenseCity = new ObservableItemSourseValue<string>(cities),
+                ResidenseCity = new ObservableValue<string>(),
                 ResidenseAdress = new ObservableValue<string>(),
-                Disability = new ObservableItemSourseValue<string>(disabilities),
-                Nationality = new ObservableItemSourseValue<string>(nationalities),
-                FamilyStatus = new ObservableItemSourseValue<string>(familyStatuses),
+                Disability = new ObservableValue<string>(),
+                Nationality = new ObservableValue<string>(),
+                FamilyStatus = new ObservableValue<string>(),
                 IsPensioner = new ObservableValue<bool>(),
                 IsReservist = new ObservableValue<bool>(),
-                MonthlyIncome = new ObservableValue<double>(0.0),
-                Currency = new ObservableItemSourseValue<string>(currencies),
+                MonthlyIncome = new ObservableValue<double>(),
+                Currency = new ObservableValue<string>(),
             };
-        }
-    }
-
-    public class ObservableItemSourseValue<T> : ObservableValue<T>
-    {
-        public ObservableItemSourseValue(IEnumerable<T> itemSource)
-        {
-            ItemSource = itemSource.Select(x => new KeyValuePair<T, string>(x, x.ToString()));
-        }
-
-        public ObservableItemSourseValue(T initValue, IEnumerable<T> itemSource)
-            : base(initValue)
-        {
-            ItemSource = itemSource.Select(x => new KeyValuePair<T, string>(x, x.ToString()));
-        }
-
-        public ObservableItemSourseValue(T initValue, IEnumerable<KeyValuePair<T, string>> itemSource)
-            : base(initValue)
-        {
-            ItemSource = itemSource;
-        }
-
-        private IEnumerable<KeyValuePair<T, string>> _itemSource;
-        public IEnumerable<KeyValuePair<T, string>> ItemSource
-        {
-            get { return _itemSource; }
-            set
-            {
-                _itemSource = value;
-                OnPropertyChanged(() => ItemSource);
-            }
         }
     }
 

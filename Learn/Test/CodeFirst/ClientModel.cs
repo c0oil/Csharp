@@ -97,7 +97,7 @@ namespace CodeFirst
         public virtual List<Client> Registrations { get; set; }
     }
 
-    public class City
+    public class City : IName
     {
         public City()
         {
@@ -105,6 +105,7 @@ namespace CodeFirst
         }
 
         public int CityId { get; set; }
+        [Required]
         public string Name { get; set; }
 
         public virtual List<Place> Places { get; set; }
@@ -130,15 +131,21 @@ namespace CodeFirst
         public int FamilyStatusId { get; set; }
     }
 
-    public class BaseEntity
+    public class BaseEntity : IName
     {
         public BaseEntity()
         {
             Clients = new List<Client>();
         }
 
+        [Required]
         public string Name { get; set; }
         public virtual List<Client> Clients { get; set; }
+    }
+
+    public interface IName
+    {
+        string Name { get; }
     }
 
     public enum Sex
@@ -167,15 +174,20 @@ namespace CodeFirst
             copy.IsReservist = orig.IsReservist;
             copy.MonthlyIncome = orig.MonthlyIncome;
 
-
             copy.Registration = orig.Registration;
             copy.Residense = orig.Residense;
 
-            copy.DisabilityId = orig.DisabilityId;
-            copy.CurrencyId = orig.CurrencyId;
-            copy.FamilyStatusId = orig.FamilyStatusId;
-            copy.NationalityId = orig.NationalityId;
-            copy.FamilyStatusId = orig.FamilyStatusId;
+            copy.Disability = orig.Disability;
+            copy.Currency = orig.Currency;
+            copy.FamilyStatus = orig.FamilyStatus;
+            copy.Nationality = orig.Nationality;
+            copy.FamilyStatus = orig.FamilyStatus;
+        }
+
+        public static bool NotValid(this IName entity)
+        {
+            return entity == null ||
+                   string.IsNullOrWhiteSpace(entity.Name);
         }
 
         public static bool NotValid(this Place entity)
@@ -199,8 +211,14 @@ namespace CodeFirst
                    string.IsNullOrWhiteSpace(entity.Name) ||
                    string.IsNullOrWhiteSpace(entity.MiddleName) ||
                    string.IsNullOrWhiteSpace(entity.BirthPlace) ||
+
                    entity.Registration.NotValid() ||
                    entity.Residense.NotValid() ||
+
+                   entity.Nationality.NotValid() ||
+                   entity.FamilyStatus.NotValid() ||
+                   entity.Disability.NotValid() ||
+
                    entity.Passport.NotValid();
         }
     }

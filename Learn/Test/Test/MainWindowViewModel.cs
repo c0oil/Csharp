@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Data;
-using System.Data.Linq;
-using System.Data.SqlClient;
+﻿using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Input;
-using System.Windows.Threading;
 using Test.DbConnection;
 using Test.DbConnection.Smo;
 using Test.Table;
@@ -54,13 +47,7 @@ namespace Test
 
         public MainWindowViewModel()
         {
-            ConnectionBuilder = new SqlConnectionStringBuilder
-            {
-                DataSource = @"C0_OIL-ПК\SQLEXPRESS",
-                InitialCatalog = "Default",
-                MultipleActiveResultSets = true,
-                IntegratedSecurity = true,
-            };
+            ConnectionBuilder = new SqlConnectionStringBuilder(ConnectionHelper.GetConnectionStringSettings());
             CheckConnection();
         }
 
@@ -70,6 +57,11 @@ namespace Test
             IsConnected = await Task<bool>.Factory.StartNew(() => 
                 SqlConnectionControlViewModel.TestConnection(ConnectionBuilder.ConnectionString));
             IsConnecting = false;
+
+            if (IsConnected)
+            {
+                ConnectionHelper.SaveConnectionStringSettings(ConnectionBuilder.ConnectionString);
+            }
         }
 
         private void ShowTables()

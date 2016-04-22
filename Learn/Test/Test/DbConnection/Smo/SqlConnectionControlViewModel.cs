@@ -259,7 +259,7 @@ namespace Test.DbConnection.Smo
         {
             try
             {
-                using (var context = new SampleContext(ConnectionBuilder.ConnectionString))
+                using (var context = new ClientContext(ConnectionBuilder.ConnectionString))
                 {
                     context.Database.Delete();
                 }
@@ -299,7 +299,7 @@ namespace Test.DbConnection.Smo
 
             try
             {
-                using (var context = new SampleContext(copy.ConnectionString))
+                using (var context = new ClientContext(copy.ConnectionString))
                 {
                     if (needRewrite)
                     {

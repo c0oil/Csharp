@@ -7,9 +7,9 @@ using System.Text;
 
 namespace CodeFirst
 {
-    //public class FillDefaultContextInitializer : CreateDatabaseIfNotExists<SampleContext>
-    public class FillDefaultContextInitializer : DropCreateDatabaseIfModelChanges<SampleContext>
-    //public class FillDefaultContextInitializer : DropCreateDatabaseAlways<SampleContext>
+    //public class FillDefaultContextInitializer : CreateDatabaseIfNotExists<ClientContext>
+    public class FillDefaultContextInitializer : DropCreateDatabaseIfModelChanges<ClientContext>
+    //public class FillDefaultContextInitializer : DropCreateDatabaseAlways<ClientContext>
     {
         #region Default data
 
@@ -129,13 +129,13 @@ namespace CodeFirst
 
         #endregion
 
-        protected override void Seed(SampleContext context)
+        protected override void Seed(ClientContext context)
         {
             FillDefaultData(context);
             base.Seed(context);
         }
 
-        private void FillDefaultData(SampleContext context)
+        private void FillDefaultData(ClientContext context)
         {
             var currencyies = currencyNames.Select(x => new Currency { Name = x }).ToArray();
             var nationalities = nationalityNames.Select(x => new Nationality { Name = x }).ToArray();
@@ -163,8 +163,8 @@ namespace CodeFirst
                 passports.Add(passport);
 
                 client.Passport = passport;
-                client.Residense = TakeItem(i, 3, places);
-                client.Registration = TakeItem(i, 2, places);
+                client.Residense = TakeItem(i, 1, places);
+                client.Registration = TakeItem(i, 3, places);
                 client.Disability = TakeItem(i, 3, disabilities);
                 client.Nationality = TakeItem(i, 4, nationalities);
                 client.FamilyStatus = TakeItem(i, 3, familyStatuses);
@@ -176,7 +176,12 @@ namespace CodeFirst
             context.SaveChanges();
         }
 
-        private void SaveChanges(DbContext context)
+        private T TakeItem<T>(int index, int mul, IEnumerable<T> array)
+        {
+            return array.ElementAt(index * mul % array.Count());
+        }
+
+        /*private void SaveChanges(DbContext context)
         {
             try
             {
@@ -198,11 +203,6 @@ namespace CodeFirst
                 throw new DbEntityValidationException("Entity Validation Failed - errors follow:\n" + sb, ex); 
                 // Add the original exception as the innerException
             }
-        }
-
-        private T TakeItem<T>(int index, int mul, IEnumerable<T> array)
-        {
-            return array.ElementAt(index * mul % array.Count());
-        }
+        }*/
     }
 }
