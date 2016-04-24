@@ -122,6 +122,7 @@
     <Compile Include="BaseUI\Columns\DataGridMaskedTextColumn.cs" />
     <Compile Include="BaseUI\Convertors.cs" />
     <Compile Include="BaseUI\MarkTextBehavior.cs" />
+    <Compile Include="DbConnection\ConnectionHelper.cs" />
     <Compile Include="DbConnection\ConnectionView.xaml.cs">
       <DependentUpon>ConnectionView.xaml</DependentUpon>
     </Compile>

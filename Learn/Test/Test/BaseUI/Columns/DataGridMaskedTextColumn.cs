@@ -18,8 +18,8 @@ namespace Test.BaseUI.Columns
             };
         }
 
-        private BindingBase binding;
-        public BindingBase Binding
+        private Binding binding;
+        public Binding Binding
         {
             get { return binding; }
             set
@@ -53,7 +53,7 @@ namespace Test.BaseUI.Columns
             {
                 return;
             }
-
+            
             TextBoxInputMaskBehavior behavior = new TextBoxInputMaskBehavior();
             behavior.SetValue(TextBoxInputMaskBehavior.InputMaskProperty, InputMask);
             Interaction.GetBehaviors(textBox).Add(behavior);

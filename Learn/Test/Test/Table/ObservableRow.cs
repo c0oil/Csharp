@@ -1,9 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Linq.Expressions;
 using CodeFirst;
+using Test.BaseUI;
 using Test.ViewModel;
 
 namespace Test.Table
@@ -12,37 +12,43 @@ namespace Test.Table
     {
         public int ClientId { get; set; }
 
-        public ObservableValue<string> Surname { get; set; }
-        public ObservableValue<string> Name { get; set; }
-        public ObservableValue<string> MiddleName { get; set; }
+        public ValidableValue<string> Surname { get; set; }
+        public ValidableValue<string> Name { get; set; }
+        public ValidableValue<string> MiddleName { get; set; }
         public ObservableValue<DateTime> BirthDate { get; set; }
-        public ObservableValue<string> BirthPlace { get; set; }
+        public ValidableValue<string> BirthPlace { get; set; }
         public ObservableValue<Sex> Sex { get; set; }
 
         public ObservableValue<string> HomePhone { get; set; }
         public ObservableValue<string> MobilePhone { get; set; }
         public ObservableValue<string> Email { get; set; }
 
-        public ObservableValue<string> PassportSeries { get; set; }
-        public ObservableValue<string> PassportNumber { get; set; }
-        public ObservableValue<string> IdentNumber { get; set; }
-        public ObservableValue<string> IssuedBy { get; set; }
+        public ValidableValue<string> PassportSeries { get; set; }
+        public MaskedValidableValue PassportNumber { get; set; }
+        public MaskedValidableValue IdentNumber { get; set; }
+        public ValidableValue<string> IssuedBy { get; set; }
         public ObservableValue<DateTime> IssueDate { get; set; }
 
-        public ObservableValue<string> RegistrationCity { get; set; }
-        public ObservableValue<string> RegistrationAdress { get; set; }
-        public ObservableValue<string> ResidenseCity { get; set; }
-        public ObservableValue<string> ResidenseAdress { get; set; }
+        public ValidableValue<string> RegistrationCity { get; set; }
+        public ValidableValue<string> RegistrationAdress { get; set; }
+        public ValidableValue<string> ResidenseCity { get; set; }
+        public ValidableValue<string> ResidenseAdress { get; set; }
 
-        public ObservableValue<string> Disability { get; set; }
-        public ObservableValue<string> Nationality { get; set; }
-        public ObservableValue<string> FamilyStatus { get; set; }
+        public ValidableValue<string> Disability { get; set; }
+        public ValidableValue<string> Nationality { get; set; }
+        public ValidableValue<string> FamilyStatus { get; set; }
 
         public ObservableValue<bool> IsPensioner { get; set; }
         public ObservableValue<bool> IsReservist { get; set; }
 
-        public ObservableValue<double> MonthlyIncome { get; set; }
+        public ObservableValue<double?> MonthlyIncome { get; set; }
         public ObservableValue<string> Currency { get; set; }
+
+        public const int NewId = -1;
+        public bool IsNew
+        {
+            get { return ClientId == NewId; }
+        }
 
         public static ObservableRow ConvertToRow(ClientObj client)
         {
@@ -50,33 +56,33 @@ namespace Test.Table
             {
                 ClientId = client.ClientId,
 
-                Surname = new ObservableValue<string>(client.Surname),
-                Name = new ObservableValue<string>(client.Name),
-                MiddleName = new ObservableValue<string>(client.MiddleName),
-                BirthDate = new ObservableValue<DateTime>(client.BirthDate),
-                BirthPlace = new ObservableValue<string>(client.BirthPlace),
+                Surname = new ValidableValue<string>(client.Surname),
+                Name = new ValidableValue<string>(client.Name),
+                MiddleName = new ValidableValue<string>(client.MiddleName),
+                BirthDate = new ValidableValue<DateTime>(client.BirthDate),
+                BirthPlace = new ValidableValue<string>(client.BirthPlace),
                 Sex = new ObservableValue<Sex>(client.Sex),
 
                 HomePhone = new ObservableValue<string>(client.HomePhone),
                 MobilePhone = new ObservableValue<string>(client.MobilePhone),
                 Email = new ObservableValue<string>(client.Email),
 
-                PassportSeries = new ObservableValue<string>(client.PassportSeries),
-                PassportNumber = new ObservableValue<string>(client.PassportNumber),
-                IdentNumber = new ObservableValue<string>(client.IdentNumber),
-                IssuedBy = new ObservableValue<string>(client.IssuedBy),
+                PassportSeries = new ValidableValue<string>(client.PassportSeries),
+                PassportNumber = new MaskedValidableValue(client.PassportNumber),
+                IdentNumber = new MaskedValidableValue(client.IdentNumber),
+                IssuedBy = new ValidableValue<string>(client.IssuedBy),
                 IssueDate = new ObservableValue<DateTime>(client.IssueDate),
 
-                RegistrationCity = new ObservableValue<string>(client.RegistrationCity),
-                RegistrationAdress = new ObservableValue<string>(client.RegistrationAdress),
-                ResidenseCity = new ObservableValue<string>(client.ResidenseCity),
-                ResidenseAdress = new ObservableValue<string>(client.ResidenseAdress),
-                Disability = new ObservableValue<string>(client.Disability),
-                Nationality = new ObservableValue<string>(client.Nationality),
-                FamilyStatus = new ObservableValue<string>(client.FamilyStatus),
+                RegistrationCity = new ValidableValue<string>(client.RegistrationCity),
+                RegistrationAdress = new ValidableValue<string>(client.RegistrationAdress),
+                ResidenseCity = new ValidableValue<string>(client.ResidenseCity),
+                ResidenseAdress = new ValidableValue<string>(client.ResidenseAdress),
+                Disability = new ValidableValue<string>(client.Disability),
+                Nationality = new ValidableValue<string>(client.Nationality),
+                FamilyStatus = new ValidableValue<string>(client.FamilyStatus),
                 IsPensioner = new ObservableValue<bool>(client.IsPensioner),
                 IsReservist = new ObservableValue<bool>(client.IsReservist),
-                MonthlyIncome = new ObservableValue<double>(client.MonthlyIncome ?? 0.0),
+                MonthlyIncome = new ObservableValue<double?>(client.MonthlyIncome),
                 Currency = new ObservableValue<string>(client.Currency),
             };
         }
@@ -122,37 +128,85 @@ namespace Test.Table
         {
             return new ObservableRow
             {
-                ClientId = -1,
+                ClientId = NewId,
 
-                Surname = new ObservableValue<string>(),
-                Name = new ObservableValue<string>(),
-                MiddleName = new ObservableValue<string>(),
-                BirthDate = new ObservableValue<DateTime>(),
-                BirthPlace = new ObservableValue<string>(),
+                Surname = new ValidableValue<string>(),
+                Name = new ValidableValue<string>(),
+                MiddleName = new ValidableValue<string>(),
+                BirthDate = new ObservableValue<DateTime>(new DateTime(1990, 1, 1)),
+                BirthPlace = new ValidableValue<string>(),
                 Sex = new ObservableValue<Sex>(),
 
-                HomePhone = new ObservableValue<string>(),
-                MobilePhone = new ObservableValue<string>(),
+                HomePhone = new MaskedValidableValue(),
+                MobilePhone = new MaskedValidableValue(),
                 Email = new ObservableValue<string>(),
 
-                PassportSeries = new ObservableValue<string>(),
-                PassportNumber = new ObservableValue<string>(),
-                IdentNumber = new ObservableValue<string>(),
-                IssuedBy = new ObservableValue<string>(),
-                IssueDate = new ObservableValue<DateTime>(),
+                PassportSeries = new ValidableValue<string>(),
+                PassportNumber = new MaskedValidableValue(),
+                IdentNumber = new MaskedValidableValue(),
+                IssuedBy = new ValidableValue<string>(),
+                IssueDate = new ObservableValue<DateTime>(new DateTime(1990, 1, 1)),
 
-                RegistrationCity = new ObservableValue<string>(),
-                RegistrationAdress = new ObservableValue<string>(),
-                ResidenseCity = new ObservableValue<string>(),
-                ResidenseAdress = new ObservableValue<string>(),
-                Disability = new ObservableValue<string>(),
-                Nationality = new ObservableValue<string>(),
-                FamilyStatus = new ObservableValue<string>(),
+                RegistrationCity = new ValidableValue<string>(),
+                RegistrationAdress = new ValidableValue<string>(),
+                ResidenseCity = new ValidableValue<string>(),
+                ResidenseAdress = new ValidableValue<string>(),
+                Disability = new ValidableValue<string>(),
+                Nationality = new ValidableValue<string>(),
+                FamilyStatus = new ValidableValue<string>(),
                 IsPensioner = new ObservableValue<bool>(),
                 IsReservist = new ObservableValue<bool>(),
-                MonthlyIncome = new ObservableValue<double>(),
+                MonthlyIncome = new ObservableValue<double?>(),
                 Currency = new ObservableValue<string>(),
             };
+        }
+    }
+
+    public class MaskedValidableValue : ObservableValue<string>, IDataErrorInfo
+    {
+        public MaskedValidableValue() { }
+        public MaskedValidableValue(string initValue) : base(initValue) { }
+
+        public string this[string columnName]
+        {
+            get
+            {
+                string result = null;
+                if (columnName == "Value" && (string.IsNullOrEmpty(Value) || Value.Contains(TextBoxInputMaskBehavior.DefaultPromptChar)))
+                {
+                    result = "Please enter Value";
+                }
+                return result;
+            }
+        }
+
+        public string Error
+        {
+            get { return "Please enter Value"; }
+        }
+    }
+
+    public class ValidableValue<T> : ObservableValue<T>, IDataErrorInfo
+    {
+        public ValidableValue() { }
+        public ValidableValue(T initValue): base(initValue) { }
+
+        public string this[string columnName]
+        {
+            get
+            {
+                string result = null;
+                if (columnName == "Value" && (string.IsNullOrEmpty(Value as string)))
+                {
+                    result = "Please enter Value";
+                }
+                return result;
+            }
+        }
+
+        public string Error
+        {
+            get { return "Please enter Value"; }
         }
     }
 

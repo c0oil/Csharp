@@ -21,14 +21,12 @@ namespace Test.Table
         #region Commands
 
         private ICommand addRowCommand;
-
         public ICommand AddRowCommand
         {
             get { return GetDelegateCommand<object>(ref addRowCommand, x => OnAddRow()); }
         }
 
         private ICommand updateRowCommand;
-
         public ICommand UpdateRowCommand
         {
             get { return GetDelegateCommand<object>(ref updateRowCommand, x => OnUpdateRow()); }
@@ -42,24 +40,15 @@ namespace Test.Table
         }
 
         private ICommand okCommand;
-
         public ICommand OkCommand
         {
             get { return GetDelegateCommand<object>(ref okCommand, x => OnOk()); }
         }
 
         private ICommand cancelCommand;
-
         public ICommand CancelCommand
         {
             get { return GetDelegateCommand<object>(ref cancelCommand, x => OnCancel()); }
-        }
-
-        private ICommand saveChangesCommand;
-
-        public ICommand SaveChangesCommand
-        {
-            get { return GetDelegateCommand<object>(ref saveChangesCommand, x => OnSaveChanges()); }
         }
 
         #endregion
@@ -120,12 +109,12 @@ namespace Test.Table
                 GetColumnInfo(x => x.Sex, ColumnType.ComboBox, new ObservableCollection<object>(Enum.GetValues(typeof(Sex)).Cast<object>())),
 
                 GetColumnInfo(x => x.HomePhone, ColumnType.MaskedText, stringMask: "0 - 00 - 00"),
-                GetColumnInfo(x => x.MobilePhone, ColumnType.MaskedText, stringMask: "(000) 000 00 - 00"),
+                GetColumnInfo(x => x.MobilePhone, ColumnType.MaskedText, stringMask: "(000) 000 - 00 - 00"),
                 GetColumnInfo(x => x.Email, ColumnType.Hyperlink),
 
                 GetColumnInfo(x => x.PassportSeries),
-                GetColumnInfo(x => x.PassportNumber),
-                GetColumnInfo(x => x.IdentNumber),
+                GetColumnInfo(x => x.PassportNumber, ColumnType.MaskedText, stringMask: ">LL0000000"),
+                GetColumnInfo(x => x.IdentNumber, ColumnType.MaskedText, stringMask: "AAAAAAAAAAAAAA"),
                 GetColumnInfo(x => x.IssuedBy),
                 GetColumnInfo(x => x.IssueDate, ColumnType.DateTime),
 
@@ -152,10 +141,6 @@ namespace Test.Table
             }
         }
 
-        public void OnSaveChanges()
-        {
-        }
-
         private void OnAddRow()
         {
             var row = ObservableRow.GetEmptyRow();
@@ -169,7 +154,13 @@ namespace Test.Table
                 return;
             }
 
-            ObservableRow selectedRow = DataGrid[Grid.SelectedIndex];
+            ObservableRow selectedRow = (ObservableRow)Grid.SelectedItem;
+            bool rowHasError = Validation.GetHasError(Grid.ItemContainerGenerator.ContainerFromItem(selectedRow));
+            if (rowHasError)
+            {
+                MessageBox.Show("Please, input correct data", "Update Row", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
             repository.UpdateOrAdd(ObservableRow.ConvertToObj(selectedRow));
         }
 
@@ -180,8 +171,11 @@ namespace Test.Table
                 return;
             }
 
-            ObservableRow selectedRow = DataGrid[Grid.SelectedIndex];
-            repository.Delete(selectedRow.ClientId);
+            ObservableRow selectedRow = (ObservableRow)Grid.SelectedItem;
+            if (!selectedRow.IsNew)
+            {
+                repository.Delete(selectedRow.ClientId);
+            }
             DataGrid.Remove(selectedRow);
         }
 
@@ -206,7 +200,7 @@ namespace Test.Table
             }
             catch (Exception e)
             {
-                MessageBox.Show(e.ToString(), "Exception stacktrace", MessageBoxButton.OK, MessageBoxImage.Hand);
+                MessageBox.Show(e.ToString(), "Stacktrace", MessageBoxButton.OK, MessageBoxImage.Hand);
             }
         }
 

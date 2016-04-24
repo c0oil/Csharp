@@ -37,6 +37,8 @@ namespace Test.BaseUI
 
     public class TextBoxInputMaskBehavior : Behavior<TextBox>
     {
+        public const char DefaultPromptChar = '_';
+
         #region DependencyProperties
 
         public static readonly DependencyProperty InputMaskProperty =
@@ -50,7 +52,7 @@ namespace Test.BaseUI
 
         public static readonly DependencyProperty PromptCharProperty =
            DependencyProperty.Register("PromptChar", typeof(char), typeof(TextBoxInputMaskBehavior),
-                                        new PropertyMetadata('_'));
+                                        new PropertyMetadata(DefaultPromptChar));
 
         public char PromptChar
         {

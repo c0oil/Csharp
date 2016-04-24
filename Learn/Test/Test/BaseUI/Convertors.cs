@@ -19,4 +19,70 @@ namespace Test.BaseUI
             return !booleanValue;
         }
     }
+
+    [ValueConversion(typeof(double), typeof(string))]
+    public class DoubleToPersistantStringConverter : IValueConverter
+    {
+        private string lastConvertBackString;
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (!(value is double)) return null;
+
+            var stringValue = lastConvertBackString ?? value.ToString();
+            lastConvertBackString = null;
+
+            return stringValue;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (!(value is string)) return null;
+
+            double result;
+            if (double.TryParse((string)value, out result))
+            {
+                lastConvertBackString = (string)value;
+                return result;
+            }
+
+            return null;
+        }
+    }
+
+    [ValueConversion(typeof(double?), typeof(string))]
+    public class NullableDoubleToStringConverter : IValueConverter
+    {
+        private string lastConvertBackString;
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (!(value is double?)) 
+                return value;
+
+            var stringValue = lastConvertBackString ?? value.ToString();
+            lastConvertBackString = null;
+
+            return stringValue;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (!(value is string))
+                return value;
+
+            if (string.IsNullOrWhiteSpace((string)value))
+            {
+                return null;
+            }
+
+            double result;
+            if (double.TryParse((string)value, out result))
+            {
+                lastConvertBackString = (string)value;
+                return result;
+            }
+
+            return value;
+        }
+    }
 }

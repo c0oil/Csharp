@@ -158,7 +158,10 @@ namespace CodeFirst
                 var passport = new Passport
                 {
                     Client = client, IssueDate = new DateTime(1996, 1, 8),
-                    IssuedBy = "Belarusia", PassportSeries = "AB", PassportNumber = "123456", IdentNumber = "1111111aaaa"
+                    IssuedBy = "Belarusia",
+                    PassportSeries = "AB",
+                    PassportNumber = "AB1234567",
+                    IdentNumber = "1234567890abCD"
                 };
                 passports.Add(passport);
 

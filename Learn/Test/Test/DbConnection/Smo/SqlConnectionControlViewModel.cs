@@ -266,7 +266,7 @@ namespace Test.DbConnection.Smo
             }
             catch (Exception e)
             {
-                MessageBox.Show(e.ToString(), "Exception stacktrace", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(e.ToString(), "Stacktrace", MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
             needUpdateDatabases = true;

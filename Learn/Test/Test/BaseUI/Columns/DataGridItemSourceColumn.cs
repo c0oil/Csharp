@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -16,6 +17,7 @@ namespace Test.BaseUI.Columns
             {
                 VisualTree = factory,
             };
+            factory.AddHandler(ComboBox.LoadedEvent, new RoutedEventHandler(Loaded));
         }
 
         private BindingBase selectedItemBinding;
@@ -53,6 +55,21 @@ namespace Test.BaseUI.Columns
                 });
                 NotifyPropertyChanged("ItemSource");
             }
+        }
+
+        private void Loaded(object sender, RoutedEventArgs e)
+        {
+            var comboBox = sender as ComboBox;
+            if (comboBox == null)
+            {
+                return;
+            }
+
+            if (comboBox.SelectedValue == null)
+            {
+                comboBox.SelectedValue = ItemSource.First().Key;
+            }
+            comboBox.Loaded -= Loaded;
         }
     }
 }

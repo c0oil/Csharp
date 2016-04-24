@@ -25,12 +25,12 @@ namespace Test.BaseUI.Columns
             Initialize(caption, columnType);
         }
 
-        private void Initialize(string caption, ColumnType columnType = ColumnType.Text)
+        private void Initialize(string bindingPath, ColumnType columnType = ColumnType.Text, string caption = null)
         {
-            Caption = caption;
+            Caption = caption ?? bindingPath;
             ColumnType = columnType;
 
-            BindingPath = caption + ".Value";
+            BindingPath = bindingPath + ".Value";
         }
 
         public string Caption { get; set; }
@@ -46,34 +46,76 @@ namespace Test.BaseUI.Columns
             switch (ColumnType)
             {
                 case ColumnType.Text:
-                    result = new DataGridTextColumn { Binding = new Binding(BindingPath) };
+                    result = new DataGridTextColumn
+                    {
+                        Binding = new Binding(BindingPath)
+                        {
+                            UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
+                            ValidatesOnDataErrors = true,
+                            NotifyOnValidationError = true,
+                        },
+                    };
                     break;
                 case ColumnType.DateTime:
                     result = new DataGridDateColumn
                     {
-                        Binding = new Binding(BindingPath) { UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged}
+                        Binding = new Binding(BindingPath)
+                        {
+                            UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+                        }
                     };
                     break;
                 case ColumnType.Hyperlink:
-                    result = new DataGridHyperlinkColumn { Binding = new Binding(BindingPath) };
+                    result = new DataGridHyperlinkColumn
+                    {
+                        Binding = new Binding(BindingPath)
+                        {
+                            UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+                        }
+                    };
                     break;
                 case ColumnType.ComboBox:
                     result = new DataGridItemSourceColumn
                     {
                         ItemSource = new ObservableCollection<KeyValuePair<object, string>>(ItemSource.Select(x => new KeyValuePair<object, string>(x, x.ToString()))),
-                        SelectedItemBinding = new Binding(BindingPath) { UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged }, 
+                        SelectedItemBinding = new Binding(BindingPath)
+                        {
+                            UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
+                            ValidatesOnDataErrors = true,
+                            NotifyOnValidationError = true,
+                        }, 
                     };
                     break;
                 case ColumnType.CheckBox:
-                    result = new DataGridCheckBoxColumn { Binding = new Binding(BindingPath) };
+                    result = new DataGridCheckBoxColumn
+                    {
+                        Binding = new Binding(BindingPath)
+                        {
+                            UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+                        }
+                    };
                     break;
                 case ColumnType.Double:
-                    result = new DataGridTextColumn { Binding = new Binding(BindingPath) };
+                    result = new DataGridTextColumn
+                    {
+                        Binding = new Binding(BindingPath)
+                        {
+                            UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
+                            ValidatesOnDataErrors = true,
+                            NotifyOnValidationError = true,
+                            Converter = new NullableDoubleToStringConverter(),
+                        }
+                    };
                     break;
                 case ColumnType.MaskedText:
                     result = new DataGridMaskedTextColumn
                     {
-                        Binding = new Binding(BindingPath) { UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged }, 
+                        Binding = new Binding(BindingPath)
+                        {
+                            UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
+                            ValidatesOnDataErrors = true,
+                            NotifyOnValidationError = true,
+                        }, 
                         InputMask = InputMask
                     };
                     break;

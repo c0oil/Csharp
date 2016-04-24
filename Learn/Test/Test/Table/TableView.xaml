@@ -11,9 +11,9 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left">
-            <Button Content="Add Row" Command="{Binding AddRowCommand}"/>
+            <Button Content="Add Row" Background="DarkSeaGreen" Command="{Binding AddRowCommand}"/>
             <Button Content="Update Row" Command="{Binding UpdateRowCommand}"/>
-            <Button Content="Delete Row" Command="{Binding DeleteRowCommand}"/>
+            <Button Content="Delete Row" Background="LightCoral" Command="{Binding DeleteRowCommand}"/>
         </StackPanel>
         <DataGrid Grid.Row="1" x:Name="grid" AutoGenerateColumns="False" CanUserAddRows="False" ItemsSource="{Binding DataGrid}" Margin="4, 0">
         </DataGrid>
