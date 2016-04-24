@@ -1,6 +1,7 @@
 ﻿using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 using Test.DbConnection;
 using Test.DbConnection.Smo;
@@ -11,6 +12,8 @@ namespace Test
 {
     public class MainWindowViewModel : ViewModelBase
     {
+        public SqlConnectionStringBuilder ConnectionBuilder { get; set; }
+
         private ICommand connectCommand;
         public ICommand ConnectCommand
         {
@@ -54,8 +57,8 @@ namespace Test
         private async void CheckConnection()
         {
             IsConnecting = true;
-            IsConnected = await Task<bool>.Factory.StartNew(() => 
-                SqlConnectionControlViewModel.TestConnection(ConnectionBuilder.ConnectionString));
+            IsConnected = await Task<bool>.Factory.StartNew(() =>
+                ConnectionHelper.TestConnection(ConnectionBuilder.ConnectionString));
             IsConnecting = false;
 
             if (IsConnected)
@@ -66,6 +69,11 @@ namespace Test
 
         private void ShowTables()
         {
+            if (!IsConnected)
+            {
+                MessageBox.Show("Please, connect to database", "Show Tables", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
             bool? result = ShowDialog<TableView>(connectionView =>
             {
                 connectionView.ViewModel.ConnectionString = ConnectionBuilder.ConnectionString;
@@ -87,7 +95,5 @@ namespace Test
 
             CheckConnection();
         }
-
-        public SqlConnectionStringBuilder ConnectionBuilder { get; set; }
     }
 }

@@ -4,6 +4,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Controls;
 using System.Windows.Data;
+using CodeFirst;
+using Test.ViewModel;
 
 namespace Test.BaseUI.Columns
 {
@@ -16,16 +18,17 @@ namespace Test.BaseUI.Columns
         Hyperlink,
         ComboBox,
         CheckBox,
+        Radio,
     }
 
     public class ColumnInfo
     {
-        public ColumnInfo(string caption, ColumnType columnType = ColumnType.Text)
+        public ColumnInfo(string bindingPath, ColumnType columnType = ColumnType.Text, string caption = null)
         {
-            Initialize(caption, columnType);
+            Initialize(bindingPath, columnType, caption);
         }
 
-        private void Initialize(string bindingPath, ColumnType columnType = ColumnType.Text, string caption = null)
+        private void Initialize(string bindingPath, ColumnType columnType, string caption)
         {
             Caption = caption ?? bindingPath;
             ColumnType = columnType;
@@ -65,6 +68,15 @@ namespace Test.BaseUI.Columns
                         }
                     };
                     break;
+                case ColumnType.Radio:
+                    result = new DataGridRadioColumn
+                    {
+                        Binding = new Binding(BindingPath)
+                        {
+                            UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+                        }
+                    };
+                    break;
                 case ColumnType.Hyperlink:
                     result = new DataGridHyperlinkColumn
                     {
@@ -77,7 +89,8 @@ namespace Test.BaseUI.Columns
                 case ColumnType.ComboBox:
                     result = new DataGridItemSourceColumn
                     {
-                        ItemSource = new ObservableCollection<KeyValuePair<object, string>>(ItemSource.Select(x => new KeyValuePair<object, string>(x, x.ToString()))),
+                        ItemSource = new ObservableCollection<KeyValuePair<object, string>>(ItemSource.Select(x => 
+                                new KeyValuePair<object, string>(x, x is Sex ? EnumHelper.ToString((Sex)x) : x.ToString()))),
                         SelectedItemBinding = new Binding(BindingPath)
                         {
                             UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,

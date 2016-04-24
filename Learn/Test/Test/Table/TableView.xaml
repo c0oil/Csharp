@@ -4,20 +4,21 @@
         xmlns:table="clr-namespace:Test.Table"
         Title="Table" Height="500" Width="800">
     <Grid>
-
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left">
-            <Button Content="Add Row" Background="DarkSeaGreen" Command="{Binding AddRowCommand}"/>
-            <Button Content="Update Row" Command="{Binding UpdateRowCommand}"/>
-            <Button Content="Delete Row" Background="LightCoral" Command="{Binding DeleteRowCommand}"/>
-        </StackPanel>
-        <DataGrid Grid.Row="1" x:Name="grid" AutoGenerateColumns="False" CanUserAddRows="False" ItemsSource="{Binding DataGrid}" Margin="4, 0">
-        </DataGrid>
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+
+        <TabControl>
+            <TabItem Header="Table" >
+                <table:TableFrame x:Name="tableFrame"/>
+            </TabItem>
+            <TabItem Header="Lists" >
+                <table:ListsFrame x:Name="listsFrame"/>
+            </TabItem>
+        </TabControl>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Ok" Command="{Binding OkCommand}"/>
             <Button Content="Cancel" Command="{Binding CancelCommand}"/>
         </StackPanel>

@@ -16,8 +16,6 @@ namespace Test.DbConnection.Smo
 {
     public class SqlConnectionControlViewModel: ViewModelBase
     {
-        private static readonly SqlConnectionStringBuilder DefaultValue = new SqlConnectionStringBuilder { IntegratedSecurity = true, MultipleActiveResultSets = true };
-
         private readonly AsyncSmoTasks smoTasks;
         private bool needUpdateDatabases = true;
 
@@ -115,13 +113,13 @@ namespace Test.DbConnection.Smo
             }
         }
 
-        private SqlConnectionStringBuilder connectionBuilder = DefaultValue;
+        private SqlConnectionStringBuilder connectionBuilder = ConnectionHelper.DefaultConnectionBuilder;
         public SqlConnectionStringBuilder ConnectionBuilder
         {
             get { return connectionBuilder; }
             set
             {
-                connectionBuilder = value ?? DefaultValue;
+                connectionBuilder = value ?? ConnectionHelper.DefaultConnectionBuilder;
                 needUpdateDatabases = true;
                 OnPropertyChanged(() => ConnectionBuilder);
 
@@ -221,24 +219,7 @@ namespace Test.DbConnection.Smo
 
         public bool TestConnection()
         {
-            return TestConnection(ConnectionBuilder.ConnectionString);
-        }
-
-        public static bool TestConnection(string connectionString)
-        {
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                try
-                {
-                    conn.Open();
-                    return true;
-                }
-                catch (SqlException e)
-                {
-                    MessageBox.Show(e.ToString(), "Test connection", MessageBoxButton.OK, MessageBoxImage.Information);
-                    return false;
-                }
-            }
+            return ConnectionHelper.TestConnection(ConnectionBuilder.ConnectionString);
         }
 
         private const string DefaultDbName = "Default";

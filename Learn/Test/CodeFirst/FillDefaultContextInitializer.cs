@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
-using System.Data.Entity.Validation;
 using System.Linq;
-using System.Text;
 
 namespace CodeFirst
 {
@@ -158,7 +156,7 @@ namespace CodeFirst
                 var passport = new Passport
                 {
                     Client = client, IssueDate = new DateTime(1996, 1, 8),
-                    IssuedBy = "Belarusia",
+                    IssuedBy = "Беларусь",
                     PassportSeries = "AB",
                     PassportNumber = "AB1234567",
                     IdentNumber = "1234567890abCD"
@@ -183,29 +181,5 @@ namespace CodeFirst
         {
             return array.ElementAt(index * mul % array.Count());
         }
-
-        /*private void SaveChanges(DbContext context)
-        {
-            try
-            {
-                context.SaveChanges();
-            }
-            catch (DbEntityValidationException ex)
-            {
-                StringBuilder sb = new StringBuilder();
-
-                foreach (var failure in ex.EntityValidationErrors)
-                {
-                    sb.AppendFormat("{0} failed validation\n", failure.Entry.Entity.GetType());
-                    foreach (var error in failure.ValidationErrors)
-                    {
-                        sb.AppendFormat("- {0} : {1}", error.PropertyName, error.ErrorMessage).AppendLine();
-                    }
-                }
-
-                throw new DbEntityValidationException("Entity Validation Failed - errors follow:\n" + sb, ex); 
-                // Add the original exception as the innerException
-            }
-        }*/
     }
 }

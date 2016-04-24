@@ -65,6 +65,5 @@ namespace Test.ViewModel
         }
 
         #endregion
-
     }
 }

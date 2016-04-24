@@ -21,9 +21,8 @@ namespace CodeFirst
         public string BirthPlace { get; set; }
         public Sex Sex { get; set; }
 
-        // can empty
-        public string HomePhone { get; set; } //mask
-        public string MobilePhone { get; set; } //mask
+        public string HomePhone { get; set; }
+        public string MobilePhone { get; set; }
         public string Email { get; set; }
 
         public bool IsPensioner { get; set; }
@@ -65,9 +64,9 @@ namespace CodeFirst
         [Required]
         public string PassportSeries { get; set; }
         [Required]
-        public string PassportNumber { get; set; } //mask
+        public string PassportNumber { get; set; }
         [Required]
-        public string IdentNumber { get; set; } //mask
+        public string IdentNumber { get; set; }
 
         [Required]
         public string IssuedBy { get; set; }
@@ -97,14 +96,16 @@ namespace CodeFirst
         public virtual List<Client> Registrations { get; set; }
     }
 
-    public class City : IName
+    public class City : IEntityList
     {
         public City()
         {
             Places = new List<Place>();
         }
 
-        public int CityId { get; set; }
+        //public int CityId { get; set; }
+        [Key]
+        public int Id { get; set; }
         [Required]
         public string Name { get; set; }
 
@@ -113,39 +114,42 @@ namespace CodeFirst
 
     public class Currency : BaseEntity
     {
-        public int CurrencyId { get; set; }
+        //public int CurrencyId { get; set; }
     }
 
     public class Disability : BaseEntity
     {
-        public int DisabilityId { get; set; }
+        //public int DisabilityId { get; set; }
     }
 
     public class Nationality : BaseEntity
     {
-        public int NationalityId { get; set; }
+        //public int NationalityId { get; set; }
     }
 
     public class FamilyStatus : BaseEntity
     {
-        public int FamilyStatusId { get; set; }
+        //public int FamilyStatusId { get; set; }
     }
 
-    public class BaseEntity : IName
+    public class BaseEntity : IEntityList
     {
         public BaseEntity()
         {
             Clients = new List<Client>();
         }
 
+        public int Id { get; set; }
+
         [Required]
         public string Name { get; set; }
         public virtual List<Client> Clients { get; set; }
     }
 
-    public interface IName
+    public interface IEntityList
     {
-        string Name { get; }
+        int Id { get; }
+        string Name { get; set; }
     }
 
     public enum Sex
@@ -184,7 +188,7 @@ namespace CodeFirst
             copy.FamilyStatus = orig.FamilyStatus;
         }
 
-        public static bool NotValid(this IName entity)
+        public static bool NotValid(this IEntityList entity)
         {
             return entity == null ||
                    string.IsNullOrWhiteSpace(entity.Name);

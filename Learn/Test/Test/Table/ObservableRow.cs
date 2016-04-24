@@ -59,7 +59,7 @@ namespace Test.Table
                 Surname = new ValidableValue<string>(client.Surname),
                 Name = new ValidableValue<string>(client.Name),
                 MiddleName = new ValidableValue<string>(client.MiddleName),
-                BirthDate = new ValidableValue<DateTime>(client.BirthDate),
+                BirthDate = new ObservableValue<DateTime>(client.BirthDate),
                 BirthPlace = new ValidableValue<string>(client.BirthPlace),
                 Sex = new ObservableValue<Sex>(client.Sex),
 
@@ -100,8 +100,8 @@ namespace Test.Table
                 BirthPlace = (client.BirthPlace.Value),
                 Sex = (client.Sex.Value),
 
-                HomePhone = (client.HomePhone.Value),
-                MobilePhone = (client.MobilePhone.Value),
+                HomePhone = MaskedValidableValue.SkipWrongMaskedValue(client.HomePhone.Value),
+                MobilePhone = MaskedValidableValue.SkipWrongMaskedValue(client.MobilePhone.Value),
                 Email = (client.Email.Value),
 
                 PassportSeries = (client.PassportSeries.Value),
@@ -135,10 +135,10 @@ namespace Test.Table
                 MiddleName = new ValidableValue<string>(),
                 BirthDate = new ObservableValue<DateTime>(new DateTime(1990, 1, 1)),
                 BirthPlace = new ValidableValue<string>(),
-                Sex = new ObservableValue<Sex>(),
+                Sex = new ObservableValue<Sex>(CodeFirst.Sex.Male),
 
-                HomePhone = new MaskedValidableValue(),
-                MobilePhone = new MaskedValidableValue(),
+                HomePhone = new ObservableValue<string>(),
+                MobilePhone = new ObservableValue<string>(),
                 Email = new ObservableValue<string>(),
 
                 PassportSeries = new ValidableValue<string>(),
@@ -178,6 +178,11 @@ namespace Test.Table
                 }
                 return result;
             }
+        }
+
+        public static string SkipWrongMaskedValue(string val)
+        {
+            return val.Contains(TextBoxInputMaskBehavior.DefaultPromptChar) ? string.Empty : val;
         }
 
         public string Error

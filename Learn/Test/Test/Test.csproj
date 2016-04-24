@@ -117,11 +117,15 @@
     <Compile Include="BaseUI\AsUserControl.cs" />
     <Compile Include="BaseUI\AsWindow.cs" />
     <Compile Include="BaseUI\Columns\ColumnInfo.cs" />
+    <Compile Include="BaseUI\Columns\DataGridRadioColumn.cs" />
     <Compile Include="BaseUI\Columns\DataGridDateColumn.cs" />
     <Compile Include="BaseUI\Columns\DataGridItemSourceColumn.cs" />
     <Compile Include="BaseUI\Columns\DataGridMaskedTextColumn.cs" />
     <Compile Include="BaseUI\Convertors.cs" />
     <Compile Include="BaseUI\MarkTextBehavior.cs" />
+    <Compile Include="BaseUI\RadioSexControl.xaml.cs">
+      <DependentUpon>RadioSexControl.xaml</DependentUpon>
+    </Compile>
     <Compile Include="DbConnection\ConnectionHelper.cs" />
     <Compile Include="DbConnection\ConnectionView.xaml.cs">
       <DependentUpon>ConnectionView.xaml</DependentUpon>
@@ -137,15 +141,27 @@
     </Compile>
     <Compile Include="DbConnection\Smo\SqlConnectionControlViewModel.cs" />
     <Compile Include="MainWindowViewModel.cs" />
+    <Compile Include="Table\ListsFrame.xaml.cs">
+      <DependentUpon>ListsFrame.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Table\ListsFrameModel.cs" />
     <Compile Include="Table\ObservableRow.cs" />
+    <Compile Include="Table\TableFrame.xaml.cs">
+      <DependentUpon>TableFrame.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Table\TableView.xaml.cs">
       <DependentUpon>TableView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Table\TableFrameModel.cs" />
     <Compile Include="Table\TableViewModel.cs" />
     <Compile Include="ViewModel\DelegateCommand.cs" />
     <Compile Include="ViewModel\TypeHelper.cs" />
     <Compile Include="ViewModel\Utils.cs" />
     <Compile Include="ViewModel\ViewModelBase.cs" />
+    <Page Include="BaseUI\RadioSexControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="BaseUI\Styles.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -174,6 +190,14 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Table\ListsFrame.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Table\TableFrame.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Table\TableView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

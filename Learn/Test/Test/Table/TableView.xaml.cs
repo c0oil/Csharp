@@ -10,13 +10,9 @@ namespace Test.Table
         public TableView()
         {
             InitializeComponent();
-            ViewModel.Grid = grid;
-            Loaded += OnLoaded;
-        }
 
-        private void OnLoaded(object sender, RoutedEventArgs e)
-        {
-            TableViewModel.ExecuteAndCatchException(ViewModel.Refresh);
+            ViewModel.ListsFrame = listsFrame;
+            ViewModel.TableFrame = tableFrame;
         }
     }
 
