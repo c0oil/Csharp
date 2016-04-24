@@ -112,18 +112,10 @@ namespace CodeFirst
                 IssuedBy = (client.Passport.IssuedBy),
                 IssueDate = (client.Passport.IssueDate),
 
-                RegistrationCity = client.Registration != null
-                                    ?(client.Registration.City.Name)
-                                    : String.Empty,
-                RegistrationAdress = client.Registration != null
-                                    ? (client.Registration.Adress)
-                                    : String.Empty,
-                ResidenseCity = client.Residense != null
-                                    ? (client.Residense.City.Name)
-                                    : String.Empty,
-                ResidenseAdress = client.Residense != null
-                                    ? (client.Residense.Adress)
-                                    : String.Empty,
+                RegistrationCity = (client.Registration.City.Name),
+                RegistrationAdress = (client.Registration.Adress),
+                ResidenseCity = (client.Residense.City.Name),
+                ResidenseAdress = (client.Residense.Adress),
                 Disability = (client.Disability.Name),
                 Nationality = (client.Nationality.Name),
                 FamilyStatus = (client.FamilyStatus.Name),

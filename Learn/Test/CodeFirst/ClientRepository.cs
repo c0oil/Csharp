@@ -154,6 +154,10 @@ namespace CodeFirst
                 switch (selectedList)
                 {
                     case ClientList.City:
+                        var city = (City)removed;
+                        IEnumerable<Client> relatedClients = city.Places.SelectMany(x => x.Registrations).
+                            Concat(city.Places.SelectMany(x => x.Residenses)).Distinct();
+                        Select<Client>().RemoveRange(relatedClients);
                         context.Cities.Remove((City) removed);
                         break;
                     case ClientList.Disability:
