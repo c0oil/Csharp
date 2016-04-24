@@ -41,13 +41,25 @@ namespace Test.Table
         public ObservableValue<bool> IsPensioner { get; set; }
         public ObservableValue<bool> IsReservist { get; set; }
 
-        public ObservableValue<double?> MonthlyIncome { get; set; }
+        public DoubleValidableValue MonthlyIncome { get; set; }
         public ObservableValue<string> Currency { get; set; }
 
         public const int NewId = -1;
         public bool IsNew
         {
             get { return ClientId == NewId; }
+        }
+
+        public bool HasError
+        {
+            get
+            {
+                return Surname.HasError || Name.HasError || MiddleName.HasError || BirthPlace.HasError ||
+                       PassportSeries.HasError || PassportNumber.HasError || IdentNumber.HasError || IssuedBy.HasError ||
+                       RegistrationCity.HasError || RegistrationAdress.HasError || 
+                       ResidenseCity.HasError || ResidenseAdress.HasError ||
+                       Disability.HasError || Nationality.HasError || FamilyStatus.HasError || MonthlyIncome.HasError;
+            }
         }
 
         public static ObservableRow ConvertToRow(ClientObj client)
@@ -82,7 +94,7 @@ namespace Test.Table
                 FamilyStatus = new ValidableValue<string>(client.FamilyStatus),
                 IsPensioner = new ObservableValue<bool>(client.IsPensioner),
                 IsReservist = new ObservableValue<bool>(client.IsReservist),
-                MonthlyIncome = new ObservableValue<double?>(client.MonthlyIncome),
+                MonthlyIncome = new DoubleValidableValue(client.MonthlyIncome.ToString()),
                 Currency = new ObservableValue<string>(client.Currency),
             };
         }
@@ -119,7 +131,9 @@ namespace Test.Table
                 FamilyStatus = (client.FamilyStatus.Value),
                 IsPensioner = (client.IsPensioner.Value),
                 IsReservist = (client.IsReservist.Value),
-                MonthlyIncome = (client.MonthlyIncome.Value),
+                MonthlyIncome = string.IsNullOrWhiteSpace(client.MonthlyIncome.Value)
+                                    ? (double?) null
+                                    : Double.Parse(client.MonthlyIncome.Value),
                 Currency = (client.Currency.Value),
             };
         }
@@ -156,10 +170,38 @@ namespace Test.Table
                 FamilyStatus = new ValidableValue<string>(),
                 IsPensioner = new ObservableValue<bool>(),
                 IsReservist = new ObservableValue<bool>(),
-                MonthlyIncome = new ObservableValue<double?>(),
+                MonthlyIncome = new DoubleValidableValue(),
                 Currency = new ObservableValue<string>(),
             };
         }
+    }
+
+    public class DoubleValidableValue : ObservableValue<string>, IDataErrorInfo
+    {
+        public DoubleValidableValue() { }
+        public DoubleValidableValue(string initValue) : base(initValue) { }
+
+        public string this[string columnName]
+        {
+            get
+            {
+                string result = null;
+                double number;
+                if (columnName == "Value" && !string.IsNullOrWhiteSpace(Value) && !double.TryParse(Value, out number))
+                {
+                    result = "Please enter Value";
+                }
+                HasError = result != null;
+                return result;
+            }
+        }
+
+        public string Error
+        {
+            get { return "Please enter Value"; }
+        }
+
+        public bool HasError { get; set; }
     }
 
     public class MaskedValidableValue : ObservableValue<string>, IDataErrorInfo
@@ -176,6 +218,7 @@ namespace Test.Table
                 {
                     result = "Please enter Value";
                 }
+                HasError = result != null;
                 return result;
             }
         }
@@ -189,6 +232,8 @@ namespace Test.Table
         {
             get { return "Please enter Value"; }
         }
+
+        public bool HasError { get; set; }
     }
 
     public class ValidableValue<T> : ObservableValue<T>, IDataErrorInfo
@@ -205,14 +250,17 @@ namespace Test.Table
                 {
                     result = "Please enter Value";
                 }
+                HasError = result != null;
                 return result;
             }
         }
 
         public string Error
         {
-            get { return "Please enter Value"; }
+            get { return Value.ToString(); }
         }
+
+        public bool HasError { get; set; }
     }
 
     public class ObservableValue<T> : ObservableObject

@@ -103,7 +103,6 @@ namespace CodeFirst
             Places = new List<Place>();
         }
 
-        //public int CityId { get; set; }
         [Key]
         public int Id { get; set; }
         [Required]
@@ -112,25 +111,13 @@ namespace CodeFirst
         public virtual List<Place> Places { get; set; }
     }
 
-    public class Currency : BaseEntity
-    {
-        //public int CurrencyId { get; set; }
-    }
+    public class Currency : BaseEntity { }
 
-    public class Disability : BaseEntity
-    {
-        //public int DisabilityId { get; set; }
-    }
+    public class Disability : BaseEntity { }
 
-    public class Nationality : BaseEntity
-    {
-        //public int NationalityId { get; set; }
-    }
+    public class Nationality : BaseEntity { }
 
-    public class FamilyStatus : BaseEntity
-    {
-        //public int FamilyStatusId { get; set; }
-    }
+    public class FamilyStatus : BaseEntity { }
 
     public class BaseEntity : IEntityList
     {

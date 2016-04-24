@@ -49,8 +49,7 @@ namespace Test.Table
             }
 
             ObservableRow selectedRow = (ObservableRow)Grid.SelectedItem;
-            bool rowHasError = Validation.GetHasError(Grid.ItemContainerGenerator.ContainerFromItem(selectedRow));
-            if (rowHasError)
+            if (selectedRow.HasError)
             {
                 MessageBox.Show("Please, input correct data", "Update Row", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -94,8 +93,6 @@ namespace Test.Table
             ClientRepository.RefreshLists();
             CreateLayaout();
 
-            var t = ClientRepository.GetTest();
-            var p = ClientRepository.Select<City>();
             IEnumerable<ClientObj> allClients = ClientRepository.GetAll();
             DataGrid = new ObservableCollection<ObservableRow>(allClients.Select(ObservableRow.ConvertToRow));
         }

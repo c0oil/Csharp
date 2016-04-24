@@ -51,8 +51,10 @@ namespace CodeFirst
             Client origClient = Select<Client>().Find(newClient.ClientId);
             if (origClient == null)
             {
-                FillPlaces(origClient);
-                Insert(clientObj);
+                FillPlaces(newClient);
+                Select<Client>().Add(newClient);
+                context.SaveChanges();
+                //Insert(clientObj);
                 MessageBox.Show("Data insered", "ClientRepository", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
@@ -149,7 +151,28 @@ namespace CodeFirst
             IEntityList removed = list.FirstOrDefault(x => x.Id == entityId);
             if (removed != null)
             {
-                Delete(removed);
+                switch (selectedList)
+                {
+                    case ClientList.City:
+                        context.Cities.Remove((City) removed);
+                        break;
+                    case ClientList.Disability:
+                        context.Disabilities.Remove((Disability)removed);
+                        break;
+                    case ClientList.Nationality:
+                        context.Nationalities.Remove((Nationality)removed);
+                        break;
+                    case ClientList.FamilyStatus:
+                        context.FamilyStatuses.Remove((FamilyStatus)removed);
+                        break;
+                    case ClientList.Currency:
+                        context.Currencies.Remove((Currency)removed);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException("selectedList", selectedList, null);
+                }
+                context.SaveChanges();
+                //Delete(removed);
             }
         }
 
