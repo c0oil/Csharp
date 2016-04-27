@@ -164,8 +164,7 @@ namespace CodeFirst
                 passports.Add(passport);
 
                 client.Passport = passport;
-                client.Residense = TakeItem(i, 1, places);
-                client.Registration = TakeItem(i, 3, places);
+                client.Residense = TakeItem(i, 3, places);
                 client.Disability = TakeItem(i, 3, disabilities);
                 client.Nationality = TakeItem(i, 4, nationalities);
                 client.FamilyStatus = TakeItem(i, 3, familyStatuses);

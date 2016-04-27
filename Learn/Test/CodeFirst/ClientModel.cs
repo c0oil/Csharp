@@ -30,12 +30,10 @@ namespace CodeFirst
 
         public double? MonthlyIncome { get; set; }
 
-        [ForeignKey("Passport")]
+        [Required, ForeignKey("Passport")]
         public int PassportId { get; set; }
-        [ForeignKey("Registration")]
-        public int? RegistrationId { get; set; }
-        [ForeignKey("Residense")]
-        public int? ResidenseId { get; set; }
+        [Required, ForeignKey("Residense")]
+        public int ResidenseId { get; set; }
         [Required, ForeignKey("Disability")]
         public int DisabilityId { get; set; }
         [Required, ForeignKey("Nationality")]
@@ -45,11 +43,7 @@ namespace CodeFirst
         [Required, ForeignKey("Currency")]
         public int CurrencyId { get; set; }
         
-        
         public virtual Passport Passport { get; set; }
-        [InverseProperty("Residenses")]
-        public virtual Place Registration { get; set; }
-        [InverseProperty("Registrations")]
         public virtual Place Residense { get; set; }
         public virtual Disability Disability { get; set; }
         public virtual Nationality Nationality { get; set; }
@@ -80,7 +74,6 @@ namespace CodeFirst
         public Place()
         {
             Residenses = new List<Client>();
-            Registrations = new List<Client>();
         }
         
         public int PlaceId { get; set; }
@@ -93,7 +86,6 @@ namespace CodeFirst
         [Required]
         public virtual City City { get; set; }
         public virtual List<Client> Residenses { get; set; }
-        public virtual List<Client> Registrations { get; set; }
     }
 
     public class City : IEntityList
@@ -161,12 +153,11 @@ namespace CodeFirst
             copy.Email = orig.Email;
 
             copy.Passport = orig.Passport;
+            copy.Residense = orig.Residense;
+
             copy.IsPensioner = orig.IsPensioner;
             copy.IsReservist = orig.IsReservist;
             copy.MonthlyIncome = orig.MonthlyIncome;
-
-            copy.Registration = orig.Registration;
-            copy.Residense = orig.Residense;
 
             copy.Disability = orig.Disability;
             copy.Currency = orig.Currency;
@@ -203,7 +194,6 @@ namespace CodeFirst
                    string.IsNullOrWhiteSpace(entity.MiddleName) ||
                    string.IsNullOrWhiteSpace(entity.BirthPlace) ||
 
-                   entity.Registration.NotValid() ||
                    entity.Residense.NotValid() ||
 
                    entity.Nationality.NotValid() ||

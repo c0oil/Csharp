@@ -56,7 +56,6 @@
     <Compile Include="ClientRepository.cs" />
     <Compile Include="FillDefaultContextInitializer.cs" />
     <Compile Include="ClientModel.cs" />
-    <Compile Include="ListRepository.cs" />
     <Compile Include="Repository.cs" />
     <Compile Include="ClientContext.cs" />
   </ItemGroup>

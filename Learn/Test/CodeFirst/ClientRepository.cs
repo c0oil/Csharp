@@ -12,11 +12,6 @@ namespace CodeFirst
         {
         }
 
-        public IEnumerable<Place> GetTest()
-        {
-            return Select<Place>().Include(x => x.City);
-        }
-
         public IEnumerable<ClientObj> GetAll()
         {
             return Select<Client>().
@@ -27,8 +22,6 @@ namespace CodeFirst
                 Include(x => x.Nationality).
                 Include(x => x.Residense).
                 Include(x => x.Residense.City).
-                Include(x => x.Registration).
-                Include(x => x.Registration.City).
                 Select(ClientObj.ConvertToObj).AsEnumerable();
         }
 
@@ -52,9 +45,7 @@ namespace CodeFirst
             if (origClient == null)
             {
                 FillPlaces(newClient);
-                Select<Client>().Add(newClient);
-                context.SaveChanges();
-                //Insert(clientObj);
+                Insert(newClient);
                 MessageBox.Show("Data insered", "ClientRepository", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
@@ -72,14 +63,7 @@ namespace CodeFirst
             var finded = places.FirstOrDefault(x => x.City.Name == origClient.Residense.City.Name && x.Adress == origClient.Residense.Adress);
             if (finded != null)
             {
-                origClient.ResidenseId = finded.PlaceId;
                 origClient.Residense = finded;
-            }
-            finded = places.FirstOrDefault(x => x.City.Name == origClient.Registration.City.Name && x.Adress == origClient.Registration.Adress);
-            if (finded != null)
-            {
-                origClient.RegistrationId = finded.PlaceId;
-                origClient.Registration = finded;
             }
         }
 
@@ -149,35 +133,32 @@ namespace CodeFirst
         {
             var list = GetList(selectedList);
             IEntityList removed = list.FirstOrDefault(x => x.Id == entityId);
-            if (removed != null)
+            if (removed == null)
             {
-                switch (selectedList)
-                {
-                    case ClientList.City:
-                        var city = (City)removed;
-                        IEnumerable<Client> relatedClients = city.Places.SelectMany(x => x.Registrations).
-                            Concat(city.Places.SelectMany(x => x.Residenses)).Distinct();
-                        Select<Client>().RemoveRange(relatedClients);
-                        context.Cities.Remove((City) removed);
-                        break;
-                    case ClientList.Disability:
-                        context.Disabilities.Remove((Disability)removed);
-                        break;
-                    case ClientList.Nationality:
-                        context.Nationalities.Remove((Nationality)removed);
-                        break;
-                    case ClientList.FamilyStatus:
-                        context.FamilyStatuses.Remove((FamilyStatus)removed);
-                        break;
-                    case ClientList.Currency:
-                        context.Currencies.Remove((Currency)removed);
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException("selectedList", selectedList, null);
-                }
-                context.SaveChanges();
-                //Delete(removed);
+               return; 
             }
+
+            switch (selectedList)
+            {
+                case ClientList.City:
+                    Delete((City)removed);
+                    break;
+                case ClientList.Disability:
+                    Delete((Disability)removed);
+                    break;
+                case ClientList.Nationality:
+                    Delete((Nationality)removed);
+                    break;
+                case ClientList.FamilyStatus:
+                    Delete((FamilyStatus)removed);
+                    break;
+                case ClientList.Currency:
+                    Delete((Currency)removed);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("selectedList", selectedList, null);
+            }
+            context.SaveChanges();
         }
 
         public void Add(string newName, ClientList selectedList)

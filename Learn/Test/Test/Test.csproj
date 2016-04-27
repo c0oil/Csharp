@@ -127,7 +127,7 @@
     <Compile Include="BaseUI\RadioSexControl.xaml.cs">
       <DependentUpon>RadioSexControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="BaseUI\RowDataInfoValidationRule.cs" />
+    <Compile Include="Table\Observable\ObservableRowValidationRule.cs" />
     <Compile Include="DbConnection\ConnectionHelper.cs" />
     <Compile Include="DbConnection\ConnectionView.xaml.cs">
       <DependentUpon>ConnectionView.xaml</DependentUpon>
@@ -147,7 +147,8 @@
       <DependentUpon>ListsFrame.xaml</DependentUpon>
     </Compile>
     <Compile Include="Table\ListsFrameModel.cs" />
-    <Compile Include="Table\ObservableRow.cs" />
+    <Compile Include="Table\Observable\ObservableRow.cs" />
+    <Compile Include="Table\Observable\ObservableValue.cs" />
     <Compile Include="Table\TableFrame.xaml.cs">
       <DependentUpon>TableFrame.xaml</DependentUpon>
     </Compile>
@@ -156,6 +157,7 @@
     </Compile>
     <Compile Include="Table\TableFrameModel.cs" />
     <Compile Include="Table\TableViewModel.cs" />
+    <Compile Include="Table\Observable\ValidableValue.cs" />
     <Compile Include="ViewModel\DelegateCommand.cs" />
     <Compile Include="ViewModel\TypeHelper.cs" />
     <Compile Include="ViewModel\Utils.cs" />

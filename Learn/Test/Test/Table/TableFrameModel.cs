@@ -7,8 +7,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using CodeFirst;
-using Test.BaseUI;
 using Test.BaseUI.Columns;
+using Test.Table.Observable;
 using Test.ViewModel;
 
 namespace Test.Table
@@ -118,8 +118,6 @@ namespace Test.Table
                 GetColumnInfo(x => x.IssuedBy, caption: "Кем выдан"),
                 GetColumnInfo(x => x.IssueDate, ColumnType.DateTime, caption: "Дата выдачи"),
 
-                GetColumnInfo(x => x.RegistrationCity, ColumnType.ComboBox, ClientRepository.GetNames<City>(), caption: "Город прописки"),
-                GetColumnInfo(x => x.RegistrationAdress, caption: "Адрес прописки"),
                 GetColumnInfo(x => x.ResidenseCity, ColumnType.ComboBox, ClientRepository.GetNames<City>(), caption: "Город факт.проживания"),
                 GetColumnInfo(x => x.ResidenseAdress, caption: "Адрес факт.проживания"),
 

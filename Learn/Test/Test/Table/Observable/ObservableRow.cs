@@ -1,12 +1,7 @@
 using System;
-using System.ComponentModel;
-using System.Linq;
-using System.Linq.Expressions;
 using CodeFirst;
-using Test.BaseUI;
-using Test.ViewModel;
 
-namespace Test.Table
+namespace Test.Table.Observable
 {
     public class ObservableRow
     {
@@ -29,8 +24,6 @@ namespace Test.Table
         public ValidableValue<string> IssuedBy { get; set; }
         public ObservableValue<DateTime> IssueDate { get; set; }
 
-        public ValidableValue<string> RegistrationCity { get; set; }
-        public ValidableValue<string> RegistrationAdress { get; set; }
         public ValidableValue<string> ResidenseCity { get; set; }
         public ValidableValue<string> ResidenseAdress { get; set; }
 
@@ -56,7 +49,6 @@ namespace Test.Table
             {
                 return Surname.HasError || Name.HasError || MiddleName.HasError || BirthPlace.HasError ||
                        PassportSeries.HasError || PassportNumber.HasError || IdentNumber.HasError || IssuedBy.HasError ||
-                       RegistrationCity.HasError || RegistrationAdress.HasError || 
                        ResidenseCity.HasError || ResidenseAdress.HasError ||
                        Disability.HasError || Nationality.HasError || FamilyStatus.HasError || MonthlyIncome.HasError;
             }
@@ -85,8 +77,6 @@ namespace Test.Table
                 IssuedBy = new ValidableValue<string>(client.IssuedBy),
                 IssueDate = new ObservableValue<DateTime>(client.IssueDate),
 
-                RegistrationCity = new ValidableValue<string>(client.RegistrationCity),
-                RegistrationAdress = new ValidableValue<string>(client.RegistrationAdress),
                 ResidenseCity = new ValidableValue<string>(client.ResidenseCity),
                 ResidenseAdress = new ValidableValue<string>(client.ResidenseAdress),
                 Disability = new ValidableValue<string>(client.Disability),
@@ -122,8 +112,6 @@ namespace Test.Table
                 IssuedBy = (client.IssuedBy.Value),
                 IssueDate = (client.IssueDate.Value),
 
-                RegistrationCity = (client.RegistrationCity.Value),
-                RegistrationAdress = (client.RegistrationAdress.Value),
                 ResidenseCity = (client.ResidenseCity.Value),
                 ResidenseAdress = (client.ResidenseAdress.Value),
                 Disability = (client.Disability.Value),
@@ -161,8 +149,6 @@ namespace Test.Table
                 IssuedBy = new ValidableValue<string>(),
                 IssueDate = new ObservableValue<DateTime>(new DateTime(1990, 1, 1)),
 
-                RegistrationCity = new ValidableValue<string>(),
-                RegistrationAdress = new ValidableValue<string>(),
                 ResidenseCity = new ValidableValue<string>(),
                 ResidenseAdress = new ValidableValue<string>(),
                 Disability = new ValidableValue<string>(),
@@ -173,147 +159,6 @@ namespace Test.Table
                 MonthlyIncome = new DoubleValidableValue(),
                 Currency = new ObservableValue<string>(),
             };
-        }
-    }
-
-    public class DoubleValidableValue : ObservableValue<string>, IDataErrorInfo
-    {
-        public DoubleValidableValue() { }
-        public DoubleValidableValue(string initValue) : base(initValue) { }
-
-        public string this[string columnName]
-        {
-            get
-            {
-                string result = null;
-                double number;
-                if (columnName == "Value" && !string.IsNullOrWhiteSpace(Value) && !double.TryParse(Value, out number))
-                {
-                    result = "Please enter Value";
-                }
-                HasError = result != null;
-                return result;
-            }
-        }
-
-        public string Error
-        {
-            get { return "Please enter Value"; }
-        }
-
-        public bool HasError { get; set; }
-    }
-
-    public class MaskedValidableValue : ObservableValue<string>, IDataErrorInfo
-    {
-        public MaskedValidableValue() { }
-        public MaskedValidableValue(string initValue) : base(initValue) { }
-
-        public string this[string columnName]
-        {
-            get
-            {
-                string result = null;
-                if (columnName == "Value" && (string.IsNullOrEmpty(Value) || Value.Contains(TextBoxInputMaskBehavior.DefaultPromptChar)))
-                {
-                    result = "Please enter Value";
-                }
-                HasError = result != null;
-                return result;
-            }
-        }
-
-        public static string SkipWrongMaskedValue(string val)
-        {
-            return val.Contains(TextBoxInputMaskBehavior.DefaultPromptChar) ? string.Empty : val;
-        }
-
-        public string Error
-        {
-            get { return "Please enter Value"; }
-        }
-
-        public bool HasError { get; set; }
-    }
-
-    public class ValidableValue<T> : ObservableValue<T>, IDataErrorInfo
-    {
-        public ValidableValue() { }
-        public ValidableValue(T initValue): base(initValue) { }
-
-        public string this[string columnName]
-        {
-            get
-            {
-                string result = null;
-                if (columnName == "Value" && (string.IsNullOrEmpty(Value as string)))
-                {
-                    result = "Please enter Value";
-                }
-                HasError = result != null;
-                return result;
-            }
-        }
-
-        public string Error
-        {
-            get { return Value.ToString(); }
-        }
-
-        public bool HasError { get; set; }
-    }
-
-    public class ObservableValue<T> : ObservableObject
-    {
-        public ObservableValue()
-        {
-            Value = default(T);
-        }
-
-        public ObservableValue(T initValue)
-        {
-            Value = initValue;
-        }
-
-        private T _value;
-        public T Value
-        {
-            get { return _value; }
-            set
-            {
-                _value = value;
-                OnPropertyChanged(() => Value);
-            }
-        }
-    }
-
-    public abstract class ObservableObject : INotifyPropertyChanged
-    {
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        public void OnPropertyChanged<T>(Expression<Func<T>> propertyExpression)
-        {
-            if (PropertyChanged == null)
-                return;
-            string name = TypeHelper.GetPropertyName(propertyExpression);
-            TypeHelper.VerifyPropertyName(this, name);
-            PropertyChanged.Invoke(this, new PropertyChangedEventArgs(name));
-        }
-
-        public void OnPropertyChanged(string propertyName)
-        {
-            if (PropertyChanged == null)
-                return;
-            TypeHelper.VerifyPropertyName(this, propertyName);
-            PropertyChanged.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        public void NotifyAllChanged()
-        {
-            if (PropertyChanged == null)
-                return;
-            foreach (string property in TypeHelper.GetProperties(this))
-                PropertyChanged(this, new PropertyChangedEventArgs(property));
         }
     }
 }

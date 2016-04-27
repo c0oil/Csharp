@@ -15,18 +15,16 @@ namespace CodeFirst
         public string BirthPlace { get; set; }
         public Sex Sex { get; set; }
 
-        public string HomePhone { get; set; } //mask
-        public string MobilePhone { get; set; } //mask
+        public string HomePhone { get; set; }
+        public string MobilePhone { get; set; }
         public string Email { get; set; }
 
         public string PassportSeries { get; set; }
-        public string PassportNumber { get; set; } //mask
-        public string IdentNumber { get; set; } //mask
+        public string PassportNumber { get; set; }
+        public string IdentNumber { get; set; }
         public string IssuedBy { get; set; }
         public DateTime IssueDate { get; set; }
 
-        public string RegistrationCity { get; set; }
-        public string RegistrationAdress { get; set; }
         public string ResidenseCity { get; set; }
         public string ResidenseAdress { get; set; }
 
@@ -68,11 +66,6 @@ namespace CodeFirst
                     IssueDate = clientObj.IssueDate,
                 },
 
-                Registration = new Place
-                {
-                    City = cities.FirstOrDefault(x => x.Name == clientObj.RegistrationCity),
-                    Adress = clientObj.RegistrationAdress,
-                },
                 Residense = new Place
                 {
                     City = cities.FirstOrDefault(x => x.Name == clientObj.ResidenseCity),
@@ -112,8 +105,6 @@ namespace CodeFirst
                 IssuedBy = (client.Passport.IssuedBy),
                 IssueDate = (client.Passport.IssueDate),
 
-                RegistrationCity = (client.Registration.City.Name),
-                RegistrationAdress = (client.Registration.Adress),
                 ResidenseCity = (client.Residense.City.Name),
                 ResidenseAdress = (client.Residense.Adress),
                 Disability = (client.Disability.Name),
