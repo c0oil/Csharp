@@ -3,7 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Media;
+using Parcer.BaseControls;
 using Parcer.ViewModel;
 
 namespace Parcer
@@ -11,7 +15,7 @@ namespace Parcer
     public class MainWindowViewModel : ViewModelBase
     {
         private string descriptionRules =
-@"'{' и '}' пишутся как'{{' и '}}' в поле Replace Setting
+@"'{' и '}' пишутся как'\{' и '\}' в поле Replace Setting
 
 \d 	[0-9] 	Цифровой символ
 \D 	[^0-9] 	Нецифровой символ
@@ -30,19 +34,15 @@ namespace Parcer
         private string sampleFindSetting = "(\\S+)\\s+(\\S+)";
         private string sampleReplaceSetting = "\\{\\r\\n{0}, {1}\\r\\n\\}";
         private string sampleInText =
-@"18,580	18,000
-1,450	1,500
-13	12
-228	238
-81	76
-8.0	8.1
-0.007	0.006
-6,000	6,800";
+@"18,580	18,000 	1,450	1,500
+13	12 	228	238
+81	76	8.0	8.1
+0.007	0.006	6,000	6,800";
 
         private readonly Parser parser = new Parser();
         
-        private string inText;
-        public string InText
+        private ColorSource inText;
+        public ColorSource InText
         {
             get { return inText; }
             set
@@ -97,13 +97,13 @@ namespace Parcer
         {
             try
             {
-                OutText = parser.Replace(InText, FindSetting, ReplaceSetting);
+                OutText = parser.Replace(InText.Text, FindSetting, ReplaceSetting);
+                InText = new ColorSource { Text = InText.Text };
 
             }
             catch (Exception e)
             {
-                OutText = InText;
-                Console.WriteLine(e);
+                MessageBox.Show(e.StackTrace, "Exception", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -111,13 +111,12 @@ namespace Parcer
         {
             try
             {
-                OutText = parser.Find(InText, FindSetting);
+                InText = new ColorSource { Text = InText.Text, HighlightWords = parser.Highlight(InText.Text, FindSetting) };
 
             }
             catch (Exception e)
             {
-                OutText = InText;
-                Console.WriteLine(e);
+                MessageBox.Show(e.StackTrace, "Exception", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -125,15 +124,53 @@ namespace Parcer
         {
             FindSetting = sampleFindSetting;
             ReplaceSetting = sampleReplaceSetting;
-            InText = sampleInText;
+            InText = new ColorSource { Text = sampleInText };
         }
     }
 
     public class Parser
     {
-        public string Find(string inText, string findSetting)
+        private readonly Color[] colors =
         {
-            return string.Empty;
+            Colors.CadetBlue,
+            Colors.Yellow,
+            Colors.YellowGreen,
+            Colors.DeepPink,
+        };
+
+        public IEnumerable<ColorWord> Highlight(string inText, string setting)
+        {
+            IEnumerable<Tuple<int, int, int>> words = Find(inText, setting);
+            return words.Select(x => new ColorWord
+            {
+                Color = colors[x.Item1 % colors.Length],
+                Start = x.Item2,
+                End = x.Item3,
+            });
+        }
+
+        public IEnumerable<Tuple<int, int, int>> Find(string inText, string setting)
+        {
+            if (string.IsNullOrEmpty(inText))
+            {
+                return null;
+            }
+
+            var r = new Regex(setting, RegexOptions.IgnoreCase);
+            var matches = r.Matches(inText);
+            if (matches.Count == 0)
+            {
+                return null;
+            }
+            
+            var highlightedWords = new List<Tuple<int, int, int>>();
+            foreach (Match match in matches)
+            {
+                highlightedWords.AddRange(FindMatch(match));
+            }
+            
+            return highlightedWords;
+
         }
 
         public string Replace(string inText, string setting, string replaceSetting)
@@ -190,17 +227,16 @@ namespace Parcer
                 stringBuilder.Replace($"\\{simbol.Key}", $"{simbol.Value}");
             }
             return stringBuilder.ToString();
+        }
 
-            /*foreach (var simbol in simbols)
-            {
-                replaceSetting = replaceSetting.Replace($"\\{simbol.Key}", $"{simbol.Value}");
-            }
-            return replaceSetting;*/
+        private IEnumerable<Tuple<int, int, int>> FindMatch(Match match)
+        {
+            return match.Groups.Cast<Group>().Skip(1).Select((x, i) => new Tuple<int, int, int>(i, x.Index, x.Index + x.Length));
         }
 
         private string FormatMatch(Match match, string replaceSetting)
         {
-            var args = match.Groups.Cast<Group>().Skip(1).Select(x => x.Value).Cast<object>().ToArray();
+            object[] args = match.Groups.Cast<Group>().Skip(1).Select(x => x.Value).Cast<object>().ToArray();
             return string.Format(replaceSetting, args);
         }
     }

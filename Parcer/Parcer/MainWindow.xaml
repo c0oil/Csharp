@@ -15,6 +15,9 @@
                 <Style TargetType="{x:Type TextBox}">
                     <Setter Property="FontFamily" Value="Consolas"/>
                 </Style>
+                <Style TargetType="{x:Type baseControls:AsColorTextBox}">
+                    <Setter Property="FontFamily" Value="Consolas"/>
+                </Style>
             </Grid.Resources>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -57,7 +60,7 @@
                 </Grid.ColumnDefinitions>
 
                 <Border Grid.Column="0" >
-                    <TextBox Text="{Binding InText}" TextWrapping="Wrap" AcceptsReturn="True" />
+                    <baseControls:AsColorTextBox ColorSource="{Binding InText}" AcceptsReturn="True" />
                 </Border>
                 <Border Grid.Column="1" BorderBrush="Green" BorderThickness="1">
                     <TextBox Text="{Binding OutText}" TextWrapping="Wrap" AcceptsReturn="True" IsReadOnly="True" />
