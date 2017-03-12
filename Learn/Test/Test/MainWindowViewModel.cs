@@ -1,66 +1,94 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Data.Linq;
+﻿using System.Data.SqlClient;
 using System.Linq;
-using System.Windows.Controls;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
-using Test.Db;
+using Test.DbConnection;
+using Test.DbConnection.Smo;
+using Test.Table;
 using Test.ViewModel;
 
 namespace Test
 {
     public class MainWindowViewModel : ViewModelBase
     {
-        private string findTemplate = "London";
-        public string FindTemplate
+        public SqlConnectionStringBuilder ConnectionBuilder { get; set; }
+
+        private ICommand connectCommand;
+        public ICommand ConnectCommand
         {
-            get { return findTemplate; }
+            get { return GetDelegateCommand<object>(ref connectCommand, x => Connect()); }
+        }
+
+        private ICommand showTablesCommand;
+        public ICommand ShowTablesCommand
+        {
+            get { return GetDelegateCommand<object>(ref showTablesCommand, x => ShowTables()); }
+        }
+        
+        private bool isConnecting;
+        public bool IsConnecting
+        {
+            get { return isConnecting; }
             set
             {
-                findTemplate = value;
-                OnPropertyChanged(() => FindTemplate);
+                isConnecting = value;
+                OnPropertyChanged(() => IsConnecting);
             }
         }
 
-        private ICommand refreshCommand;
-        public ICommand RefreshCommand
+        private bool isConnected;
+        public bool IsConnected
         {
-            get { return GetDelegateCommand<object>(ref refreshCommand, x => Refresh()); }
-        }
-
-        private ObservableCollection<Row> gridData = new ObservableCollection<Row>();
-        public ObservableCollection<Row> GridData
-        {
-            get { return gridData; }
+            get { return isConnected; }
             set
             {
-                gridData = value;
-                OnPropertyChanged(() => GridData);
+                isConnected = value;
+                OnPropertyChanged(() => IsConnected);
             }
         }
 
-        public void Refresh()
+        public MainWindowViewModel()
         {
-            DataContext db = new DataContext(@"c:\linqtest5\NORTHWND.MDF");
-            Table<DbTables.Customer> customers = db.GetTable<DbTables.Customer>();
-            IQueryable<DbTables.Customer> custQuery = customers.Where(cust => cust.City.StartsWith(FindTemplate));
+            ConnectionBuilder = new SqlConnectionStringBuilder(ConnectionHelper.GetConnectionStringSettings());
+            CheckConnection();
+        }
 
-            GridData.Clear();
-            foreach (DbTables.Customer customer in custQuery)
+        private async void CheckConnection()
+        {
+            IsConnecting = true;
+            IsConnected = await Task<bool>.Factory.StartNew(() =>
+                ConnectionHelper.TestConnection(ConnectionBuilder.ConnectionString));
+            IsConnecting = false;
+
+            if (IsConnected)
             {
-                GridData.Add(new Row
-                {
-                    City = customer.City,
-                    CustomerID = customer.CustomerID
-                });
+                ConnectionHelper.SaveConnectionStringSettings(ConnectionBuilder.ConnectionString);
             }
         }
 
-        public class Row
+        private void ShowTables()
         {
-            public string CustomerID { get; set; }
-            public string City { get; set; }
+            bool? result = ShowDialog<TableView>(connectionView =>
+            {
+                connectionView.ViewModel.ConnectionString = ConnectionBuilder.ConnectionString;
+            });
         }
 
+        private void Connect()
+        {
+            ConnectionViewModel viewModel = null;
+            bool? result = ShowDialog<ConnectionView>(connectionView =>
+            {
+                viewModel = connectionView.ViewModel;
+                viewModel.ConnectionBuilder = ConnectionBuilder;
+            });
+            if (result == true)
+            {
+                ConnectionBuilder = viewModel.ConnectionBuilder;
+            }
+
+            CheckConnection();
+        }
     }
 }

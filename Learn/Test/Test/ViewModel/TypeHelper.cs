@@ -1,13 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
 namespace Test.ViewModel
 {
-    static class TypeHelper
+    public static class TypeHelper
     {
+        public static string GetPropertyName<TSource, TProperty>(TSource source, Expression<Func<TSource, TProperty>> propertyLambda)
+        {
+            Type type = typeof(TSource);
+
+            MemberExpression member = propertyLambda.Body as MemberExpression;
+            if (member == null)
+                throw new ArgumentException(string.Format("Expression '{0}' refers to a method, not a property.", propertyLambda));
+
+            PropertyInfo propInfo = member.Member as PropertyInfo;
+            if (propInfo == null)
+                throw new ArgumentException(string.Format("Expression '{0}' refers to a field, not a property.", propertyLambda));
+
+            if (type != propInfo.ReflectedType && !type.IsSubclassOf(propInfo.ReflectedType))
+                throw new ArgumentException(string.Format("Expresion '{0}' refers to a property that is not from type {1}.", propertyLambda, type));
+
+            return propInfo.Name;
+        }
+
         public static string GetPropertyName<T>(Expression<Func<T>> p)
         {
             return GetPropertyNameInternal(p);
@@ -32,6 +52,23 @@ namespace Test.ViewModel
                 memberExpression = (MemberExpression)p.Body;
             }
             return (PropertyInfo)(memberExpression).Member;
+        }
+
+        public static IEnumerable<string> GetProperties(object obj)
+        {
+            if (obj == null)
+                throw new ArgumentNullException();
+            return obj.GetType().GetProperties().Select(p => p.Name);
+        }
+
+        [Conditional("DEBUG")]
+        [DebuggerStepThrough]
+        public static void VerifyPropertyName(object target, string name)
+        {
+            if (TypeDescriptor.GetProperties(target)[name] == null)
+            {
+                throw new ArgumentException(string.Format("Property {0} doesn't exists in class {1}", name, TypeDescriptor.GetClassName(target)));
+            }
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using System.Windows;
+﻿using System.Windows;
 using Test.ViewModel;
 
 namespace Test.BaseUI
@@ -9,6 +8,21 @@ namespace Test.BaseUI
         public AsWindow()
         {
             ViewModel = new T();
+            WindowStartupLocation = WindowStartupLocation.CenterScreen;
+
+            bool? dialogResult = null;
+            Closing += (sender, e) =>
+            {
+                if (DialogResult != dialogResult)
+                {
+                    DialogResult = dialogResult;
+                }
+            };
+            ViewModel.OnCloseView = result =>
+            {
+                dialogResult = result;
+                Close();
+            };
         }
 
         public T ViewModel

@@ -1,0 +1,25 @@
+﻿<dbConnection:ConnectionViewBase x:Class="Test.DbConnection.ConnectionView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dbConnection="clr-namespace:Test.DbConnection"
+        xmlns:smo="clr-namespace:Test.DbConnection.Smo"
+        Title="Connection" Height="350" Width="525">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <smo:SqlConnectionControl Grid.Row="0" x:Name="connectionControl" Margin="4, 0"/>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Ok" Command="{Binding OkCommand}"/>
+            <Button Content="Cancel" Command="{Binding CancelCommand}"/>
+        </StackPanel>
+    </Grid>
+</dbConnection:ConnectionViewBase>
+
+
+
+
+
+
+
