@@ -1,77 +1,6 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <ControlTemplate x:Key="buttonTemplate" TargetType="{x:Type Button}">
-        <Border CornerRadius="0" Background="{TemplateBinding Background}">
-            <Grid>
-                <ContentPresenter x:Name="MyContentPresenter" 
-                                              Content="{TemplateBinding Content}" 
-                                              HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center" 
-                                              Margin="0,0,0,0" />
-            </Grid>
-        </Border>
-
-        <ControlTemplate.Triggers>
-            <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background">
-                    <Setter.Value>
-                        <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                            <GradientStop Offset="0.5" Color="WhiteSmoke" />
-                            <GradientStop Offset="0.5" Color="#b3e5fc" />
-                        </LinearGradientBrush>
-                    </Setter.Value>
-                </Setter>
-                <Setter Property="Foreground" Value="White" />
-            </Trigger>
-
-            <Trigger Property="IsPressed" Value="True">
-                <Setter Property="Background">
-                    <Setter.Value>
-                        <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
-                            <GradientStop Offset="0.5" Color="WhiteSmoke" />
-                            <GradientStop Offset="0.5" Color="#90a4ae" />
-                        </LinearGradientBrush>
-                    </Setter.Value>
-                </Setter>
-                <Setter Property="Foreground" Value="White" />
-            </Trigger>
-        </ControlTemplate.Triggers>
-    </ControlTemplate>
-
-    <Style TargetType="Button">
-        <Setter Property="Margin" Value="8"/>
-        <Setter Property="Width" Value="80"/>
-        <Setter Property="Height" Value="30"/>
-        <Setter Property="Template" Value="{StaticResource buttonTemplate}"/>
-    </Style>
-    
-    <LinearGradientBrush x:Key="redColor" StartPoint="0.5,0" EndPoint="0.5,1">
-        <GradientStop Offset="0.5" Color="#ef9a9a" />
-        <GradientStop Offset="0.5" Color="#e57373" />
-    </LinearGradientBrush>
-    
-    <LinearGradientBrush x:Key="greenColor" StartPoint="0.5,0" EndPoint="0.5,1">
-        <GradientStop Offset="0.5" Color="#81c784" />
-        <GradientStop Offset="0.5" Color="#4caf50" />
-    </LinearGradientBrush>
-
-    <Style x:Key="ConnectButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-        <Setter Property="Width" Value="100"/>
-        <Setter Property="Height" Value="50"/>
-    </Style>
-    
-    <Style x:Key="ColoredButton" TargetType="Button" BasedOn="{StaticResource ConnectButton}">
-        <Style.Triggers>
-            <DataTrigger Binding="{Binding IsConnected}" Value="True">
-                <Setter Property="Button.Background" Value="{StaticResource greenColor}"/>
-            </DataTrigger>
-            <DataTrigger Binding="{Binding IsConnected}" Value="False">
-                <Setter Property="Button.Background" Value="{StaticResource redColor}"/>
-            </DataTrigger>
-        </Style.Triggers>
-    </Style>
-
     <Style TargetType="{x:Type DataGridRow}">
         <Setter Property="Validation.ErrorTemplate" Value="{x:Null}"/>
         
@@ -85,7 +14,8 @@
                         <Border.Background>
                             <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
                                 <GradientStop Offset="0" Color="White" />
-                                <GradientStop Offset="1" Color="#bbdefb" />
+                                <GradientStop Offset="1" Color="White" />
+                                <!--<GradientStop Offset="1" Color="#bbdefb" />-->
                             </LinearGradientBrush>
                         </Border.Background>
                         <SelectiveScrollingGrid>

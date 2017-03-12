@@ -1,4 +1,4 @@
-using System;
+п»їusing System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
@@ -20,56 +20,51 @@ namespace CodeFirst
 
         readonly string[] nationalityNames =
         {
-            "Белорус",
-            "Русский",
-            "Аргентинец",
-            "Француз",
-            "Немец",
-            "Датчанин",
-            "Итальянец",
-            "Латвиец",
-            "Поляк",
-            "Испанец",
-            "Американец",
-            "Украинец",
+            "belarus",
+            "russian",
+            "american",
+            "french",
+            "polac",
+            "litvinian",
+            "ukranian",
         };
 
         readonly string[] cityNames =
         {
-            "Минск",
-            "Москва",
-            "Киев",
-            "Вильнюс",
-            "Краков",
-            "Париж",
-            "Нью Йорк",
+            "Minsk",
+            "Nepal",
+            "Moscow",
+            "New York",
+            "Paris",
+            "Madrid",
+            "Praha",
         };
 
         readonly string[] disabilityNames =
         {
-            "Без инвалидности",
-            "Группа 1",
-            "Группа 2",
-            "Группа 3",
+            "No disability",
+            "Stage 1",
+            "Stage 2",
+            "Stage 3",
         };
 
         readonly string[] familyStatusNames =
         {
-            "Женат",
-            "Замужем",
-            "Не женат",
-            "Не замужем",
+            "Alone",
+            "Meet",
+            "No women",
+            "No men",
         };
 
         readonly List<Client> clients = new List<Client>
         {
             new Client
             {
-                Surname = "Пупкин",
-                Name = "Вася",
-                MiddleName = "Папкин",
+                Surname = "John",
+                Name = "John",
+                MiddleName = "John",
                 BirthDate = new DateTime(1992, 9, 19),
-                BirthPlace = "Дом",
+                BirthPlace = "Р”РѕРј",
                 IsPensioner = true,
                 IsReservist = true,
                 MonthlyIncome = 90000,
@@ -77,11 +72,11 @@ namespace CodeFirst
             },
             new Client
             {
-                Surname = "Васькин",
-                Name = "Вася",
-                MiddleName = "Васькин",
+                Surname = "Rick",
+                Name = "Ross",
+                MiddleName = "Deniel",
                 BirthDate = new DateTime(1995, 3, 10),
-                BirthPlace = "Дом",
+                BirthPlace = "Р”РѕРј",
                 IsPensioner = true,
                 IsReservist = true,
                 MonthlyIncome = 100000,
@@ -89,11 +84,11 @@ namespace CodeFirst
             },
             new Client
             {
-                Surname = "Сорокин",
-                Name = "Антонио",
-                MiddleName = "Мамкин",
+                Surname = "Rocky",
+                Name = "Balboa",
+                MiddleName = "Stalone",
                 BirthDate = new DateTime(1993, 5, 1),
-                BirthPlace = "Дом",
+                BirthPlace = "Р”РѕРј",
                 IsPensioner = true,
                 IsReservist = true,
                 MonthlyIncome = 80000,
@@ -101,11 +96,11 @@ namespace CodeFirst
             },
             new Client
             {
-                Surname = "Нисорокин",
-                Name = "Димас",
-                MiddleName = "Браткин",
+                Surname = "Eddi",
+                Name = "Merhi",
+                MiddleName = "Good",
                 BirthDate = new DateTime(1994, 9, 5),
-                BirthPlace = "Дом",
+                BirthPlace = "Р”РѕРј",
                 IsPensioner = true,
                 IsReservist = false,
                 MonthlyIncome = 70000,
@@ -113,11 +108,11 @@ namespace CodeFirst
             },
             new Client
             {
-                Surname = "Пушкин",
-                Name = "Серега",
-                MiddleName = "Анатольевич",
+                Surname = "Julian",
+                Name = "Lassanj",
+                MiddleName = "Google",
                 BirthDate = new DateTime(1996, 1, 8),
-                BirthPlace = "Дом",
+                BirthPlace = "Р”РѕРј",
                 IsPensioner = true,
                 IsReservist = false,
                 MonthlyIncome = 50000,
@@ -140,7 +135,7 @@ namespace CodeFirst
             var disabilities = disabilityNames.Select(x => new Disability { Name = x }).ToArray();
             var familyStatuses = familyStatusNames.Select(x => new FamilyStatus { Name = x }).ToArray();
             var cities = cityNames.Select(x => new City { Name = x }).ToArray();
-            var places = cities.Select(x => new Place { City = x, Adress = "Дом пушкина"}).ToArray();
+            var places = cities.Select(x => new Place { City = x, Adress = "РЈР». РљР°Р·РёРЅС†Р°"}).ToArray();
             
             context.Cities.AddRange(cities);
             context.Disabilities.AddRange(disabilities);
@@ -156,7 +151,7 @@ namespace CodeFirst
                 var passport = new Passport
                 {
                     Client = client, IssueDate = new DateTime(1996, 1, 8),
-                    IssuedBy = "Беларусь",
+                    IssuedBy = "РќР°Р»РѕРіРѕРІРѕР№",
                     PassportSeries = "AB",
                     PassportNumber = "AB1234567",
                     IdentNumber = "1234567890abCD"

@@ -1,6 +1,4 @@
-﻿using Test.BaseUI;
-
-namespace Test
+﻿namespace Test
 {
     public partial class MainWindow
     {
@@ -9,6 +7,4 @@ namespace Test
             InitializeComponent();
         }
     }
-
-    public class MainWindowBase : AsWindow<MainWindowViewModel> {}
 }

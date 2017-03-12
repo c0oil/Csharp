@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Windows;
 using System.Windows.Data;
 
 namespace Test.BaseUI
@@ -96,6 +97,23 @@ namespace Test.BaseUI
             }
 
             return value;
+        }
+    }
+
+    class StyleConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            bool dataValue = (bool)values[0];
+            Style firstStyle = values[1] as Style;
+            Style secondStyle = values[2] as Style;
+
+            return !dataValue ? firstStyle : secondStyle;
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException();
         }
     }
 }

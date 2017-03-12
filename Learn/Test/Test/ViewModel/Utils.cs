@@ -26,10 +26,7 @@ namespace Test.ViewModel
         {
             try
             {
-                if (method != null)
-                {
-                    method();
-                }
+                method?.Invoke();
             }
             catch (Exception e)
             {

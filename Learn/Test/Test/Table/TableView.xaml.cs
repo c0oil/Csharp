@@ -1,7 +1,4 @@
-﻿using System;
-using System.Windows;
-using System.Windows.Controls;
-using Test.BaseUI;
+﻿using Test.BaseUI;
 
 namespace Test.Table
 {
@@ -15,6 +12,4 @@ namespace Test.Table
             ViewModel.TableFrame = tableFrame;
         }
     }
-
-    public class TableViewBase : AsWindow<TableViewModel> { }
 }

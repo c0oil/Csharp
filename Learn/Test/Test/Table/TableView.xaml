@@ -1,7 +1,10 @@
-﻿<table:TableViewBase x:Class="Test.Table.TableView"
+﻿<baseUi:AsWindow
+        x:TypeArguments="table:TableViewModel" 
+        x:Class="Test.Table.TableView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:table="clr-namespace:Test.Table"
+        xmlns:baseUi="clr-namespace:Test.BaseUI"
         Title="Table" Height="500" Width="800">
     <Grid>
         <Grid.RowDefinitions>
@@ -23,7 +26,7 @@
             <Button Content="Cancel" Command="{Binding CancelCommand}"/>
         </StackPanel>
     </Grid>
-</table:TableViewBase>
+</baseUi:AsWindow>
 
 
 

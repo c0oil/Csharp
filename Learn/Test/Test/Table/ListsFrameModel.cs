@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+п»їusing System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
@@ -114,11 +114,11 @@ namespace Test.Table
             ListItems = new ObservableCollection<ListItem>();
             Lists = new Dictionary<ClientList, string>
             {
-                { ClientList.City, "Город" },
-                { ClientList.FamilyStatus, "Семейное положение" },
-                { ClientList.Currency, "Валюта" },
-                { ClientList.Disability, "Инвалидность" },
-                { ClientList.Nationality, "Национальность" },
+                { ClientList.City, "Р“РѕСЂРѕРґ" },
+                { ClientList.FamilyStatus, "РЎРµРјРµР№РЅС‹Р№ СЃС‚Р°С‚СѓСЃ" },
+                { ClientList.Currency, "Р’Р°Р»СЋС‚Р°" },
+                { ClientList.Disability, "РРЅРІР°Р»РёРґРЅРѕСЃС‚СЊ" },
+                { ClientList.Nationality, "РќР°С†РёРѕРЅР°Р»СЊРЅРѕСЃС‚СЊ" },
             };
         }
 

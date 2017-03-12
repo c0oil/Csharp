@@ -1,7 +1,10 @@
-<table:ListsFrameBase x:Class="Test.Table.ListsFrame"
+<baseUi:AsWindow 
+    x:TypeArguments="table:ListsFrameModel"  
+    x:Class="Test.Table.ListsFrame"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:table="clr-namespace:Test.Table">
+	xmlns:table="clr-namespace:Test.Table"
+	xmlns:baseUi="clr-namespace:Test.BaseUI">
     <Grid HorizontalAlignment="Left">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -10,9 +13,9 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left">
-            <Button Content="Add" Background="{StaticResource greenColor}" Command="{Binding AddRowCommand}"/>
-            <Button Content="Rename" Command="{Binding UpdateRowCommand}"/>
-            <Button Content="Delete" Background="{StaticResource redColor}" Command="{Binding DeleteRowCommand}"/>
+            <Button Content="Add" Command="{Binding AddRowCommand}" Style="{StaticResource GreenButtonStyle}"/>
+            <Button Content="Rename" Command="{Binding UpdateRowCommand}" Style="{StaticResource ButtonStyle}"/>
+            <Button Content="Delete" Command="{Binding DeleteRowCommand}" Style="{StaticResource RedButtonStyle}"/>
         </StackPanel>
         <TextBox Grid.Row="1" Text="{Binding SelectedItemName}" Margin="4" HorizontalAlignment="Stretch" />
         <ComboBox Grid.Row="2" Width="150" SelectedValue="{Binding SelectedList}" HorizontalAlignment="Left" Margin="4"
@@ -21,4 +24,4 @@
         <ListView Grid.Row="3" Margin="4" ItemsSource="{Binding ListItems}" SelectedValue="{Binding SelectedItem}"
                   DisplayMemberPath="Value"/>
     </Grid>
-</table:ListsFrameBase>
+</baseUi:AsWindow>

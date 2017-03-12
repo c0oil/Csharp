@@ -1,18 +1,20 @@
-﻿<table:TableFrameBase x:Class="Test.Table.TableFrame"
+﻿<baseUi:AsWindow
+        x:TypeArguments="table:TableFrameModel" 
+        x:Class="Test.Table.TableFrame"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:table="clr-namespace:Test.Table"
-        xmlns:baseUi="clr-namespace:Test.BaseUI"
-        xmlns:observable="clr-namespace:Test.Table.Observable">
+        xmlns:observable="clr-namespace:Test.Table.Observable"
+        xmlns:baseUi="clr-namespace:Test.BaseUI">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left">
-            <Button Content="Add Row" Background="{StaticResource greenColor}" Command="{Binding AddRowCommand}"/>
-            <Button Content="Update Row" Command="{Binding UpdateRowCommand}"/>
-            <Button Content="Delete Row" Background="{StaticResource redColor}" Command="{Binding DeleteRowCommand}"/>
+            <Button Content="Add Row" Command="{Binding AddRowCommand}" Style="{StaticResource GreenButtonStyle}"/>
+            <Button Content="Update Row" Command="{Binding UpdateRowCommand}" Style="{StaticResource ButtonStyle}"/>
+            <Button Content="Delete Row" Command="{Binding DeleteRowCommand}" Style="{StaticResource RedButtonStyle}"/>
         </StackPanel>
         <DataGrid Grid.Row="1" x:Name="grid" ItemsSource="{Binding DataGrid}"
                   AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" Margin="4, 0">
@@ -25,5 +27,7 @@
         </DataGrid>
         
     </Grid>
-</table:TableFrameBase>
+</baseUi:AsWindow>
+
+
 

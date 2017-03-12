@@ -9,7 +9,7 @@ namespace Test.DbConnection
         private const string DefaultConnectionString = "mainConnectionString";
         public static readonly SqlConnectionStringBuilder DefaultConnectionBuilder = new SqlConnectionStringBuilder
             {
-                DataSource = @"C0_OIL-ой\SQLEXPRESS",
+                DataSource = @"DESKTOP-BMDDRNJ\SQLEXPRESS",
                 //DataSource = @"DESKTOP-COMHVJF\SQLEXPRESS",
                 InitialCatalog = "Default",
                 MultipleActiveResultSets = true,

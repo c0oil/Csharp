@@ -69,11 +69,6 @@ namespace Test
 
         private void ShowTables()
         {
-            if (!IsConnected)
-            {
-                MessageBox.Show("Please, connect to database", "Show Tables", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
             bool? result = ShowDialog<TableView>(connectionView =>
             {
                 connectionView.ViewModel.ConnectionString = ConnectionBuilder.ConnectionString;

@@ -19,6 +19,4 @@ namespace Test.Table
             UiHelper.ExecuteAndCatchException(ViewModel.Refresh);
         }
     }
-
-    public class TableFrameBase : AsUserControl<TableFrameModel> { }
 }

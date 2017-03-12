@@ -5,7 +5,8 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="BaseUI/Styles.xaml"/>
+                <ResourceDictionary Source="BaseUI/GridStyles.xaml"/>
+                <ResourceDictionary Source="BaseUI/ButtonStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
         
