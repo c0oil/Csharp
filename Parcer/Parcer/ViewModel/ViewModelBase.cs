@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Windows;
 using System.Windows.Input;
+using Parcer.Utils;
 
 namespace Parcer.ViewModel
 {

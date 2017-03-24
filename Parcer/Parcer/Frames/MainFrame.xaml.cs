@@ -1,11 +1,11 @@
 ﻿namespace Parcer.Frames
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for MainFrame.xaml
     /// </summary>
-    public partial class MainWindow
+    public partial class MainFrame
     {
-        public MainWindow()
+        public MainFrame()
         {
             InitializeComponent();
         }

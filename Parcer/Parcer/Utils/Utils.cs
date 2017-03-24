@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 
-namespace Parcer.ViewModel
+namespace Parcer.Utils
 {
     public static class UiHelper
     {

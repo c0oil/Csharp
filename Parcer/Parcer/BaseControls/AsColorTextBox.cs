@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Forms;
 using System.Windows.Media;
+using RichTextBox = System.Windows.Controls.RichTextBox;
 
 namespace Parcer.BaseControls
 {
@@ -44,6 +44,7 @@ namespace Parcer.BaseControls
                 return;
             }
 
+            document.BeginInit();
             range.Text = string.Empty;
             Action <int, int> tryAppendText = (start, length) =>
             {
@@ -61,6 +62,7 @@ namespace Parcer.BaseControls
                 currPosition = info.End;
             }
             tryAppendText(currPosition, colorSource.Text.Length - currPosition);
+            document.EndInit();
 
             Document = document;
         }
