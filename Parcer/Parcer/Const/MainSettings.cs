@@ -19,12 +19,14 @@
 (?:шаблон)   Если группа используется только для группировки и её результат в дальнейшем не потребуется
 (шаблон)   Буден найден результат для этой группы";
 
-        public const string SampleFindSetting = "\\{[^\"]*\"([^\"]+)(?:\"[^\"]+\"([^\"]+)\")[^\\}]*\\}";
+        public const string SampleFindSetting = "\"((\\w+)\\s*(\\w*))\"";
         // \{[^"]*"([^"]+)(?:(?:"[^"]+"([^"]+)")|(?:.+Messages(w+)))[^\}]*\}
         // \{[^"]*"([^"]+)(?:"[^"]+"([^"]+)")[^\}]*\}
         // ([^\t\r\n]+)\t([^\t\r\n]+)
         // (.+)\r\n
-        public const string SampleReplaceSetting = "\\{\\r\\n\"{0}\", \"{1}\"\\r\\n\\},\\r\\n";
+        public const string SampleReplaceSeparator = ";";
+        public const string SampleReplaceSetting = "={0}{1};-{0};+{0}";
+        public const string SampleBuildSetting = "\\{\\r\\n\"{0}\", \"{1}\"\\r\\n\\},\\r\\n";
         // "{0}"\t"{1}"\r\n
         //"{0}"\r\n
 
@@ -56,6 +58,8 @@
     ""Companies that produce motorcycles, scooters or three-wheelers. Excludes bicycles classified in the Leisure Products Sub-Industry.""
 },";
 
-        public const string SampleCode = "return matches.OrderBy(x => x.First())";
+        public const string SampleCode =
+            @"//return matches.OrderBy(x => x.First())
+return matches";
     }
 }

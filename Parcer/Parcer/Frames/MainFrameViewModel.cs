@@ -11,7 +11,9 @@ namespace Parcer.Frames
     public class MainFrameViewModel : ViewModelBase
     {
         private const string SampleFindSetting = MainSettings.SampleFindSetting;
+        private const string SampleReplaceSeparator = MainSettings.SampleReplaceSeparator;
         private const string SampleReplaceSetting = MainSettings.SampleReplaceSetting;
+        private const string SampleBuildSetting = MainSettings.SampleBuildSetting;
         private const string SampleInText = MainSettings.SampleInText;
         private const string SampleCode = MainSettings.SampleCode;
 
@@ -50,6 +52,17 @@ namespace Parcer.Frames
             }
         }
 
+        private string replaceSeparator;
+        public string ReplaceSeparator
+        {
+            get { return replaceSeparator; }
+            set
+            {
+                replaceSeparator = value;
+                OnPropertyChanged(nameof(ReplaceSeparator));
+            }
+        }
+
         private string replaceSetting;
         public string ReplaceSetting
         {
@@ -58,6 +71,17 @@ namespace Parcer.Frames
             {
                 replaceSetting = value;
                 OnPropertyChanged(nameof(ReplaceSetting));
+            }
+        }
+
+        private string buildSetting;
+        public string BuildSetting
+        {
+            get { return buildSetting; }
+            set
+            {
+                buildSetting = value;
+                OnPropertyChanged(nameof(BuildSetting));
             }
         }
 
@@ -87,6 +111,9 @@ namespace Parcer.Frames
 
         private ICommand replaceCommand;
         public ICommand ReplaceCommand => GetDelegateCommand<object>(ref replaceCommand, OnReplace);
+
+        private ICommand buildCommand;
+        public ICommand BuildCommand => GetDelegateCommand<object>(ref buildCommand, OnBuild);
         
         private ICommand findCommand;
         public ICommand FindCommand => GetDelegateCommand<object>(ref findCommand, OnFind);
@@ -95,8 +122,17 @@ namespace Parcer.Frames
         {
             TryExecute(() =>
             {
+                OutText = parser.ReplaceTree(InText.Text, FindSetting, ReplaceSetting, ReplaceSeparator);
+                InText = GetUncolorText(InText.Text);
+            });
+        }
+
+        private void OnBuild(object obj)
+        {
+            TryExecute(() =>
+            {
                 //OutText = parser.Replace(InText.Text, AdditionalText, FindSetting, ReplaceSetting, CodeString);
-                OutText = parser.Replace(InText.Text, FindSetting, ReplaceSetting, CodeString);
+                OutText = parser.Build(InText.Text, FindSetting, BuildSetting, CodeString);
                 InText = GetUncolorText(InText.Text);
             });
         }
@@ -125,6 +161,8 @@ namespace Parcer.Frames
         {
             FindSetting = SampleFindSetting;
             ReplaceSetting = SampleReplaceSetting;
+            ReplaceSeparator = SampleReplaceSeparator;
+            BuildSetting = SampleBuildSetting;
             CodeString = SampleCode;
             InText = GetUncolorText(SampleInText);
         }
