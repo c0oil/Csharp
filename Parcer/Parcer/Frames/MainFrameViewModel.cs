@@ -16,8 +16,6 @@ namespace Parcer.Frames
         private const string SampleBuildSetting = MainSettings.SampleBuildSetting;
         private const string SampleInText = MainSettings.SampleInText;
         private const string SampleCode = MainSettings.SampleCode;
-
-        private readonly Parser parser = new Parser();
         
         private ColorSource inText;
         public ColorSource InText
@@ -122,7 +120,7 @@ namespace Parcer.Frames
         {
             TryExecute(() =>
             {
-                OutText = parser.ReplaceTree(InText.Text, FindSetting, ReplaceSetting, ReplaceSeparator);
+                OutText = TreeParceLogic.Replace(InText.Text, FindSetting, ReplaceSetting, ReplaceSeparator);
                 InText = GetUncolorText(InText.Text);
             });
         }
@@ -132,7 +130,7 @@ namespace Parcer.Frames
             TryExecute(() =>
             {
                 //OutText = parser.Replace(InText.Text, AdditionalText, FindSetting, ReplaceSetting, CodeString);
-                OutText = parser.Build(InText.Text, FindSetting, BuildSetting, CodeString);
+                OutText = ParceLogic.Build(InText.Text, FindSetting, BuildSetting, CodeString);
                 InText = GetUncolorText(InText.Text);
             });
         }
@@ -141,7 +139,8 @@ namespace Parcer.Frames
         {
             TryExecute(() =>
             {
-                InText = new ColorSource { Text = InText.Text, HighlightWords = parser.Highlight(InText.Text, FindSetting) };
+                //InText = new ColorSource { Text = InText.Text, HighlightWords = ParceLogic.Highlight(InText.Text, FindSetting) };
+                InText = new ColorSource { Text = InText.Text, HighlightWords = HighlightLogic.Highlight(InText.Text, FindSetting) };
             });
         }
 

@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Forms;
 using System.Windows.Media;
+using Parcer.BusinesLogic;
 using RichTextBox = System.Windows.Controls.RichTextBox;
 
 namespace Parcer.BaseControls
@@ -55,10 +57,12 @@ namespace Parcer.BaseControls
             };
 
             int currPosition = 0;
-            foreach (ColorWord info in colorSource.HighlightWords)
+            foreach (TreeItem<ColorWord> word in colorSource.HighlightWords)
             {
+                ColorWord info = word.Item;
                 tryAppendText(currPosition, info.Start - currPosition);
                 AppendText(colorSource.Text.Substring(info.Start, info.End - info.Start), info.Color, document);
+                //AppendText(word, colorSource.Text.Substring(info.Start, info.End - info.Start), info.Color, document);
                 currPosition = info.End;
             }
             tryAppendText(currPosition, colorSource.Text.Length - currPosition);
@@ -73,6 +77,33 @@ namespace Parcer.BaseControls
             textrange.Text = textData;
             textrange.ClearAllProperties();
         }
+
+        /*private void AppendText(TreeItem<ColorWord> word, string textData, Color color, FlowDocument document)
+        {
+            TextRange textrange = new TextRange(document.ContentEnd, document.ContentEnd);
+            textrange.Text = textData;
+            textrange.ClearAllProperties();
+            foreach (TreeItem<ColorWord> item in word.Childrens)
+            {
+                ColorText(textrange.Start, textrange.End, item, word);
+            }
+        }
+
+        private void ColorText(TextPointer startPointer, TextPointer endPointer, TreeItem<ColorWord> word, TreeItem<ColorWord> parent)
+        {
+            foreach (ColorWord colorWord in word.Reverse())
+            {
+                int startOffset = colorWord.Start - parent.Item.Start;
+                int endOffset = colorWord.End - parent.Item.End;
+                var s = startPointer.GetPositionAtOffset(startOffset, LogicalDirection.Forward);
+                var e = endPointer.GetPositionAtOffset(endOffset, LogicalDirection.Forward);
+
+
+                TextRange textrange = new TextRange(s, e);
+                textrange.ApplyPropertyValue(TextElement.ForegroundProperty, new SolidColorBrush(colorWord.Color));
+                textrange.ApplyPropertyValue(TextElement.BackgroundProperty, new SolidColorBrush(Colors.Black));
+            }
+        }*/
 
         private void AppendText(string textData, Color color, FlowDocument document)
         {
@@ -106,12 +137,14 @@ namespace Parcer.BaseControls
 
     public class ColorSource
     {
-        public IEnumerable<ColorWord> HighlightWords { get; set; }
+        public IEnumerable<TreeItem<ColorWord>> HighlightWords { get; set; }
+        //public IEnumerable<ColorWord> HighlightWords { get; set; }
         public string Text { get; set; }
     }
 
     public struct ColorWord
     {
+        public string Value { get; set; }
         public int Start { get; set; }
         public int End { get; set; }
         public Color Color { get; set; }

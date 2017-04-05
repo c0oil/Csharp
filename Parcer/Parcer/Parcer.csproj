@@ -64,8 +64,13 @@
     <Compile Include="BaseControls\AsColorTextBox.cs" />
     <Compile Include="BaseControls\AsUserControl.cs" />
     <Compile Include="BaseControls\AsWindow.cs" />
+    <Compile Include="BusinesLogic\HighlightLogic.cs" />
+    <Compile Include="BusinesLogic\ParceConst.cs" />
+    <Compile Include="BusinesLogic\TreeItem.cs" />
+    <Compile Include="BusinesLogic\TreeMatchCollectionUtils.cs" />
+    <Compile Include="BusinesLogic\TreeParceLogic.cs" />
     <Compile Include="Const\MainSettings.cs" />
-    <Compile Include="BusinesLogic\Parser.cs" />
+    <Compile Include="BusinesLogic\ParceLogic.cs" />
     <Compile Include="Frames\MainFrame.xaml.cs">
       <DependentUpon>MainFrame.xaml</DependentUpon>
     </Compile>
