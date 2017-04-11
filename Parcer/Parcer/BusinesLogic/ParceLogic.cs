@@ -65,14 +65,8 @@ namespace Parcer.BusinesLogic
         
         private static IEnumerable<Tuple<int, int, int>> Find(string inText, string setting)
         {
-            if (string.IsNullOrEmpty(inText))
-            {
-                return null;
-            }
-
-            var r = new Regex(setting, RegexOptions.IgnoreCase);
-            MatchCollection matches = r.Matches(inText);
-            if (matches.Count == 0)
+            MatchCollection matches;
+            if (!TryMatch(inText, setting, out matches))
             {
                 return null;
             }
@@ -88,9 +82,8 @@ namespace Parcer.BusinesLogic
 
         private static IEnumerable<IEnumerable<string>> FindMatches(string inText, string setting)
         {
-            var r = new Regex(setting, RegexOptions.IgnoreCase);
-            var matches = r.Matches(inText);
-            if (matches.Count == 0)
+            MatchCollection matches;
+            if (!TryMatch(inText, setting, out matches))
             {
                 return null;
             }
@@ -125,13 +118,7 @@ namespace Parcer.BusinesLogic
             return match.Groups.Cast<Group>().Skip(1).Select((x, i) => new Tuple<int, int, int>(i, x.Index, x.Index + x.Length));
         }
 
-        private static string FormatMatch(Match match, string replaceSetting)
-        {
-            object[] args = match.Groups.Cast<Group>().Skip(1).Select(x => x.Value).Cast<object>().ToArray();
-            return string.Format(replaceSetting, args);
-        }
-
-        public static string AggregateMatches<T>(string inText, IEnumerable<T> findedInfoWords, Func<T, string> formatWord, Func<T, Group> getGroup)
+        public static string ReplaceMatches<T>(string inText, IEnumerable<T> findedInfoWords, Func<T, string> formatWord, Func<T, Group> getGroup, int offset = 0)
         {
             StringBuilder outText = new StringBuilder();
             Action<int, int> tryAppendText = (start, length) =>
@@ -146,16 +133,29 @@ namespace Parcer.BusinesLogic
             foreach (T info in findedInfoWords)
             {
                 Group group = getGroup(info);
-                tryAppendText(currPosition, group.Index - currPosition);
+                tryAppendText(currPosition, group.Index - offset - currPosition);
 
                 string formatedWord = formatWord(info);
                 outText.Append(formatedWord);
 
-                currPosition = group.Index + group.Length;
+                currPosition = group.Index - offset + group.Length;
             }
             tryAppendText(currPosition, inText.Length - currPosition);
 
             return outText.ToString();
+        }
+
+        public static bool TryMatch(string inText, string setting, out MatchCollection matches)
+        {
+            matches = null;
+            if (string.IsNullOrEmpty(inText))
+            {
+                return false;
+            }
+
+            Regex r = new Regex(setting, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+            matches = r.Matches(inText);
+            return matches.Count != 0;
         }
     }
 }

@@ -19,14 +19,20 @@
 (?:шаблон)   Если группа используется только для группировки и её результат в дальнейшем не потребуется
 (шаблон)   Буден найден результат для этой группы";
 
-        public const string SampleFindSetting = "\"((\\w+)\\s*(\\w*))\"";
+        public const string SampleFindSetting = "\\{ ((\"(.+)\"), (\"(.+)\")) \\}";
+        //public const string SampleFindSetting = "((?s:(public).+\\}))";
+        //public const string SampleFindSetting = "\"((\\w+)\\s*(\\w*))\"";
         // \{[^"]*"([^"]+)(?:(?:"[^"]+"([^"]+)")|(?:.+Messages(w+)))[^\}]*\}
         // \{[^"]*"([^"]+)(?:"[^"]+"([^"]+)")[^\}]*\}
         // ([^\t\r\n]+)\t([^\t\r\n]+)
         // (.+)\r\n
-        public const string SampleReplaceSeparator = ";";
-        public const string SampleReplaceSetting = "={0}{1};-{0};+{0}";
+
         public const string SampleBuildSetting = "\\{\\r\\n\"{0}\", \"{1}\"\\r\\n\\},\\r\\n";
+
+        public const string SampleReplaceSeparator = ";";
+        public const string SampleReplaceSetting = "({1}|{2}|{3}|{4}|{5});{0};{0};{0};{0};{0}";
+        //public const string SampleReplaceSetting = "-{0};+{0}";
+        //public const string SampleReplaceSetting = "={0}{1};-{0};+{0}";
         // "{0}"\t"{1}"\r\n
         //"{0}"\r\n
 
@@ -37,6 +43,23 @@
 0.007	0.006	6,000	6,800";*/
 
         public const string SampleInText =
+            @"
+                { ""f"", ""\f"" },
+                { ""r"", ""\r"" },
+                { ""t"", ""\t"" },
+                { ""v"", ""\v"" },
+                { ""n"", ""\n"" },
+                { ""{"", ""{{"" },
+                { ""}"", ""}}"" }";
+        public const string SampleInText2 =
+            @"
+
+    public class MatchTreeItem
+    {
+        public Group Group { get; set; }
+        public string ReplaceSetting { get; set; }
+    }";
+        public const string SampleInText1 =
             @"{
     ""Specialized REITs"",
     ""Companies or Trusts engaged in the acquisition, development, ownership, leasing, management and operation of properties not classified elsewhere. Includes trusts that operate and invest in storage properties. It also includes REITs that do not generate a majority of their revenues and income from real estate rental and leasing operations.""

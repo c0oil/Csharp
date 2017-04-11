@@ -19,14 +19,8 @@ namespace Parcer.BusinesLogic
 
         public static IEnumerable<TreeItem<ColorWord>> Highlight(string inText, string setting)
         {
-            if (string.IsNullOrEmpty(inText))
-            {
-                throw new ArgumentNullException();
-            }
-
-            var r = new Regex(setting, RegexOptions.IgnoreCase);
-            MatchCollection matches = r.Matches(inText);
-            if (matches.Count == 0)
+            MatchCollection matches;
+            if (!ParceLogic.TryMatch(inText, setting, out matches))
             {
                 return null;
             }

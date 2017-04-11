@@ -12,35 +12,49 @@ namespace Parcer.BusinesLogic
         
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return this.ToFlatten().GetEnumerator();
+            return this.FromLifesToRoot().GetEnumerator();
         }
 
         public IEnumerator<T> GetEnumerator()
         {
-            return this.ToFlatten().GetEnumerator();
+            return this.FromLifesToRoot().GetEnumerator();
         }
     }
 
     public static class TreeEnumerator
     {
-        public static IEnumerable<T> ToFlatten<T>(this TreeItem<T> tree)
+        public static IEnumerable<T> FromLifesToRoot<T>(this TreeItem<T> tree)
         {
             var result = new List<T>();
             if (tree.Childrens != null)
             {
                 foreach (TreeItem<T> children in tree.Childrens)
                 {
-                    result.AddRange(ToFlatten(children));
+                    result.AddRange(FromLifesToRoot(children));
                 }
             }
             result.Add(tree.Item);
             return result;
         }
 
-        public static TResult Aggregate<T, TResult>(this TreeItem<T> tree, Func<IEnumerable<TResult>, T, TResult> aggregate)
+        public static IEnumerable<T> FromRootToLifes<T>(this TreeItem<T> tree)
         {
-            IEnumerable<TResult> args = tree.Childrens.Select(item => Aggregate(item, aggregate));
-            return aggregate(args, tree.Item);
+            var result = new List<T>();
+            result.Add(tree.Item);
+            if (tree.Childrens != null)
+            {
+                foreach (TreeItem<T> children in tree.Childrens)
+                {
+                    result.AddRange(FromRootToLifes(children));
+                }
+            }
+            return result;
+        }
+
+        public static TResult Aggregate<T, TResult>(this TreeItem<T> tree, Func<IEnumerable<TResult>, IEnumerable<T>, T, TResult> aggregate)
+        {
+            IEnumerable<TResult> args = tree.Childrens.Select(item => Aggregate(item, aggregate)).ToArray();
+            return aggregate(args, tree.Childrens.Select(x => x.Item), tree.Item);
         }
 
         public static TreeItem<TOut> Convert<TIn, TOut>(this TreeItem<TIn> tree, Func<TIn, TOut> convertItem)
