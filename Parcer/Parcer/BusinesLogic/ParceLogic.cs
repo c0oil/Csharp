@@ -3,31 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Parcer.BaseControls;
 using Parcer.Utils;
 
 namespace Parcer.BusinesLogic
 {
     public static class ParceLogic
     {
-        public static IEnumerable<ColorWord> Highlight(string inText, string setting)
-        {
-            IEnumerable<Tuple<int, int, int>> words = Find(inText, setting);
-            return words.Select(x => new ColorWord
-            {
-                Color = HighlightLogic.ColorSettings[x.Item1 % HighlightLogic.ColorSettings.Length],
-                Start = x.Item2,
-                End = x.Item3
-            });
-        }
+        public const int SkipFirstMatches = 1;
 
         public static string Build(string inText, string additionalText, string setting, string buildSetting, string code)
         {
-            if (string.IsNullOrEmpty(inText))
-            {
-                return inText;
-            }
-
             IEnumerable<IEnumerable<string>> inMatches = FindMatches(inText, setting);
             if (inMatches == null)
             {
@@ -38,18 +23,13 @@ namespace Parcer.BusinesLogic
 
             IEnumerable<IEnumerable<string>> matches = inMatches.Where(x => additionalMatches.Contains(x.First()));
 
-            buildSetting = Ecrane(buildSetting);
+            buildSetting = PrepareForFormat(buildSetting);
             IEnumerable<string> formattedMatches = matches.Select(x => string.Format(buildSetting, x.Cast<object>().ToArray()));
             return string.Concat(formattedMatches);
         }
 
         public static string Build(string inText, string setting, string replaceSetting, string code)
         {
-            if (string.IsNullOrEmpty(inText))
-            {
-                return inText;
-            }
-            
             IEnumerable<IEnumerable<string>> stringMatches = FindMatches(inText, setting);
             if (stringMatches == null)
             {
@@ -58,41 +38,28 @@ namespace Parcer.BusinesLogic
             
             stringMatches = DynamicCode.ExecuteMethod(code, stringMatches);
 
-            replaceSetting = Ecrane(replaceSetting);
+            replaceSetting = PrepareForFormat(replaceSetting);
             IEnumerable<string> formattedMatches = stringMatches.Select(x => string.Format(replaceSetting, x.Cast<object>().ToArray()));
             return string.Concat(formattedMatches);
-        }
-        
-        private static IEnumerable<Tuple<int, int, int>> Find(string inText, string setting)
-        {
-            MatchCollection matches;
-            if (!TryMatch(inText, setting, out matches))
-            {
-                return null;
-            }
-
-            var highlightedWords = new List<Tuple<int, int, int>>();
-            foreach (Match match in matches)
-            {
-                highlightedWords.AddRange(FindMatch(match));
-            }
-
-            return highlightedWords;
         }
 
         private static IEnumerable<IEnumerable<string>> FindMatches(string inText, string setting)
         {
             MatchCollection matches;
-            if (!TryMatch(inText, setting, out matches))
+            if (!RegExpHelper.TryMatch(inText, setting, out matches))
             {
                 return null;
             }
 
-            IEnumerable<IEnumerable<string>> stringMatches = matches.Cast<Match>().Select(match => match.Groups.Cast<Group>().Skip(1).Select(x => x.Value));
+            IEnumerable<IEnumerable<string>> stringMatches = matches.
+                Cast<Match>().
+                Select(match => match.Groups.Cast<Group>().
+                Skip(SkipFirstMatches).
+                Select(x => x.Value));
             return stringMatches;
         }
 
-        public static string Ecrane(string replaceSetting)
+        public static string PrepareForFormat(string replaceSetting)
         {
             var simbols = new Dictionary<string, string>
             {
@@ -113,49 +80,47 @@ namespace Parcer.BusinesLogic
             return stringBuilder.ToString();
         }
 
-        private static IEnumerable<Tuple<int, int, int>> FindMatch(Match match)
-        {
-            return match.Groups.Cast<Group>().Skip(1).Select((x, i) => new Tuple<int, int, int>(i, x.Index, x.Index + x.Length));
-        }
-
-        public static string ReplaceMatches<T>(string inText, IEnumerable<T> findedInfoWords, Func<T, string> formatWord, Func<T, Group> getGroup, int offset = 0)
+        public static string ReplaceMatches<T>(string inText, IEnumerable<T> matches, Func<T, string> formatWord, Func<T, Group> getGroup, int offset = 0)
         {
             StringBuilder outText = new StringBuilder();
             Action<int, int> tryAppendText = (start, length) =>
             {
                 if (length > 0)
-                {
                     outText.Append(inText.Substring(start, length));
-                }
             };
 
-            int currPosition = 0;
-            foreach (T info in findedInfoWords)
-            {
-                Group group = getGroup(info);
-                tryAppendText(currPosition, group.Index - offset - currPosition);
-
-                string formatedWord = formatWord(info);
-                outText.Append(formatedWord);
-
-                currPosition = group.Index - offset + group.Length;
-            }
-            tryAppendText(currPosition, inText.Length - currPosition);
+            EnumerateMatches(matches, 
+                (s, l) => tryAppendText(s, l), 
+                (s, l, info) => outText.Append(formatWord(info)),
+                info => getGroup(info).Index,
+                info => getGroup(info).Length,
+                inText.Length, offset);
 
             return outText.ToString();
         }
 
-        public static bool TryMatch(string inText, string setting, out MatchCollection matches)
+        public static void EnumerateMatches<T>(IEnumerable<T> matches,
+            Action<int, int> doNoMatched, Action<int, int, T> doMatched, 
+            Func<T, int> getStart, Func<T, int> getLength,
+            int endPosition,
+            int offset = 0)
         {
-            matches = null;
-            if (string.IsNullOrEmpty(inText))
+            int currPosition = 0;
+            foreach (T info in matches)
             {
-                return false;
+                int start = getStart(info) - offset;
+                int length = getLength(info);
+                if (start - currPosition > 0)
+                {
+                    doNoMatched(currPosition, start - currPosition);
+                }
+                if (length > 0)
+                {
+                    doMatched(start, length, info);
+                }
+                currPosition = start + length;
             }
-
-            Regex r = new Regex(setting, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-            matches = r.Matches(inText);
-            return matches.Count != 0;
+            doNoMatched(currPosition, endPosition - currPosition);
         }
     }
 }

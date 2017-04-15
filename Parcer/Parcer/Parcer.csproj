@@ -65,7 +65,7 @@
     <Compile Include="BaseControls\AsUserControl.cs" />
     <Compile Include="BaseControls\AsWindow.cs" />
     <Compile Include="BusinesLogic\HighlightLogic.cs" />
-    <Compile Include="BusinesLogic\ParceConst.cs" />
+    <Compile Include="BusinesLogic\RegExpHelper.cs" />
     <Compile Include="BusinesLogic\TreeItem.cs" />
     <Compile Include="BusinesLogic\TreeMatchCollectionUtils.cs" />
     <Compile Include="BusinesLogic\TreeParceLogic.cs" />

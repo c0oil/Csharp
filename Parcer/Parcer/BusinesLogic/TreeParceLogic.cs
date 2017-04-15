@@ -10,12 +10,12 @@ namespace Parcer.BusinesLogic
         public static string Replace(string inText, string setting, string replaceSetting, string separator)
         {
             MatchCollection matches;
-            if (!ParceLogic.TryMatch(inText, setting, out matches))
+            if (!RegExpHelper.TryMatch(inText, setting, out matches))
             {
                 return null;
             }
             
-            replaceSetting = ParceLogic.Ecrane(replaceSetting);
+            replaceSetting = ParceLogic.PrepareForFormat(replaceSetting);
             string[] replaceSettings = replaceSetting.Split(new[] { separator }, StringSplitOptions.None);
 
             IEnumerable<TreeItem<MatchTreeItem>> treeMatches = PrepareTreeMatches(matches, replaceSettings);

@@ -4,9 +4,5 @@ namespace Parcer
 {
     public class MainWindowViewModel : ViewModelBase
     {
-        public MainWindowViewModel()
-        {
-            
-        }
     }
 }

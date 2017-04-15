@@ -11,16 +11,18 @@ namespace Parcer.BusinesLogic
     {
         public static readonly Color[] ColorSettings =
         {
-            Colors.CadetBlue,
-            Colors.Yellow,
-            Colors.YellowGreen,
-            Colors.DeepPink
+            Colors.DeepSkyBlue,
+            Colors.DarkRed,
+            Colors.Blue,
+            Colors.Coral,
+            Colors.DarkSeaGreen,
+            Colors.DarkGoldenrod,
         };
 
-        public static IEnumerable<TreeItem<ColorWord>> Highlight(string inText, string setting)
+        public static IEnumerable<ColorWord> Highlight(string inText, string setting)
         {
             MatchCollection matches;
-            if (!ParceLogic.TryMatch(inText, setting, out matches))
+            if (!RegExpHelper.TryMatch(inText, setting, out matches))
             {
                 return null;
             }
@@ -33,11 +35,49 @@ namespace Parcer.BusinesLogic
                     {
                         Start = y.Index,
                         End = y.Index + y.Length,
-                        Color = ColorSettings[i % ColorSettings.Length],
                         Value = y.Value,
-                    }));
+                    })).
+                ToArray();
 
-            return treeMatches;
+            foreach (TreeItem<ColorWord> treeMatch in treeMatches)
+            {
+                ColorWord[] items = treeMatch.FromRootToLifes().ToArray();
+                for (int i = ParceLogic.SkipFirstMatches; i < items.Length; i++)
+                {
+                    items[i].Color = ColorSettings[i % ColorSettings.Length];
+                }
+            }
+            return treeMatches.SelectMany(SelectColorWords);
+        }
+
+        private static IEnumerable<ColorWord> SelectColorWords(TreeItem<ColorWord> tree)
+        {
+            var result = new List<ColorWord>();
+            ColorWord item = tree.Item;
+            if (tree.Childrens != null && tree.Childrens.Any())
+            {
+                TreeItem<ColorWord> last = tree.Childrens.First();
+                result.Add(new ColorWord
+                    {
+                        Color = item.Color,
+                        Start = item.Start,
+                        End = last.Item.Start
+                    });
+                result.AddRange(SelectColorWords(last));
+
+                foreach (TreeItem<ColorWord> children in tree.Childrens.Skip(1))
+                {
+                    result.Add(new ColorWord { Color = item.Color, Start = last.Item.End, End = children.Item.Start });
+                    result.AddRange(SelectColorWords(children));
+                    last = children;
+                }
+                result.Add(new ColorWord { Color = item.Color, Start = last.Item.End, End = item.End });
+            }
+            else
+            {
+                result.Add(item);
+            }
+            return result;
         }
     }
 }
