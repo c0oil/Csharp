@@ -1,5 +1,6 @@
 *.*
 TemporaryGeneratedFile*.cs
+!*.tt
 !*.cs
 !*.xaml.cs
 !*.xaml
