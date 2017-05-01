@@ -12,6 +12,7 @@
 <#@ import namespace="Microsoft.VisualStudio.Shell.Interop" #>
 <#@ import namespace="System.CodeDom" #>
 <#@ import namespace="System.CodeDom.Compiler" #>
+<#@ import namespace="System.Collections" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ import namespace="System.ComponentModel.Design" #>
 <#@ import namespace="System.Diagnostics" #>
@@ -32,40 +33,25 @@ namespace empty
     public class RaXmlImportGenerator
 	{
 <#
+    string xsdFileName = "open-protocol-schema.xsd";
+    string path = @"D:\GitHub\empty\empty";
+    string xsdPath = Path.Combine(path, xsdFileName);
+
     string nameProject = "RaObjects";
     string nameSpace = "RaObjects.Objects";
 	Project project = GetProject(nameProject);
     CodeElements codeElements = project.CodeModel.CodeElements;
 
-
-	ComplexType fundAndInvestorDetails = InfoExporter.CreateComplexType("fundAndInvestorDetails", "RaFundAndInvestorDetails", codeElements, nameSpace);
-	fundAndInvestorDetails.SubItems.Add(new SimpleElement { SimpleType = typeof(string), ObjectName = "FundName", XmlName = "fundName" });
-	fundAndInvestorDetails.SubItems.Add(new SimpleElement { SimpleType = typeof(DateTime), ObjectName = "Date", XmlName = "date" });
-
-	ComplexType equityExposure = InfoExporter.CreateComplexType("equityExposure", "RaEquityExposure", codeElements, nameSpace);
+    ComplexType root = InfoImporter.ImporXsdRootElement(xsdPath, codeElements, nameSpace);
 	
-    ComplexType opera = InfoExporter.CreateComplexType("opera", "RiskAggregationData", codeElements, nameSpace);
-	opera.SubItems.Add(new ComplexElement { ComplexType = fundAndInvestorDetails, ObjectName = "FundAndInvestorDetails", XmlName = "fundAndInvestorDetails" });
-	opera.SubItems.Add(new ComplexElement { ComplexType = equityExposure, ObjectName = "EquityExposure", XmlName = "equityExposure" });
-
-	CreateImportElement(opera);
-
-	ComplexType totalAssetValue = InfoExporter.CreateComplexType("totalAssetValue", "RaExposureItem", codeElements, nameSpace);
-
-    CreateImportElement(totalAssetValue);
-    CreateImportAttributionGroup(totalAssetValue.Attribution);
+	CreateImportElement(root);
 	
-	/*
-	// identify the path to the xsd
-		
-    //string currentDir = Assembly.GetAssembly(typeof(empty)).Location;
-	string xsdFileName = "open-protocol-schema.xsd";
-	string path = @"D:\samples\empty\empty";
-	string xsdPath = Path.Combine(path, xsdFileName);
-
-
-    CodeNamespace codeNamespace = new CodeNamespace("empty");
+    foreach (AttributionGroupInfo groupInfo in attributionGroupOrder.Values)
+    {
+        CreateImportAttributionGroup(groupInfo);
+    }
 	
+	/*	
 
 	// Check for invalid characters in identifiers
 	CodeGenerator.ValidateIdentifiers(codeNamespace);
@@ -100,14 +86,14 @@ namespace empty
 
 		private static class ImportSimpleTypes
 		{
-			public static DateTime ImportDateTimeNullable(XmlReader reader)
+            public static DateTime? ImportDateTimeNullable(XmlReader reader)
+            {
+                return string.IsNullOrEmpty(reader.Value) ? new DateTime?() : Convert.ToDateTime(reader.Value);
+            }
+
+            public static DateTime ImportDateTime(XmlReader reader)
 			{
 				return string.IsNullOrEmpty(reader.Value) ? DateTime.MinValue : Convert.ToDateTime(reader.Value);
-			}
-
-			public static DateTime? ImportDateTime(XmlReader reader)
-			{
-				return string.IsNullOrEmpty(reader.Value) ? new DateTime?() : Convert.ToDateTime(reader.Value);
 			}
 
 			public  static long ImportLongNullable(XmlReader reader)
@@ -138,25 +124,27 @@ namespace empty
 	}
 }
 <#+
+		private Dictionary<string, AttributionGroupInfo> attributionGroupOrder = new Dictionary<string, AttributionGroupInfo>();
 
 		private void CreateImportElement(ComplexType element)
 		{
-		    if (ImportSimpleTypes.CheckImport(element))
+		    if (ImportSimpleTypes.CheckImportMethod(element))
 		    {
 				return;
 		    }
+			
       #>  
-        private <#= element.ObjectTypeName #> <#= ImportSimpleTypes.GetImportComplexElementMethod(element) #>(XmlReader reader)
+        private <#= element.ObjectType #> <#= ImportSimpleTypes.GetImportComplexElementMethod(element) #>(XmlReader reader)
         {
-            <#= element.ObjectTypeName #> result = new <#= element.ObjectTypeName #>();
-            <#=  element.Attribution != null ? $"{ImportSimpleTypes.GetImportAttributionGroupMethod(element.Attribution)}(result, reader);" : string.Empty#>
+            <#= element.ObjectType #> result = new <#= element.ObjectType #>();
+            <#= element.Attribution != null ? $"{ImportSimpleTypes.GetImportAttributionGroupMethod(element.Attribution)}(result, reader);" : string.Empty #>
             ForEachSubItems(reader, () =>
             {
 <#+
 		    if (element.HaveSubItemsInterface)
 		    {
 	#>
-				result.SubItems.Add(Import<#= element.ObjectTypeName #>(reader));
+				result.SubItems.Add(Import<#= element.ObjectType #>(reader));
 <#+ 
 		    }
 		    else
@@ -168,6 +156,10 @@ namespace empty
             return result;
         }
 <#+
+		    if (element.Attribution != null && !attributionGroupOrder.ContainsKey(element.Attribution.ElementObjectType))
+		    {
+		        attributionGroupOrder[element.Attribution.ElementObjectType] = element.Attribution;
+		    }
 		    if (!element.HaveSubItemsInterface)
 		    {
 		        foreach (ComplexElement complexElement in element.SubItems.OfType<ComplexElement>())
@@ -229,34 +221,6 @@ namespace empty
                 isFirst = false;
             }
         }
-		/*
-	private static string GetImportAttributionGroupMethod(AttributionGroupInfo attributionGroup)
-	{
-		return $"Import{attributionGroup.ElementObjectType}Fields";
-	}
-
-    private static string GetImportAttributionMethod(CodeTypeRef objectType)
-    {
-		return ImportSimpleTypes.GetConverterName(objectType);
-    }
-
-    private static string GetImportObjectMethod(ComplexType complexType)
-    {
-        return $"Import{complexType.ObjectTypeName}";
-    }
-
-    private static string GetImportElementMethod(IElement element)
-    {
-        if (element is SimpleElement)
-        {
-            return ImportSimpleTypes.GetConverterName(((SimpleElement) element).SimpleType);
-        }
-        if (element is ComplexElement)
-        {
-            return GetImportObjectMethod(((ComplexElement) element).ComplexType);
-        }
-        return null;
-    }*/
 
     private static class ImportSimpleTypes
     {
@@ -318,6 +282,16 @@ namespace empty
 	        return string.Equals(typeFullName, codeType.AsFullName, StringComparison.InvariantCultureIgnoreCase);
 	    }
 
+        public static bool CheckImportMethod(ComplexType element)
+        {
+            if (complexTypes.ContainsKey(element.ObjectType))
+            {
+                return true;
+            }
+            complexTypes.Add(element.ObjectType, GetImportComplexElementMethod(element));
+            return false;
+        }
+
 	    public static string GetImportSimpleElementMethod(Type objectType)
 	    {
 	        return simpleTypes.
@@ -334,16 +308,6 @@ namespace empty
 				FirstOrDefault();
 	    }
 
-        public static bool CheckImport(ComplexType element)
-        {
-            if (complexTypes.ContainsKey(element.ObjectTypeName))
-            {
-                return true;
-            }
-            complexTypes.Add(element.ObjectTypeName, GetImportComplexElementMethod(element));
-            return false;
-        }
-
 		public static string GetImportAttributionGroupMethod(AttributionGroupInfo attributionGroup)
 		{
 			return $"Import{attributionGroup.ElementObjectType}Fields";
@@ -351,24 +315,30 @@ namespace empty
 
 		public static string GetImportComplexElementMethod(ComplexType complexType)
 		{
-			return $"Import{complexType.ObjectTypeName}";
+			return $"Import{complexType.ObjectType}";
 		}
 
 		public static string GetImportElementMethod(IElement element)
 		{
-			if (element is SimpleElement)
+		    var simpleElement = element as SimpleElement;
+		    if (simpleElement != null)
 			{
-				return GetImportSimpleElementMethod(((SimpleElement) element).SimpleType);
+				return GetImportSimpleElementMethod(simpleElement.SimpleType);
 			}
-			if (element is ComplexElement)
+
+		    var complexElement = element as ComplexElement;
+		    if (complexElement != null)
 			{
-				return GetImportComplexElementMethod(((ComplexElement) element).ComplexType);
+				return GetImportComplexElementMethod(complexElement.ComplexType);
 			}
+
 			return null;
 		}
     }
 
-	public interface IElement
+    #region Structers
+
+    public interface IElement
 	{
         string XmlName { get; }
         string ObjectName { get; }
@@ -391,19 +361,19 @@ namespace empty
     public class ComplexType
     {
         //public CodeClass ObjectType { get; set; }
-        public string ObjectTypeName { get; set; }
+        public string ObjectType { get; set; }
 
         public AttributionGroupInfo Attribution { get; set; }
 		
 		public bool HaveSubItemsInterface { get; set; }
-        public List<IElement> SubItems { get; set; }
+        public List<IElement> SubItems { get; set; } = new List<IElement>();
     }
 
     public class AttributionGroupInfo
     {
         public string ElementObjectType { get; set; }
 
-        public List<AttributionInfo> Attributions { get; set; }
+        public List<AttributionInfo> Attributions { get; set; } = new List<AttributionInfo>();
     }
 
     public class AttributionInfo
@@ -413,33 +383,165 @@ namespace empty
         public CodeTypeRef ObjectType { get; set; }
     }
 
-    public class AttributionMap
+    public class XmlToObjectMap
     {
-        public string XmlAttributionName;
-        public string ObjectFieldName;
+        public string XmlName;
+        public string ObjectName;
     }
+	
+    #endregion
 
 	public static class MapInfo
 	{
-	    private static AttributionMap[] raExposureItemMaps =
+	    private static XmlToObjectMap[] aumPercentageMaps =
 	    {
-			new AttributionMap { XmlAttributionName = "nonNettedShortAssetValue", ObjectFieldName = "NonNettedShortAumExposure"}, 
-			new AttributionMap { XmlAttributionName = "nonNettedLongAssetValue", ObjectFieldName = "NonNettedLongAumExposure"}, 
-			new AttributionMap { XmlAttributionName = "nettedShortAssetValue", ObjectFieldName = "NettedShortAumExposure"}, 
-			new AttributionMap { XmlAttributionName = "nettedLongAssetValue", ObjectFieldName = "NettedLongAumExposure"}, 
-			new AttributionMap { XmlAttributionName = "numberOfLongPositions", ObjectFieldName = "NumberOfLongPositions"}, 
-			new AttributionMap { XmlAttributionName = "numberOfShortPositions", ObjectFieldName = "NumberOfShortPositions"}, 
+			new XmlToObjectMap { XmlName = "nonNettedShortAumPercentage", ObjectName = "NonNettedShortAumExposure"}, 
+			new XmlToObjectMap { XmlName = "nonNettedLongAumPercentage", ObjectName = "NonNettedLongAumExposure"}, 
+			new XmlToObjectMap { XmlName = "nettedShortAumPercentage", ObjectName = "NettedShortAumExposure"}, 
+			new XmlToObjectMap { XmlName = "nettedLongAumPercentage", ObjectName = "NettedLongAumExposure"},
 	    };
 
-	    public static Dictionary<string, AttributionMap[]> AttributionGroupsMaps = new Dictionary<string, AttributionMap[]>
+	    private static XmlToObjectMap[] assetValueMaps =
 	    {
-	        { "totalAssetValue", raExposureItemMaps },
+			new XmlToObjectMap { XmlName = "nonNettedShortAssetValue", ObjectName = "NonNettedShortAumExposure"}, 
+			new XmlToObjectMap { XmlName = "nonNettedLongAssetValue", ObjectName = "NonNettedLongAumExposure"}, 
+			new XmlToObjectMap { XmlName = "nettedShortAssetValue", ObjectName = "NettedShortAumExposure"}, 
+			new XmlToObjectMap { XmlName = "nettedLongAssetValue", ObjectName = "NettedLongAumExposure"},
+	    };
+
+	    private static XmlToObjectMap[] positionsMaps =
+	    {
+			new XmlToObjectMap { XmlName = "numberOfLongPositions", ObjectName = "NumberOfLongPositions"}, 
+			new XmlToObjectMap { XmlName = "numberOfShortPositions", ObjectName = "NumberOfShortPositions"}, 
+	    };
+
+	    public static Dictionary<string, string> ComplexTypeMaps = new Dictionary<string, string>
+	    {
+
+	    };
+
+	    public static Dictionary<string, string> ElementTypeMaps = new Dictionary<string, string>
+	    {
+			
+	    };
+
+	    public static Dictionary<string, string> ElementNameMaps = new Dictionary<string, string>
+	    {
+
+	    };
+		
+	    public static Dictionary<string, XmlToObjectMap[]> AttributionGroupsMaps = new Dictionary<string, XmlToObjectMap[]>
+	    {
+	        { "totalAssetValue", assetValueMaps.Concat(positionsMaps).ToArray() },
+	        { "totalAumPercentage", assetValueMaps.Concat(positionsMaps).ToArray() },
+	        //{ "longShortAumPercentagePositionAttributes", aumPercentageMaps.Concat(positionsMaps).ToArray() },
 	    };
 	}
 
-	public static class InfoExporter
+	public static class InfoImporter
 	{
-	    public static AttributionGroupInfo CreateAttributionGroup(CodeClass parent, IEnumerable<AttributionMap> attributionMaps)
+	    public static ComplexType ImporXsdRootElement(string xsdPath, CodeElements codeElements, string nameSpace)
+	    {
+	        XmlSchema xsd = PrepareSchemaSet(xsdPath);
+			
+	        ComplexType root = ImporXsdRootElement(xsd, codeElements, nameSpace);
+
+	        return root;
+	    }
+
+	    private static XmlSchema PrepareSchemaSet(string xsdPath)
+        {
+            XmlSchema xsd;
+            using (FileStream stream = new FileStream(xsdPath, FileMode.Open, FileAccess.Read))
+            {
+                xsd = XmlSchema.Read(stream, null);
+            }
+			
+			XmlSchemas xsds = new XmlSchemas { xsd };
+			xsds.Compile(null, true);
+            return xsd;
+        }
+
+	    #region Impor Xsd elements
+		
+	    private static ComplexType ImporXsdRootElement(XmlSchema xsd, CodeElements codeElements, string nameSpace)
+	    {
+			Dictionary<string, IElement[]> groups = ImporXsdGroups(xsd, codeElements, nameSpace);
+
+	        Dictionary<string, ComplexType> types = ImporXsdComplexTypes(xsd, codeElements, nameSpace);
+
+			ComplexType fundAndInvestorDetails = CreateComplexType("fundAndInvestorDetails", "RaFundAndInvestorDetails", codeElements, nameSpace);
+			fundAndInvestorDetails.SubItems.Add(new SimpleElement { SimpleType = typeof(string), ObjectName = "FundName", XmlName = "fundName" });
+			fundAndInvestorDetails.SubItems.Add(new SimpleElement { SimpleType = typeof(DateTime?), ObjectName = "Date", XmlName = "date" });
+	
+			ComplexType totalAssetValue = CreateComplexType("totalAssetValue", "RaExposureItem", codeElements, nameSpace);
+			ComplexType totalAumPercentage = CreateComplexType("totalAumPercentage", "RaExposureItem", codeElements, nameSpace);
+
+			ComplexType equityExposure = CreateComplexType("equityExposure", "RaEquityExposure", codeElements, nameSpace);
+			equityExposure.SubItems.Add(new ComplexElement { ComplexType = totalAssetValue, ObjectName = "TotalExposure", XmlName = "totalAssetValue" });
+			equityExposure.SubItems.Add(new ComplexElement { ComplexType = totalAumPercentage, ObjectName = "PercentagePortfolio", XmlName = "totalAumPercentage" });
+		
+			ComplexType opera = CreateComplexType("opera", "RiskAggregationData", codeElements, nameSpace);
+			opera.SubItems.Add(new ComplexElement { ComplexType = fundAndInvestorDetails, ObjectName = "FundAndInvestorDetails", XmlName = "fundAndInvestorDetails" });
+			opera.SubItems.Add(new ComplexElement { ComplexType = equityExposure, ObjectName = "EquityExposure", XmlName = "equityExposure" });
+			
+			return opera;
+	    }
+
+	    private static Dictionary<string, ComplexType> ImporXsdComplexTypes(XmlSchema xsd, CodeElements codeElements, string nameSpace)
+	    {
+			var result = new Dictionary<string, ComplexType>();
+
+			foreach (XmlSchemaComplexType complexType in xsd.SchemaTypes.Values.OfType<XmlSchemaComplexType>())
+	        {
+				ComplexType objectComplexType = CreateComplexType(complexType.Name, MapInfo.ComplexTypeMaps[complexType.Name], codeElements, nameSpace);
+				result.Add(complexType.Name, objectComplexType);
+	        }
+
+	        return result;
+	    }
+
+	    private static Dictionary<string, IElement[]> ImporXsdGroups(XmlSchema xsd, CodeElements codeElements, string nameSpace)
+	    {
+			var result = new Dictionary<string, IElement[]>();
+
+	        foreach (XmlSchemaGroup schemaGroup in xsd.Groups.Values.Cast<XmlSchemaGroup>())
+	        {
+	            IEnumerable<IElement> elements = schemaGroup.Particle.Items.
+	                OfType<XmlSchemaElement>().
+	                Select(x => ImporElement(x, codeElements, nameSpace, objectType: "RaExposureItem")).
+					Where(x => x != null);
+	            result.Add(schemaGroup.Name, elements.ToArray());
+	        }
+
+	        return result;
+	    }
+
+	    private static IElement ImporElement(XmlSchemaElement element, CodeElements codeElements, string nameSpace, string objectName = "[None]", string objectType = "[None]")
+	    {
+	        IElement result = null;
+	        string name = element.QualifiedName.Name;
+	        var complexType = element.ElementSchemaType as XmlSchemaComplexType;
+	        if (complexType != null)
+	        {
+	            ComplexType objectComplexType = CreateComplexType(name, objectType, codeElements, nameSpace);
+	            result = new ComplexElement { ComplexType = objectComplexType, XmlName = name, ObjectName = objectName };
+	        }
+
+			var simpleType = element.ElementSchemaType as XmlSchemaSimpleType;
+	        if (simpleType != null)
+	        {
+	            Type objectSimpleType = GetType(simpleType.Datatype.TypeCode, simpleType.Datatype.Variety);
+	            result = new SimpleElement { SimpleType = objectSimpleType, XmlName = name, ObjectName = objectName };
+	        }
+
+	        return result;
+	    }
+
+
+	    #endregion
+
+	    public static AttributionGroupInfo CreateAttributionGroup(CodeClass parent, IEnumerable<XmlToObjectMap> attributionMaps)
 		{
 		    if (attributionMaps == null)
 		    {
@@ -451,10 +553,10 @@ namespace empty
 				ElementObjectType = GetClassName(parent),
 				Attributions = new List<AttributionInfo>(),
 			};
-		    foreach (AttributionMap attributionMap in attributionMaps)
+		    foreach (XmlToObjectMap attributionMap in attributionMaps)
 		    {
-				CodeVariable field = FindField(parent, attributionMap.ObjectFieldName);
-		        attributionGroup.Attributions.Add(new AttributionInfo { XmlName = attributionMap.XmlAttributionName, ObjectType = field.Type, ObjectName = field.Name });
+				CodeVariable field = FindField(parent, attributionMap.ObjectName);
+		        attributionGroup.Attributions.Add(new AttributionInfo { XmlName = attributionMap.XmlName, ObjectType = field.Type, ObjectName = field.Name });
 		    }
 		    return attributionGroup;
 		}
@@ -465,19 +567,17 @@ namespace empty
 			
 			ComplexType elementInfo = new ComplexType
 			{
-				//ObjectType = codeClass,
-				ObjectTypeName = GetClassName(codeClass),
+				ObjectType = GetClassName(codeClass),
 				HaveSubItemsInterface = HaveSubItemsInterface(codeClass),
-				SubItems = new List<IElement>(),
 			};
 		    elementInfo.Attribution = CreateAttributionGroup(codeClass, GetMap(elementName));
 		    return elementInfo;
 		}
 
-	    public static IEnumerable<AttributionMap> GetMap(string key)
+	    public static IEnumerable<XmlToObjectMap> GetMap(string attributionGroupName)
 	    {
-	        AttributionMap[] result;
-	        if (MapInfo.AttributionGroupsMaps.TryGetValue(key, out result))
+	        XmlToObjectMap[] result;
+	        if (MapInfo.AttributionGroupsMaps.TryGetValue(attributionGroupName, out result))
 	        {
 	            return result;
 	        }
@@ -542,6 +642,41 @@ namespace empty
 				}
 			}
 		}
+		
+        private static Type GetType(XmlTypeCode typeCode, XmlSchemaDatatypeVariety variety)
+        {
+            Type result;
+            switch (typeCode)
+            {
+                case XmlTypeCode.AnyAtomicType:
+                    // union
+                    result = typeof(string);
+                    break;
+                case XmlTypeCode.AnyUri:
+                case XmlTypeCode.Date:
+                case XmlTypeCode.Duration:
+                case XmlTypeCode.GDay:
+                case XmlTypeCode.GMonth:
+                case XmlTypeCode.GMonthDay:
+                case XmlTypeCode.GYear:
+                case XmlTypeCode.GYearMonth:
+                case XmlTypeCode.Time:
+                    result = variety == XmlSchemaDatatypeVariety.List ? typeof(string[]) : typeof(string);
+                    break;
+                case XmlTypeCode.Decimal:
+                case XmlTypeCode.Integer:
+                case XmlTypeCode.NegativeInteger:
+                case XmlTypeCode.NonNegativeInteger:
+                case XmlTypeCode.NonPositiveInteger:
+                case XmlTypeCode.PositiveInteger:
+                    result = typeof(string);
+                    break;
+                default:
+                    result = null;
+                    break;
+            }
+            return result;
+        }
 	}
 
 	private Project GetProject(string projectName)
