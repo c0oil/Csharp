@@ -235,11 +235,20 @@ namespace empty
 <#+
                     }
                 }
+				if (complex.SubItemsInAttribution)
+					return;
+
 				if (complex.IsElementContainer)
 				{
 					CreateImportAnnonimElement(complex.ComplexType);
 				}
-				else if (!complex.SubItemsInAttribution)
+				else if (complex.ComplexType != null && complex.ComplexType.IsCollection)
+				{
+#>
+					result.<#= element.ObjectName ?? String.Empty #>.Add(<#= ImportSimpleTypes.GetImportElementMethod(element) #>(reader, <#= haveImportAction ? "importAttributesElement": "null" #>));
+<#+				    
+				}
+				else 
 				{
 #>
 					result.<#= element.ObjectName ?? String.Empty #> = <#= ImportSimpleTypes.GetImportElementMethod(element) #>(reader, <#= haveImportAction ? "importAttributesElement": "null" #>);
@@ -448,6 +457,7 @@ namespace empty
     {
         public string ObjectType { get; set; }
 		
+        public bool IsCollection { get; set; }
 		public bool HaveSubItemsInterface { get; set; }
         public List<IElement> SubItems { get; } = new List<IElement>();
     }
@@ -554,6 +564,17 @@ namespace empty
 			new XmlToObjectMap { XmlName = "dv01", ObjectName = "Dv01"},
 	    };*/
 
+	    private static XmlToObjectMap[] sensitivityAttributes =
+	    {
+			new XmlToObjectMap { XmlName = "beta", ObjectName = "Beta"},
+			new XmlToObjectMap { XmlName = "delta", ObjectName = "Delta"},
+			new XmlToObjectMap { XmlName = "gamma", ObjectName = "Gamma"},
+			new XmlToObjectMap { XmlName = "vega", ObjectName = "Vega"},
+			new XmlToObjectMap { XmlName = "theta", ObjectName = "Theta"},
+			new XmlToObjectMap { XmlName = "cs01", ObjectName = "Cs01"},
+			new XmlToObjectMap { XmlName = "dv01", ObjectName = "Dv01"},
+	    };
+
 	    private static XmlToObjectMap[] stressTestAttributes =
 	    {
 			new XmlToObjectMap { XmlName = "portfolioReturnPercentage", ObjectName = "PortfolioReturn"},
@@ -614,6 +635,7 @@ namespace empty
 	        { "gammaVegaThetaSensitivityAttributes", gammaVegaThetaSensitivityAttributes },
 	        { "basisPointChangeSensitivityAttributes", basisPointChangeSensitivityAttributes },
 			*/
+	        { "sensitivityAttributes", sensitivityAttributes },
 
 	        { "stressTestAttributes", stressTestAttributes },
 	        { "historicalStressTestAttributes", stressTestAttributes.Concat(historicalStressTestAttributes).ToArray() },
@@ -728,12 +750,12 @@ namespace empty
 
 	    private static XmlToObjectMap[] sensitivityMaps =
 	    {
-			/*new XmlToObjectMap { XmlName = "equity", ObjectName = "Sensivities[0]"},
+			new XmlToObjectMap { XmlName = "equity", ObjectName = "Sensivities"},
 			new XmlToObjectMap { XmlName = "sovereignInterestRate", ObjectName = "Sensivities"},
-			new XmlToObjectMap { XmlName = "credit", ObjectName = "Sensivities[0]"},
-			new XmlToObjectMap { XmlName = "convertibleBond", ObjectName = "Sensivities[0]"},
-			new XmlToObjectMap { XmlName = "currency", ObjectName = "Sensivities[0]"},
-			new XmlToObjectMap { XmlName = "realAsset", ObjectName = "Sensivities[0]"},*/
+			new XmlToObjectMap { XmlName = "credit", ObjectName = "Sensivities"},
+			new XmlToObjectMap { XmlName = "convertibleBond", ObjectName = "Sensivities"},
+			new XmlToObjectMap { XmlName = "currency", ObjectName = "Sensivities"},
+			new XmlToObjectMap { XmlName = "realAsset", ObjectName = "Sensivities"},
 
 			new XmlToObjectMap { XmlName = "exposureInCalculation", ObjectName = SelfObjectName},
 	    };
@@ -898,18 +920,32 @@ namespace empty
 	        var complexType = element.ElementSchemaType as XmlSchemaComplexType;
 	        if (complexType != null)
 	        {
-				CodeClass codeClass = FindClass(codeElements, nameSpace, objectType);
-	            if (HaveSubItemsInterface(codeClass))
+	            if (IsCollection(objectType))
 	            {
-					string attributionGroupName = ImportXsdAttributionGroupNameForSubElement(complexType);
+	                string subItemObjectType = GetCollectionItemClassName(objectType);
+					//string attributionGroupName = ImportXsdAttributionGroupName(complexType);
+	                string attributionGroupName = "sensitivityAttributes";
+					CodeClass codeClass = FindClass(codeElements, nameSpace, subItemObjectType);
 					ComplexType objectComplexType = CreateComplexType(codeClass);
-					result = CreateComplexElement(name, objectFieldName, objectType, attributionGroupName, objectComplexType, codeElements, nameSpace);
+	                objectComplexType.IsCollection = true;
+					result = CreateComplexElement(name, objectFieldName, subItemObjectType, attributionGroupName, objectComplexType, codeElements, nameSpace);
 	            }
 	            else
 	            {
-					string attributionGroupName = ImportXsdAttributionGroupName(complexType);
-					ComplexType objectComplexType = ImporXsdComplexType(complexType, name, objectType, codeElements, nameSpace);
-					result = CreateComplexElement(name, objectFieldName, objectType, attributionGroupName, objectComplexType, codeElements, nameSpace);
+	                
+					CodeClass codeClass = FindClass(codeElements, nameSpace, objectType);
+					if (HaveSubItemsInterface(codeClass))
+					{
+						string attributionGroupName = ImportXsdAttributionGroupNameForSubElement(complexType);
+						ComplexType objectComplexType = CreateComplexType(codeClass);
+						result = CreateComplexElement(name, objectFieldName, objectType, attributionGroupName, objectComplexType, codeElements, nameSpace);
+					}
+					else
+					{
+						string attributionGroupName = ImportXsdAttributionGroupName(complexType);
+						ComplexType objectComplexType = ImporXsdComplexType(complexType, name, objectType, codeElements, nameSpace);
+						result = CreateComplexElement(name, objectFieldName, objectType, attributionGroupName, objectComplexType, codeElements, nameSpace);
+					}
 	            }
 	        }
 
@@ -1057,6 +1093,18 @@ namespace empty
 
 	        }
 	        return null;
+	    }
+
+	    private static string GetCollectionItemClassName(string objectType)
+	    {
+	        int start = objectType.IndexOf("<") + 1;
+	        int end = objectType.IndexOf(">");
+	        return objectType.Substring(start, end - start);
+	    }
+
+	    private static bool IsCollection(string objectType)
+	    {
+	        return objectType.Contains("List<");
 	    }
 
 	    private static bool HaveSubItemsInterface(CodeClass codeClass)
