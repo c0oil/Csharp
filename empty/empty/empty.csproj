@@ -50,6 +50,16 @@
       <DependentUpon>Converters.tt</DependentUpon>
     </Compile>
     <Compile Include="Generator.cs" />
+    <Compile Include="InfoImporter.cs">
+      <DependentUpon>InfoImporter.tt</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <Compile Include="MapInfo.cs">
+      <DependentUpon>MapInfo.tt</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
     <Compile Include="RaXmlImporter.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -72,6 +82,14 @@
     <Content Include="Converters.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Converters.cs</LastGenOutput>
+    </Content>
+    <Content Include="InfoImporter.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>InfoImporter.cs</LastGenOutput>
+    </Content>
+    <Content Include="MapInfo.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>MapInfo.cs</LastGenOutput>
     </Content>
     <Content Include="RaXmlImporter.tt">
       <Generator>TextTemplatingFileGenerator</Generator>

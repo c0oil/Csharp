@@ -7,14 +7,13 @@
 <#@ assembly name="System.Xml" #>
 <#@ assembly name="System.Xml.Linq" #>
 <#@ import namespace="System.Collections.Generic" #>
-<#@ import namespace="System.Globalization" #>
 <#@ import namespace="System.IO" #>
 <#@ import namespace="System.Linq" #>
-<#@ import namespace="System.Reflection" #>
 <#@ import namespace="System.Xml" #>
 <#@ import namespace="System.Xml.Schema" #>
 <#@ import namespace="System.Xml.Serialization" #>
 <#@ import namespace="EnvDTE" #>
+<#@ include file="InfoImporter.tt"#>
 using System;
 using System.Globalization;
 using System.Xml;
@@ -36,11 +35,11 @@ namespace empty
 
     ComplexType root = InfoImporter.ImporXsdRootElement(xsdPath, codeElements, nameSpace);
 	
-	CreateImportElement(root);
+	CreateImportMethodForElement(root);
 	
-    foreach (AttributionGroupInfo groupInfo in attributionGroupOrder.Values)
+    foreach (AttributionGroupInfo groupInfo in existingsAttributionGroups.Values)
     {
-        CreateImportAttributionGroup(groupInfo);
+        CreateImportMethodForAttributionGroup(groupInfo);
     }
 	
 #>
@@ -62,11 +61,6 @@ namespace empty
                 }
             } while (reader.Read() && reader.Depth >= depth);
         }
-
-		private static class ImportManualyTypes
-		{
-			
-		}
 		
 		private static class ImportSimpleTypes
 		{
@@ -122,37 +116,37 @@ namespace empty
 	}
 }
 <#+
-		private Dictionary<string, AttributionGroupInfo> attributionGroupOrder = new Dictionary<string, AttributionGroupInfo>();
+		private Dictionary<string, AttributionGroupInfo> existingsAttributionGroups = new Dictionary<string, AttributionGroupInfo>();
 
-		private void CreateImportElement(ComplexType element)
+		private void CreateImportMethodForElement(ComplexType complexType)
 		{
-		    if (ImportSimpleTypes.CheckImportMethod(element))
+		    if (ImportSimpleTypes.CheckImportMethod(complexType))
 		    {
 				return;
 		    }
 
 #>  
-        public static <#= element.ObjectType #> <#= ImportSimpleTypes.GetImportComplexElementMethod(element) #>(XmlReader reader, Action<<#= element.ObjectType #>> importAttributes)
+        public static <#= complexType.ClassName #> <#= ImportSimpleTypes.GetImportComplexElementMethod(complexType) #>(XmlReader reader, Action<<#= complexType.ClassName #>> importAttributes)
         {
-            <#= element.ObjectType #> result = new <#= element.ObjectType #>();
+            <#= complexType.ClassName #> result = new <#= complexType.ClassName #>();
 			importAttributes?.Invoke(result);
 <#+
-		    if (element.HaveSubItemsInterface)
+		    if (complexType.ClassHaveSubItemsInterface)
 		    {
 #>
 			ForEachSubItems(reader, () =>
             {
-				result.SubItems.Add(Import<#= element.ObjectType #>(reader, importAttributes));
+				result.SubItems.Add(Import<#= complexType.ClassName #>(reader, importAttributes));
             });
 <#+ 
 		    }
-		    else if(element.SubItems.Any())
+		    else if(complexType.ChildElements.Any())
 		    {
 #>
 			ForEachSubItems(reader, () =>
             {
 <#+
-				CreateIfStatments(element.SubItems);
+				CreateIfStatments(complexType.ChildElements);
 #>
             });
 <#+
@@ -161,43 +155,43 @@ namespace empty
             return result;
         }
 <#+
-		    if (!element.HaveSubItemsInterface)
+		    if (!complexType.ClassHaveSubItemsInterface)
 		    {
-		        foreach (ComplexElement complexElement in element.SubItems.OfType<ComplexElement>())
+		        foreach (ComplexElement complexElement in complexType.ChildElements.OfType<ComplexElement>())
 		        {
-		            if (complexElement.IsElementContainer)
+		            if (complexElement.IsMapElementChildrensToFieldsInCurrentClass)
 		            {
-		                CreateImportAnnonimElement(complexElement.ComplexType, complexElement.XmlName);
+		                CreateImportMethodForChildElements(complexElement.ComplexType, complexElement.ElementName);
 		            }
 		            else
 		            {
-						CreateImportElement(complexElement.ComplexType);
+						CreateImportMethodForElement(complexElement.ComplexType);
 		            }
 		        }
 		    }
 		}
 
-		private void CreateImportAnnonimElement(ComplexType element, string elementName)
+		private void CreateImportMethodForChildElements(ComplexType complexType, string elementName)
 		{
 #>
 
-		private static void <#= ImportSimpleTypes.GetImportAnnonomMethod(elementName) #>(XmlReader reader, <#= element.ObjectType #> result, Action<<#= element.ObjectType #>> importAttributes)
+		private static void <#= ImportSimpleTypes.GetImportChildElementsMethod(elementName) #>(XmlReader reader, <#= complexType.ClassName #> result, Action<<#= complexType.ClassName #>> importAttributes)
         {
 			importAttributes?.Invoke(result);
 			ForEachSubItems(reader, () =>
 			{
 <#+
-			CreateIfStatments(element.SubItems);
+			CreateIfStatments(complexType.ChildElements);
 #>
 			});
 		}
 <#+
 		}
 
-        private void CreateImportAttributionGroup(AttributionGroupInfo attributionGroup)
+        private void CreateImportMethodForAttributionGroup(AttributionGroupInfo attributionGroup)
         {
 #> 
-		private static void <#= ImportSimpleTypes.GetImportAttributionGroupMethod(attributionGroup) #>(<#= attributionGroup.ElementObjectType #> result, XmlReader reader)
+		private static void <#= ImportSimpleTypes.GetImportAttributionGroupMethod(attributionGroup) #>(<#= attributionGroup.ClassName #> result, XmlReader reader)
 		{
 			if (!reader.MoveToFirstAttribute())
 				return;
@@ -221,7 +215,7 @@ namespace empty
             foreach (IElement element in elements)
             {
 #>
-				<#= isFirst ? "" : "else " #>if (reader.Name.Equals("<#= element.XmlName #>"))
+				<#= GetIfExpresion(element.ElementName, isFirst) #>
 				{
 <#+
                 CreateIfBody(element);
@@ -232,62 +226,47 @@ namespace empty
             }
         }
 
+        private string importAttributesActionName = "importElementAttributes";
+        private string nullString = "null";
+
 		private void CreateIfBody(IElement element)
 		{
             var simple = element as SimpleElement;
             if (simple != null)
             {
-#>
-					result.<#= element.ObjectName ?? String.Empty #> = <#= ImportSimpleTypes.GetImportElementMethod(element) #>(reader);
-<#+
+				CreateFieldAssign(element, false, false);
             }
 			
             var complex = element as ComplexElement;
             if (complex != null)
             {
-                bool haveImportAction = false;
+                bool isInitializedAttributionImport = false;
                 if (complex.Attribution != null)
                 {
-                    var attribution = complex.Attribution;
-                    string key = attribution.XmlName + attribution.ElementObjectType;
-                    if (!attributionGroupOrder.ContainsKey(key))
+                    AttributionGroupInfo attribution = complex.Attribution;
+                    string key = attribution.XmlName + attribution.ClassName;
+                    if (!existingsAttributionGroups.ContainsKey(key))
                     {
-                        attributionGroupOrder[key] = attribution;
-                    }             
-					if (complex.SubItemsInAttribution || complex.IsElementContainer)
-                    {
-#>
-					<#=ImportSimpleTypes.GetImportAttributionGroupMethod(attribution) #>(result, reader);
-<#+
+                        existingsAttributionGroups[key] = attribution;
                     }
-                    else
+					          
+					if (complex.IsMapAttributionsToFieldsInCurrentClass)
 					{
-					    haveImportAction = true;
-#>
-                    Action<<#= complex.ComplexType.ObjectType #>> importAttributesElement = (attribution) => <#=ImportSimpleTypes.GetImportAttributionGroupMethod(attribution) #>(attribution, reader);
-<#+
+					    CreateAttributionGroupMethodInvocation(attribution);
+						return;
                     }
+					
+					isInitializedAttributionImport = true;
+					CreateInitializeActionAttributionGroup(attribution, complex.ComplexType.ClassName);
                 }
-				if (complex.SubItemsInAttribution)
-					return;
 
-				if (complex.IsElementContainer)
+				if (complex.IsMapElementChildrensToFieldsInCurrentClass)
 				{
-#>
-					<#= ImportSimpleTypes.GetImportAnnonomMethod(element.XmlName) #>(reader, result, <#= haveImportAction ? "importAttributesElement": "null" #>);
-<#+
+				    CreateChildElementsMethodInvocation(element, isInitializedAttributionImport);
 				}
-				else if (complex.ComplexType != null && complex.ComplexType.IsCollection)
+				else if (complex.ComplexType != null)
 				{
-#>
-					result.<#= element.ObjectName ?? String.Empty #>.Add(<#= ImportSimpleTypes.GetImportElementMethod(element) #>(reader, <#= haveImportAction ? "importAttributesElement": "null" #>));
-<#+				    
-				}
-				else 
-				{
-#>
-					result.<#= element.ObjectName ?? String.Empty #> = <#= ImportSimpleTypes.GetImportElementMethod(element) #>(reader, <#= haveImportAction ? "importAttributesElement": "null" #>);
-<#+				        
+				    CreateFieldAssign(element, isInitializedAttributionImport, complex.ComplexType.IsCollection);				        
 				}
             }
 		}
@@ -298,1018 +277,77 @@ namespace empty
             foreach (AttributionInfo attribution in attributions)
             {
 #>
-				<#= isFirst ? "" : "else " #>if (reader.Name.Equals("<#= attribution.XmlName #>"))
+				<#= GetIfExpresion(attribution.AttributionName, isFirst) #>
 				{
-					result.<#= attribution.ObjectName #> = <#= ImportSimpleTypes.GetImportSimpleElementMethod(attribution.ObjectType) ?? ImportSimpleTypes.GetImportAttributionElementMethod(attribution.ObjectType) #>(reader);
+					result.<#= attribution.FieldName #> = <#= 
+						ImportSimpleTypes.GetImportSimpleElementMethod(attribution.FieldType) ?? 
+						ImportSimpleTypes.GetImportAttributionElementMethod(attribution.FieldType) #>(reader);
 				}
 <#+
                 isFirst = false;
             }
         }
 
-	// Helpers
-	private static class ImportSimpleTypes
-	{
-	    private static Dictionary<string, string> complexTypes = new Dictionary<string, string>();
-
-		private static Dictionary<Type, string> simpleTypes = new Dictionary<Type, string>
+		private void CreateInitializeActionAttributionGroup(AttributionGroupInfo attribution, string className)
 		{
-		    { typeof(DateTime?), nameof(ImportDateTimeNullable) },
-		    { typeof(long?), nameof(ImportLongNullable) },
-		    { typeof(double?), nameof(ImportDoubleNullable) },
-			{ typeof(string), nameof(ImportString) },
-		};
-			public static DateTime? ImportDateTimeNullable(XmlReader reader)
-            {
-                string value = ReadContent(reader);
-				DateTime parsedValue;
-				return string.IsNullOrEmpty(value) || !DateTime.TryParse(value, out parsedValue) ? (DateTime?)null : parsedValue;
-			}
-
-			public static long? ImportLongNullable(XmlReader reader)
-            {
-                double? doubleValue = ImportDoubleNullable(reader);
-				return doubleValue == null ? (Int64?) null : (Int64) Math.Round(doubleValue.Value, MidpointRounding.AwayFromZero);
-			}
-
-			public static double? ImportDoubleNullable(XmlReader reader)
-            {
-                string value = ReadContent(reader);
-				double parsedValue;
-				return string.IsNullOrEmpty(value) || !double.TryParse(value, out parsedValue) ? (double?)null : parsedValue;
-			}
-
-			public static string ImportString(XmlReader reader)
-			{
-                return ReadContent(reader);
-			}
-
-		    private static string ReadContent(XmlReader reader)
-            {
-                if (reader.NodeType == XmlNodeType.Element)
-                {
-                    return reader.ReadElementContentAsString();
-                }
-                return reader.Value;
-            }
-
-		/*
-
-		public static RaDoubleValue ImportRaDoubleValue(XmlReader reader)
-		{
-			return new RaDoubleValue { Value = ImportDoubleNullable(reader) };
+#>
+                    Action<<#= className #>> <#= importAttributesActionName #> = (attribution) => <#=ImportSimpleTypes.GetImportAttributionGroupMethod(attribution) #>(attribution, reader);
+<#+        
 		}
 
-		public static RaIntValue ImportRaIntValue(XmlReader reader)
+		private void CreateAttributionGroupMethodInvocation(AttributionGroupInfo attribution)
 		{
-			return new RaIntValue { Value = ImportLongNullable(reader) };
+#>
+					<#=ImportSimpleTypes.GetImportAttributionGroupMethod(attribution) #>(result, reader);
+<#+        
+		}
+		private void CreateChildElementsMethodInvocation(IElement element, bool haveAttributionImport)
+		{
+#>
+					<#= ImportSimpleTypes.GetImportChildElementsMethod(element.ElementName) #>(reader, result, <#= haveAttributionImport ? importAttributesActionName: nullString #>);
+<#+        
 		}
 
-		public static RaStringValue ImportRaStringValue(XmlReader reader)
+		private void CreateFieldAssign(IElement element, bool haveAttributionImport, bool isCollection)
 		{
-			return new RaStringValue { Value = ImportString(reader) };
+#>
+					result.<#= element.FieldName ?? String.Empty #><#= isCollection ? ".Add(" : " = " #><#= GetImportMethodInvocation(element, haveAttributionImport) #><#= isCollection ? ")" : string.Empty #>;
+<#+	        
 		}
 
-		*/
-
-        private static bool EqualsType(Type type, string codeTypeAsFullName)
-        {
-			string typeFullName = type.FullName;
-			if (type.IsGenericType && type.FullName.Contains("Nullable"))
-	        {
-	            typeFullName = $"System.Nullable<{type.GenericTypeArguments.First().FullName}>";
-	        }
-	        return string.Equals(typeFullName, codeTypeAsFullName, StringComparison.InvariantCultureIgnoreCase);
-        }
-
-	    private static bool EqualsType(Type type, CodeTypeRef codeType)
-	    {
-			string typeFullName = type.FullName;
-			if (type.IsGenericType && type.FullName.Contains("Nullable"))
-	        {
-	            typeFullName = $"System.Nullable<{type.GenericTypeArguments.First().FullName}>";
-	        }
-	        return string.Equals(typeFullName, codeType.AsFullName, StringComparison.InvariantCultureIgnoreCase);
-	    }
-
-        public static bool CheckImportMethod(ComplexType element)
-        {
-            if (element?.ObjectType == null)
-            {
-                return true;
-            }
-            if (complexTypes.ContainsKey(element.ObjectType))
-            {
-                return true;
-            }
-            complexTypes.Add(element.ObjectType, GetImportComplexElementMethod(element));
-            return false;
-        }
-
-        public static Type GetSimpleType(string objectType)
-        {
-            return simpleTypes.Keys.FirstOrDefault(x => EqualsType(x, objectType));
-        }
-
-	    public static string GetImportSimpleElementMethod(Type objectType, string simpleElementAsSimpleType)
-	    {
-	        var methods = simpleTypes.Where(simpleType => simpleType.Key == objectType);
-
-	        return methods.Any() 
-				? $"{nameof(ImportSimpleTypes)}.{methods.FirstOrDefault().Value}" 
-				: $"{nameof(ImportSimpleTypes)}.Import{simpleElementAsSimpleType}";;
-	    }
-
-	    public static string GetImportSimpleElementMethod(CodeTypeRef objectType)
-	    {
-	        return simpleTypes.
-				Where(simpleType => EqualsType(simpleType.Key, objectType)).
-				Select(simpleType => $"{nameof(ImportSimpleTypes)}.{simpleType.Value}").
-				FirstOrDefault();
-	    }
-
-	    public static string GetImportAnnonomMethod(string element)
-	    {
-			return $"Import{FirstCharToUpper(element)}";
-	    }
-
-		public static string GetImportAttributionGroupMethod(AttributionGroupInfo attributionGroup)
+		private string GetIfExpresion(string xmlName, bool isFirst)
 		{
-			return $"Import{FirstCharToUpper(attributionGroup.XmlName)}";
+		    return $"{(isFirst ? string.Empty : "else ")}if (reader.Name.Equals(\"{xmlName}\"))";
 		}
 
-	    public static string GetImportAttributionElementMethod(CodeTypeRef objectType)
-	    {
-	        string className = objectType.AsFullName.Substring(objectType.AsFullName.LastIndexOf(".") + 1);
-			return $"{nameof(ImportSimpleTypes)}.Import{className}";
-	    }
-
-		public static string GetImportComplexElementMethod(ComplexType complexType)
+		private string GetImportMethodInvocation(IElement element, bool haveAttributionImport)
 		{
-			return $"Import{complexType?.ObjectType}";
-		}
-
-		public static string GetImportElementMethod(IElement element)
-		{
-		    var simpleElement = element as SimpleElement;
-		    if (simpleElement != null)
-			{
-				return GetImportSimpleElementMethod(simpleElement.SimpleType, simpleElement.AsSimpleType);
-			}
-
 		    var complexElement = element as ComplexElement;
 		    if (complexElement != null)
-			{
-				return GetImportComplexElementMethod(complexElement.ComplexType);
-			}
-
-			return null;
-		}
-
-		public static string FirstCharToUpper(string input)
-		{
-			if (String.IsNullOrEmpty(input))
-				return input;
-			return input.First().ToString().ToUpper() + input.Substring(1);
-		}
-    }
-
-    #region Structers
-
-    public interface IElement
-	{
-        string XmlName { get; }
-        string ObjectName { get; }
-	}
-
-	public class SimpleElement : IElement
-    {
-        public string XmlName { get; set; }
-        public string ObjectName { get; set; }
-        public Type SimpleType { get; set; }
-        public string AsSimpleType { get; set; }
-    }
-
-    public class ComplexElement : IElement
-    {
-        public string XmlName { get; set; }
-        public string ObjectName { get; set; }
-        public ComplexType ComplexType { get; set; }
-        public AttributionGroupInfo Attribution { get; set; }
-
-        public bool SubItemsInAttribution => ObjectName == MapInfo.SelfObjectName;
-        public bool IsElementContainer => ObjectName == MapInfo.ContainerfObjectName;
-    }
-
-    public class ComplexType
-    {
-        public string ObjectType { get; set; }
-		
-        public bool IsCollection { get; set; }
-		public bool HaveSubItemsInterface { get; set; }
-        public List<IElement> SubItems { get; } = new List<IElement>();
-    }
-
-    public class AttributionGroupInfo
-    {
-        public string XmlName { get; set; }
-        public string ElementObjectType { get; set; }
-
-        public List<AttributionInfo> Attributions { get; } = new List<AttributionInfo>();
-    }
-
-    public class AttributionInfo
-    {
-        public string XmlName { get; set; }
-        public string ObjectName { get; set; }
-        public CodeTypeRef ObjectType { get; set; }
-    }
-
-    public class XmlToObjectMap
-    {
-        public string XmlName;
-        public string ObjectName;
-    }
-	
-    #endregion
-
-	public static class MapInfo
-	{
-		// Attributions map 
-		
-	    private static XmlToObjectMap[] aumPercentageAssetValueAttributes =
-	    {
-			new XmlToObjectMap { XmlName = "aumPercentage", ObjectName = "PercentAge"}, 
-			new XmlToObjectMap { XmlName = "assetValue", ObjectName = "Amount"},
-	    };
-
-	    private static XmlToObjectMap[] aumPercentageRedemptionAttributes =
-	    {
-			new XmlToObjectMap { XmlName = "aumPercentageRedeemableWithPenalty", ObjectName = "PercentWithPenalty"}, 
-			new XmlToObjectMap { XmlName = "aumPercentageRedeemableWithNoPenalty", ObjectName = "PercentWithoutPenalty"},
-	    };
-
-	    private static XmlToObjectMap[] nettedNonNettedLongShortAumPercentageAttributes =
-	    {
-			new XmlToObjectMap { XmlName = "nonNettedShortAumPercentage", ObjectName = "NonNettedShortAumExposure"}, 
-			new XmlToObjectMap { XmlName = "nonNettedLongAumPercentage", ObjectName = "NonNettedLongAumExposure"}, 
-			new XmlToObjectMap { XmlName = "nettedShortAumPercentage", ObjectName = "NettedShortAumExposure"}, 
-			new XmlToObjectMap { XmlName = "nettedLongAumPercentage", ObjectName = "NettedLongAumExposure"},
-	    };
-
-	    private static XmlToObjectMap[] nettedNonNettedLongShortAssetValueAttributes =
-	    {
-			new XmlToObjectMap { XmlName = "nonNettedShortAssetValue", ObjectName = "NonNettedShortAumExposure"}, 
-			new XmlToObjectMap { XmlName = "nonNettedLongAssetValue", ObjectName = "NonNettedLongAumExposure"}, 
-			new XmlToObjectMap { XmlName = "nettedShortAssetValue", ObjectName = "NettedShortAumExposure"}, 
-			new XmlToObjectMap { XmlName = "nettedLongAssetValue", ObjectName = "NettedLongAumExposure"},
-	    };
-
-	    private static XmlToObjectMap[] longShortPositionAttributes =
-	    {
-			new XmlToObjectMap { XmlName = "numberOfLongPositions", ObjectName = "NumberOfLongPositions"}, 
-			new XmlToObjectMap { XmlName = "numberOfShortPositions", ObjectName = "NumberOfShortPositions"}, 
-	    };
-
-	    private static XmlToObjectMap[] longShortIssuerAttributes =
-	    {
-			new XmlToObjectMap { XmlName = "numberOfLongIssuers", ObjectName = "NumberOfLongIssuers"}, 
-			new XmlToObjectMap { XmlName = "numberOfShortIssuers", ObjectName = "NumberOfShortIssuers"}, 
-	    };
-	    private static XmlToObjectMap[] valueAtRiskAttributes =
-	    {
-			new XmlToObjectMap { XmlName = "exposurePercentage", ObjectName = "PercentExposure"}, 
-			new XmlToObjectMap { XmlName = "varPercentage", ObjectName = "VaR"}, 
-			new XmlToObjectMap { XmlName = "cVarPercentage", ObjectName = "CvaR"}, 
-	    };
-
-	    private static XmlToObjectMap[] percentageOfExposureInCalculationAttributes =
-	    {
-			new XmlToObjectMap { XmlName = "percentageOfLongExposureInCalculation", ObjectName = "LongExposureIncluded"}, 
-			new XmlToObjectMap { XmlName = "percentageOfShortExposureInCalculation", ObjectName = "ShortExposureIncluded"},
-	    };
-
-	    private static XmlToObjectMap[] decayFactorAttribute =
-	    {
-			new XmlToObjectMap { XmlName = "decayFactor", ObjectName = "DecayFactor"},
-	    };
-
-	    private static XmlToObjectMap[] numberOfDaysAttribute =
-	    {
-			new XmlToObjectMap { XmlName = "numberOfDays", ObjectName = "LookbackPeriod"},
-	    };
-
-	    private static XmlToObjectMap[] sensitivityAttributes =
-	    {
-			new XmlToObjectMap { XmlName = "beta", ObjectName = "Beta"},
-			new XmlToObjectMap { XmlName = "delta", ObjectName = "Delta"},
-			new XmlToObjectMap { XmlName = "gamma", ObjectName = "Gamma"},
-			new XmlToObjectMap { XmlName = "vega", ObjectName = "Vega"},
-			new XmlToObjectMap { XmlName = "theta", ObjectName = "Theta"},
-			new XmlToObjectMap { XmlName = "cs01", ObjectName = "Cs01"},
-			new XmlToObjectMap { XmlName = "dv01", ObjectName = "Dv01"},
-	    };
-
-	    private static XmlToObjectMap[] stressTestAttributes =
-	    {
-			new XmlToObjectMap { XmlName = "portfolioReturnPercentage", ObjectName = "PortfolioReturn"},
-			new XmlToObjectMap { XmlName = "percentageOfLongExposureInCalculation", ObjectName = "PercentLongExposure"},
-			new XmlToObjectMap { XmlName = "percentageOfShortExposureInCalculation", ObjectName = "PercentShortExposure"},
-	    };
-
-	    private static XmlToObjectMap[] historicalStressTestAttributes =
-	    {
-			new XmlToObjectMap { XmlName = "startDate", ObjectName = "StartDate"},
-	    };
-		
-	    private static XmlToObjectMap[] counterpartyNameAttribute =
-	    {
-			new XmlToObjectMap { XmlName = "counterpartyName", ObjectName = "Number"},
-	    };
-
-	    private static XmlToObjectMap[] numberOfCustodiansAndCounterpartiesAttribute =
-	    {
-			new XmlToObjectMap { XmlName = "numberOfCustodiansAndCounterparties", ObjectName = "Number"},
-	    };
-
-	    private static XmlToObjectMap[] numberOfFinancingAgreementsAttribute =
-	    {
-			new XmlToObjectMap { XmlName = "numberOfFinancingAgreements", ObjectName = "Number"},
-	    };
-
-	    private static XmlToObjectMap[] otherAssetValueCounterpartyExposureAttributes =
-	    {
-			new XmlToObjectMap { XmlName = "equity", ObjectName = "Equity"},
-			new XmlToObjectMap { XmlName = "longMarketValue", ObjectName = "Lmv"},
-			new XmlToObjectMap { XmlName = "shortMarketValue", ObjectName = "Smv"},
-			new XmlToObjectMap { XmlName = "cash", ObjectName = "Cash"},
-			new XmlToObjectMap { XmlName = "openTradeEquity", ObjectName = "OteMmt"},
-			new XmlToObjectMap { XmlName = "availableLiquidity", ObjectName = "AvailableLiquidity"},
-			new XmlToObjectMap { XmlName = "requiredMargin", ObjectName = "RequiredMargin"},
-			new XmlToObjectMap { XmlName = "longAumPercentage", ObjectName = "LongAumExposurePercent"},
-			new XmlToObjectMap { XmlName = "shortAumPercentage", ObjectName = "ShortAumExposurePercent"},
-	    };
-
-	    public static Dictionary<string, string> ManualyAttributionGroupsMaps = new Dictionary<string, string>
-	    {
-			{ "betaSensitivityAttribute", "sensitivityAttributes" },
-	        { "deltaSensitivityAttribute", "sensitivityAttributes" },
-	        { "gammaVegaThetaSensitivityAttributes", "sensitivityAttributes" },
-	        { "basisPointChangeSensitivityAttributes", "sensitivityAttributes" },
-
-	    };
-
-	    public static Dictionary<string, XmlToObjectMap[]> AttributionGroupsMaps = new Dictionary<string, XmlToObjectMap[]>
-	    {
-	        //{ "grossNetPercentageAttributes", assetValueMaps },
-	        //{ "nonNegativeAssetValueAttribute", nonNegativeAssetValueAttribute },
-	        { "aumPercentageAssetValueAttributes", aumPercentageAssetValueAttributes },
-	        { "aumPercentageRedemptionAttributes", aumPercentageRedemptionAttributes },
-
-	        { "nettedNonNettedLongShortAssetValueAttributes", nettedNonNettedLongShortAssetValueAttributes },
-	        { "nettedNonNettedLongShortAumPercentageAttributes", nettedNonNettedLongShortAumPercentageAttributes },
-	        { "longShortPositionAttributes", longShortPositionAttributes },
-	        { "longShortIssuerAttributes", longShortIssuerAttributes },
-	        { "longShortAumPercentagePositionAttributes", nettedNonNettedLongShortAumPercentageAttributes.Concat(longShortPositionAttributes).ToArray() },
-	        { "longShortAumPercentageIssuerAttributes", nettedNonNettedLongShortAumPercentageAttributes.Concat(longShortIssuerAttributes).ToArray() },
-
-	        { "valueAtRiskAttributes", valueAtRiskAttributes },
-	        { "percentageOfExposureInCalculationAttributes", percentageOfExposureInCalculationAttributes },
-	        { "decayFactorAttribute", decayFactorAttribute },
-	        { "numberOfDaysAttribute", numberOfDaysAttribute },
-
-	        { "sensitivityAttributes", sensitivityAttributes },
-
-	        { "stressTestAttributes", stressTestAttributes },
-	        { "historicalStressTestAttributes", stressTestAttributes.Concat(historicalStressTestAttributes).ToArray() },
-
-	        { "counterpartyNameCounterpartyExposureAttributes", counterpartyNameAttribute.Concat(otherAssetValueCounterpartyExposureAttributes).ToArray() },
-	        { "counterpartyCountCounterpartyExposureAttributes", numberOfCustodiansAndCounterpartiesAttribute.Concat(otherAssetValueCounterpartyExposureAttributes).ToArray() },
-	        { "agreementCountCounterpartyExposureAttributes", numberOfFinancingAgreementsAttribute.Concat(otherAssetValueCounterpartyExposureAttributes).ToArray() },
-	    };
-
-		// Elements map 
-		
-
-	    public const string ContainerfObjectName = "~";
-	    public const string SelfObjectName = ".";
-
-	    private static XmlToObjectMap[] fundAndInvestorDetailsMaps =
-	    {
-			new XmlToObjectMap { XmlName = "fundName", ObjectName = "FundName"},
-			new XmlToObjectMap { XmlName = "date", ObjectName = "Date"},
-			//new XmlToObjectMap { XmlName = "managerDetails", ObjectName = ContainerfObjectName},
-			//new XmlToObjectMap { XmlName = "fundAumDetails", ObjectName = ContainerfObjectName},
-			new XmlToObjectMap { XmlName = "primaryInvestmentStrategy", ObjectName = "PrimaryInvStrategy"},
-			//new XmlToObjectMap { XmlName = "reportingShareClass", ObjectName = ContainerfObjectName},
-			//new XmlToObjectMap { XmlName = "performance", ObjectName = "Performance"},
-			new XmlToObjectMap { XmlName = "investorSize", ObjectName = ContainerfObjectName},
-			new XmlToObjectMap { XmlName = "investorType", ObjectName = "InvestorType"},
-			new XmlToObjectMap { XmlName = "investorLiquidity", ObjectName = "InvestorLiquidity"},
-			//new XmlToObjectMap { XmlName = "unencumberedCash", ObjectName = "UnencumberedCash"},
-			//new XmlToObjectMap { XmlName = "externalFundInvestment", ObjectName = ContainerfObjectName},
-	    };
-
-	    private static XmlToObjectMap[] equityExposureMaps =
-	    {
-			new XmlToObjectMap { XmlName = "totalAssetValue", ObjectName = "TotalExposure"},
-			new XmlToObjectMap { XmlName = "totalAumPercentage", ObjectName = "PercentagePortfolio"},
-			new XmlToObjectMap { XmlName = "totalNumberOfPositions", ObjectName = "AggregateNumberOfPositions"},
-
-			new XmlToObjectMap { XmlName = "sectorExposure", ObjectName = "Sectors"},
-			new XmlToObjectMap { XmlName = "regionExposure", ObjectName = "Region"},
-			new XmlToObjectMap { XmlName = "instrumentExposure", ObjectName = "Instruments"},
-			new XmlToObjectMap { XmlName = "marketCapitalExposure", ObjectName = "MarketCapitalExposure"},
-			new XmlToObjectMap { XmlName = "liquidityExposure", ObjectName = "Liquidity"},
-	    };
-
-	    private static XmlToObjectMap[] sovereignInterestRateExposureMaps =
-	    {
-			new XmlToObjectMap { XmlName = "totalAssetValue", ObjectName = "TotalExposure"},
-			new XmlToObjectMap { XmlName = "totalAumPercentage", ObjectName = "PercentagePortfolio"},
-			new XmlToObjectMap { XmlName = "totalNumberOfPositions", ObjectName = "AggregateNumberOfPositions"},
-
-			new XmlToObjectMap { XmlName = "regionExposure", ObjectName = "Region"},
-			new XmlToObjectMap { XmlName = "maturityInstrumentExposure", ObjectName = "InstrumentsByMaturity"},
-			new XmlToObjectMap { XmlName = "creditRatingExposure", ObjectName = "CreditRating"},
-			new XmlToObjectMap { XmlName = "liquidityExposure", ObjectName = "Liquidity"},
-	    };
-
-	    private static XmlToObjectMap[] creditExposureMaps =
-	    {
-			new XmlToObjectMap { XmlName = "totalAssetValue", ObjectName = "TotalExposure"},
-			new XmlToObjectMap { XmlName = "totalAumPercentage", ObjectName = "PercentagePortfolio"},
-			new XmlToObjectMap { XmlName = "totalNumberOfIssuers", ObjectName = "AggregateNumberOfParentIssuers"},
-
-			new XmlToObjectMap { XmlName = "sectorExposure", ObjectName = "Sectors"},
-			new XmlToObjectMap { XmlName = "regionExposure", ObjectName = "Region"},
-			new XmlToObjectMap { XmlName = "creditTypeExposure", ObjectName = "CreditType"},
-			new XmlToObjectMap { XmlName = "instrumentExposure", ObjectName = "CreditInstrument"},
-			new XmlToObjectMap { XmlName = "priceAndYieldAndSpreadExposure", ObjectName = "PriceYieldAndSpread"},
-			new XmlToObjectMap { XmlName = "creditRatingExposure", ObjectName = "CreditRating"},
-			new XmlToObjectMap { XmlName = "maturityExposure", ObjectName = "MaturityBuckets"},
-			new XmlToObjectMap { XmlName = "ownershipConcentrationExposure", ObjectName = "ConcentrationOfOwnership"},
-			new XmlToObjectMap { XmlName = "liquidityExposure", ObjectName = "Liquidity"},
-	    };
-
-	    private static XmlToObjectMap[] convertibleBondExposureMaps =
-	    {
-	        new XmlToObjectMap {XmlName = "totalAssetValue", ObjectName = "TotalExposure"},
-	        new XmlToObjectMap {XmlName = "totalAumPercentage", ObjectName = "PercentagePortfolio"},
-	        new XmlToObjectMap {XmlName = "totalNumberOfIssuers", ObjectName = "AggregateNumberOfParentIssuers"},
-
-			new XmlToObjectMap { XmlName = "sectorExposure", ObjectName = "Sectors"},
-			new XmlToObjectMap { XmlName = "regionExposure", ObjectName = "Region"},
-			new XmlToObjectMap { XmlName = "instrumentExposure", ObjectName = "Instrument"},
-			new XmlToObjectMap { XmlName = "derivativeSpecificExposure", ObjectName = "Derivative"},
-			new XmlToObjectMap { XmlName = "creditRatingExposure", ObjectName = "CreditRating"},
-			new XmlToObjectMap { XmlName = "maturityExposure", ObjectName = "MaturityBuckets"},
-			new XmlToObjectMap { XmlName = "ownershipConcentrationExposure", ObjectName = "ConcentrationOfOwnership"},
-			new XmlToObjectMap { XmlName = "liquidityExposure", ObjectName = "Liquidity"},
-	    };
-
-	    private static XmlToObjectMap[] currencyExposureMaps =
-	    {
-	        new XmlToObjectMap {XmlName = "totalAssetValue", ObjectName = "TotalExposure"},
-	        new XmlToObjectMap {XmlName = "totalAumPercentage", ObjectName = "PercentagePortfolio"},
-	        new XmlToObjectMap {XmlName = "totalNumberOfPositions", ObjectName = "AggregateNumberOfParentIssuers"},
-
-			new XmlToObjectMap { XmlName = "regionCurrencyExposure", ObjectName = "RegionalCurrencies"},
-			new XmlToObjectMap { XmlName = "instrumentExposure", ObjectName = "Instruments"},
-			new XmlToObjectMap { XmlName = "liquidityExposure", ObjectName = "Liquidity"},
-	    };
-
-	    private static XmlToObjectMap[] realAssetExposureMaps =
-	    {
-	        new XmlToObjectMap {XmlName = "totalAssetValue", ObjectName = "TotalExposure"},
-	        new XmlToObjectMap {XmlName = "totalAumPercentage", ObjectName = "PercentagePortfolio"},
-	        new XmlToObjectMap {XmlName = "totalNumberOfPositions", ObjectName = "AggregateNumberOfParentIssuers"},
-
-			new XmlToObjectMap { XmlName = "regionExposure", ObjectName = "Region"},
-			new XmlToObjectMap { XmlName = "commodityTypeExposure", ObjectName = "CommodityType"},
-			new XmlToObjectMap { XmlName = "commodityInstrumentExposure", ObjectName = "CommoditiesInstruments"},
-			new XmlToObjectMap { XmlName = "realEstateExposure", ObjectName = "RealEstate"},
-			new XmlToObjectMap { XmlName = "timberlandExposure", ObjectName = "Timberland"},
-			new XmlToObjectMap { XmlName = "infrastructureExposure", ObjectName = "Infrastructure"},
-			new XmlToObjectMap { XmlName = "liquidityExposure", ObjectName = "Liquidity"},
-	    };
-
-	    private static XmlToObjectMap[] valueAtRiskMaps =
-	    {
-			new XmlToObjectMap { XmlName = "calculationMethodology", ObjectName = ContainerfObjectName},
-
-			new XmlToObjectMap { XmlName = "assetClassValueAtRisk", ObjectName = "AssetClass"},
-			new XmlToObjectMap { XmlName = "regionValueAtRisk", ObjectName = "Region"},
-			new XmlToObjectMap { XmlName = "sectorValueAtRisk", ObjectName = "Sector"},
-
-			new XmlToObjectMap { XmlName = "exposureInCalculation", ObjectName = SelfObjectName},
-	    };
-
-	    private static XmlToObjectMap[] sensitivityMaps =
-	    {
-			new XmlToObjectMap { XmlName = "equity", ObjectName = "Sensivities"},
-			new XmlToObjectMap { XmlName = "sovereignInterestRate", ObjectName = "Sensivities"},
-			new XmlToObjectMap { XmlName = "credit", ObjectName = "Sensivities"},
-			new XmlToObjectMap { XmlName = "convertibleBond", ObjectName = "Sensivities"},
-			new XmlToObjectMap { XmlName = "currency", ObjectName = "Sensivities"},
-			new XmlToObjectMap { XmlName = "realAsset", ObjectName = "Sensivities"},
-
-			new XmlToObjectMap { XmlName = "exposureInCalculation", ObjectName = SelfObjectName},
-	    };
-
-	    private static XmlToObjectMap[] stressTestMaps =
-	    {
-			new XmlToObjectMap { XmlName = "scenarios", ObjectName = "Scenarios"},
-			new XmlToObjectMap { XmlName = "historicalStressEvents", ObjectName = "HistoricalStress"},
-			new XmlToObjectMap { XmlName = "historicalStress", ObjectName = "HistoricalPortfolioStress"},
-	    };
-
-	    private static XmlToObjectMap[] counterpartyExposureMaps =
-	    {
-			new XmlToObjectMap { XmlName = "tradingAssets", ObjectName = "TradingAssets"},
-			new XmlToObjectMap { XmlName = "treasuryAssets", ObjectName = "TreasureAssets"},
-			new XmlToObjectMap { XmlName = "otherAssets", ObjectName = "OtherAssets"},
-			new XmlToObjectMap { XmlName = "tradingAssetsByCounterpartyAssetSize", ObjectName = "TradingAssetsBySize"},
-			new XmlToObjectMap { XmlName = "tradingAssetsByCounterpartyRegion", ObjectName = "TradingAssetsByGeography"},
-			new XmlToObjectMap { XmlName = "treasuryAssetsByCounterpartyRegion", ObjectName = "TreasureAssetsByGeography"},
-			new XmlToObjectMap { XmlName = "otherAssetsByCounterpartyRegion", ObjectName = "OtherAssetsByGeography"},
-			new XmlToObjectMap { XmlName = "tradingAssetsByLockupProfile", ObjectName = "TradingAssetsByLockup"},
-
-			new XmlToObjectMap { XmlName = "counterpartyAndFinancingSources", ObjectName = ContainerfObjectName},
-	    };
-
-	    private static XmlToObjectMap[] otherExposureMaps =
-	    {
-			new XmlToObjectMap { XmlName = "totalAssetValue", ObjectName = "TotalInvestment"},
-			new XmlToObjectMap { XmlName = "totalAumPercentage", ObjectName = "PercentagePortfolio"},
-			new XmlToObjectMap { XmlName = "totalNumberOfPositions", ObjectName = "AggregateNumberOfPositions"},
-	    };
-
-	    private static XmlToObjectMap[] operaMaps =
-	    {
-			new XmlToObjectMap { XmlName = "fundAndInvestorDetails", ObjectName = "FundAndInvestorDetails"},
-			new XmlToObjectMap { XmlName = "equityExposure", ObjectName = "EquityExposure"},
-			new XmlToObjectMap { XmlName = "sovereignInterestRateExposure", ObjectName = "SovereignIntRateExp"},
-			new XmlToObjectMap { XmlName = "creditExposure", ObjectName = "Credit"},
-			new XmlToObjectMap { XmlName = "convertibleBondExposure", ObjectName = "ConvertibleBondExposure"},
-			new XmlToObjectMap { XmlName = "currencyExposure", ObjectName = "CurrencyExposure"},
-			new XmlToObjectMap { XmlName = "realAssetExposure", ObjectName = "RealAssetsAndComExposure"},
-			new XmlToObjectMap { XmlName = "valueAtRisk", ObjectName = "VaR"},
-			new XmlToObjectMap { XmlName = "sensitivity", ObjectName = "Sensivity"},
-			new XmlToObjectMap { XmlName = "stressTest", ObjectName = "StressTest"},
-			new XmlToObjectMap { XmlName = "counterpartyExposure", ObjectName = "CounterParty"},
-			new XmlToObjectMap { XmlName = "otherExposure", ObjectName = "OtherExposure"},
-	    };
-
-	    private static XmlToObjectMap[] calculationMethodologyMaps =
-	    {
-			new XmlToObjectMap { XmlName = "valueAtRiskMethodology", ObjectName = "VaRMethodology"},
-			new XmlToObjectMap { XmlName = "otherValueAtRiskMethodologyDetails", ObjectName = "MethodologyDetails"},
-			new XmlToObjectMap { XmlName = "decayFactor", ObjectName = SelfObjectName},
-			new XmlToObjectMap { XmlName = "lookBackPeriod", ObjectName = SelfObjectName},
-	    };
-
-	    private static XmlToObjectMap[] counterpartyAndFinancingSourcesMaps =
-	    {
-			new XmlToObjectMap { XmlName = "unregulatedPercentageOfNetCreditCounterpartyExposure", ObjectName = "PercentAggNetCreditCpExp"},
-			new XmlToObjectMap { XmlName = "uncollateralizedPercentageOfFinancing", ObjectName = "PercentFinancingUncoll"},
-	    };
-
-	    private static XmlToObjectMap[] managerDetailsMaps =
-	    {
-			new XmlToObjectMap { XmlName = "managerName", ObjectName = "InvestmentManagerName"},
-			new XmlToObjectMap { XmlName = "totalFirmAum", ObjectName = ContainerfObjectName},
-	    };
-
-	    private static XmlToObjectMap[] totalFirmAumMaps =
-	    {
-			new XmlToObjectMap { XmlName = "totalFirmAum", ObjectName = "FirmAumDetails"},
-	    };
-
-	    private static XmlToObjectMap[] fundAumDetailsMaps =
-	    {
-			new XmlToObjectMap { XmlName = "aumCalculationMethod", ObjectName = "AumCalcMethod"},
-			new XmlToObjectMap { XmlName = "totalFundAum", ObjectName = ContainerfObjectName},
-	    };
-
-	    private static XmlToObjectMap[] totalFundAumMaps =
-	    {
-			new XmlToObjectMap { XmlName = "totalFundAum", ObjectName = "AumDetails"},
-	    };
-
-	    private static XmlToObjectMap[] investorSizeMaps =
-	    {
-			new XmlToObjectMap { XmlName = "topFiveLargestInvestors", ObjectName = "TopInvestors"},
-	    };
-		
-	    private static XmlToObjectMap[] externalFundInvestmentMaps =
-	    {
-			new XmlToObjectMap { XmlName = "cashManagementPurpose", ObjectName = "InvForCashManagement"},
-			new XmlToObjectMap { XmlName = "nonCashManagementPurpose", ObjectName = "InvNonCashManagement"},
-	    };
-
-	    public static Dictionary<string, XmlToObjectMap[]> ComplexTypeMaps = new Dictionary<string, XmlToObjectMap[]>
-	    {
-			{ "opera", operaMaps },
-
-			{ "fundAndInvestorDetails", fundAndInvestorDetailsMaps },
-			{ "equityExposure", equityExposureMaps },
-			{ "sovereignInterestRateExposure", sovereignInterestRateExposureMaps },
-			{ "creditExposure", creditExposureMaps },
-			{ "convertibleBondExposure", convertibleBondExposureMaps },
-			{ "currencyExposure", currencyExposureMaps },
-			{ "realAssetExposure", realAssetExposureMaps },
-			{ "valueAtRisk", valueAtRiskMaps },
-			{ "sensitivity", sensitivityMaps },
-			{ "stressTest", stressTestMaps },
-			{ "counterpartyExposure", counterpartyExposureMaps },
-			{ "otherExposure", otherExposureMaps },
-
-			{ "managerDetails", managerDetailsMaps },
-			{ "fundAumDetails", fundAumDetailsMaps },
-			{ "investorSize", investorSizeMaps },
-			{ "externalFundInvestment", externalFundInvestmentMaps },
-			{ "totalFirmAum", totalFirmAumMaps },
-			{ "totalFundAum", totalFundAumMaps },
-
-			{ "calculationMethodology", calculationMethodologyMaps },
-			{ "counterpartyAndFinancingSources", counterpartyAndFinancingSourcesMaps },
-	    };
-	}
-
-	public static class InfoImporter
-	{
-	    public static ComplexType ImporXsdRootElement(string xsdPath, CodeElements codeElements, string nameSpace)
-	    {
-	        XmlSchema xsd = PrepareSchemaSet(xsdPath);
-
-	        ComplexType root = ImporXsdRootElement(xsd, codeElements, nameSpace);
-
-	        return root;
-	    }
-
-	    private static XmlSchema PrepareSchemaSet(string xsdPath)
-        {
-            XmlSchema xsd;
-            using (FileStream stream = new FileStream(xsdPath, FileMode.Open, FileAccess.Read))
-            {
-                xsd = XmlSchema.Read(stream, null);
-            }
-
-			XmlSchemas xsds = new XmlSchemas { xsd };
-			xsds.Compile(null, true);
-            return xsd;
-        }
-
-	    #region Impor Xsd elements
-
-	    private static ComplexType ImporXsdRootElement(XmlSchema xsd, CodeElements codeElements, string nameSpace)
-	    {
-	        ComplexType opera = ImporXsdOperaElement(xsd, codeElements, nameSpace);
-	        return opera;
-	    }
-
-	    private static ComplexType ImporXsdOperaElement(XmlSchema xsd, CodeElements codeElements, string nameSpace)
-	    {
-	        string rootElement = "opera";
-	        string rootObjectType = "RiskAggregationData";
-
-			XmlSchemaComplexType complexType = xsd.Elements.Values.OfType<XmlSchemaElement>().
-				FirstOrDefault(x => x.Name == rootElement)?.
-				ElementSchemaType as XmlSchemaComplexType;
-
-			return ImporXsdComplexType(complexType, rootElement, rootObjectType, codeElements, nameSpace);
-	    }
-
-	    private static ComplexType ImporXsdComplexType(XmlSchemaComplexType complexType, string elementName, string objectType, CodeElements codeElements, string nameSpace)
-	    {
-	        XmlToObjectMap[] mapInfo = GetComplexTypeInfo(elementName);
-	        if (mapInfo == null)
-	        {
-	            return null;
-	        }
-
-	        CodeClass codeClass = FindClass(codeElements, nameSpace, objectType);
-			ComplexType objectComplexType = CreateComplexType(codeClass);
-
-	        foreach (XmlSchemaElement xsdElement in GetXsdElements(complexType))
-	        {
-	            XmlToObjectMap map = mapInfo.FirstOrDefault(y => y.XmlName == xsdElement.Name);
-	            if (map == null)
-	                continue;
-
-				string elementObjectName = map.ObjectName;
-				string elementObjectType = IsSelfObjectName(elementObjectName) || IsContainerfObjectName(elementObjectName)
-					? objectType 
-					: GetFieldType(codeClass, elementObjectName, nameSpace);
-				IElement element = ImportXsdElement(xsdElement, elementObjectType, elementObjectName, codeElements, nameSpace);
-				objectComplexType.SubItems.Add(element);
-	        }
-
-	        return objectComplexType;
-	    }
-
-	    private static IElement ImportXsdElement(XmlSchemaElement element, string objectType, string objectFieldName, CodeElements codeElements, string nameSpace)
-	    {
-	        IElement result = null;
-	        string name = element.Name;
-
-	        var complexType = element.ElementSchemaType as XmlSchemaComplexType;
-	        if (complexType != null)
-	        {
-	            if (IsCollection(objectType))
-	            {
-	                string subItemObjectType = GetCollectionItemClassName(objectType);
-					string attributionGroupName = ImportXsdAttributionGroupName(complexType);
-					CodeClass codeClass = FindClass(codeElements, nameSpace, subItemObjectType);
-					ComplexType objectComplexType = CreateComplexType(codeClass);
-	                objectComplexType.IsCollection = true;
-					result = CreateComplexElement(name, objectFieldName, subItemObjectType, attributionGroupName, objectComplexType, codeElements, nameSpace);
-	            }
-	            else
-	            {
-	                
-					CodeClass codeClass = FindClass(codeElements, nameSpace, objectType);
-					if (HaveSubItemsInterface(codeClass))
-					{
-						string attributionGroupName = ImportXsdAttributionGroupNameForSubElement(complexType);
-						ComplexType objectComplexType = CreateComplexType(codeClass);
-						result = CreateComplexElement(name, objectFieldName, objectType, attributionGroupName, objectComplexType, codeElements, nameSpace);
-					}
-					else
-					{
-						string attributionGroupName = ImportXsdAttributionGroupName(complexType);
-						ComplexType objectComplexType = ImporXsdComplexType(complexType, name, objectType, codeElements, nameSpace);
-						result = CreateComplexElement(name, objectFieldName, objectType, attributionGroupName, objectComplexType, codeElements, nameSpace);
-					}
-	            }
-	        }
-
-			var simpleType = element.ElementSchemaType as XmlSchemaSimpleType;
-	        if (simpleType != null)
-	        {
-				Type objectSimpleType = ImportSimpleTypes.GetSimpleType(objectType);
-	            result = CreatSimpleElement(name, objectFieldName, objectSimpleType, objectType);
-	        }
-	        return result;
-	    }
-
-	    private static IEnumerable<XmlSchemaElement> GetXsdElements(XmlSchemaComplexType complexType)
-	    {
-	        XmlSchemaSequence sequence = complexType?.Particle as XmlSchemaSequence ??
-										(complexType?.Particle as XmlSchemaGroupRef)?.Particle as XmlSchemaSequence;
-
-	        return sequence?.Items.OfType<XmlSchemaElement>() ?? new List<XmlSchemaElement>();
-	    }
-
-	    private static bool IsContainAttribution(string attributionGroupName)
-	    {
-	        return GetAttributions(attributionGroupName) != null;
-	    }
-
-	    private static string ImportXsdAttributionGroupName(XmlSchemaComplexType complexType)
-	    {
-	        XmlSchemaAttributeGroupRef attributeGroupRef = complexType.Attributes.OfType<XmlSchemaAttributeGroupRef>().FirstOrDefault();
-	        string attributionGroupName = attributeGroupRef != null ? attributeGroupRef.RefName.Name : String.Empty;
-	        return GetManualyAttributionGroup(attributionGroupName);
-	    }
-
-	    private static string ImportXsdAttributionGroupNameForSubElement(XmlSchemaComplexType complexType)
-	    {
-	        string attributionGroupName = ImportXsdAttributionGroupName(complexType);
-	        if (IsContainAttribution(attributionGroupName))
-	        {
-	            return attributionGroupName;
-	        }
-
-	        IEnumerable<XmlSchemaComplexType> subComplexTypes = GetXsdElements(complexType).
-				Select(x => x.ElementSchemaType).
-				OfType<XmlSchemaComplexType>();
-
-	        foreach (XmlSchemaComplexType subComplexType in subComplexTypes)
-	        {
-				attributionGroupName = ImportXsdAttributionGroupNameForSubElement(subComplexType);
-	            if (IsContainAttribution(attributionGroupName))
-	            {
-	                return attributionGroupName;
-	            }
-	        }
-
-	        return null;
-	    }
-		
-	    private static bool IsContainerfObjectName(string objectName)
-	    {
-	        return objectName == MapInfo.ContainerfObjectName;
-	    }
-
-	    private static bool IsSelfObjectName(string objectName)
-	    {
-	        return objectName == MapInfo.SelfObjectName;
-	    }
-
-	    #endregion
-
-	    public static ComplexElement CreateComplexElement(string elementName, string objectName, string className, string attributionGroupName,
-			ComplexType objectComplexType, CodeElements codeElements, string nameSpace)
-	    {
-	        CodeClass codeClass = FindClass(codeElements, nameSpace, className);
-	        AttributionGroupInfo attributionGroup = CreateAttributionGroup(codeClass, attributionGroupName, GetAttributions(attributionGroupName));
-	        var result = new ComplexElement
-	        {
-	            ComplexType = objectComplexType, 
-				Attribution = attributionGroup, 
-				XmlName = elementName, 
-				ObjectName = objectName,
-	        };
-	        return result;
-	    }
-
-	    public static SimpleElement CreatSimpleElement(string elementName, string objectName, Type objectSimpleType, string objectAsSimpleType)
-	    {
-	        var result = new SimpleElement
-	        {
-	            SimpleType = objectSimpleType,
-				AsSimpleType = objectAsSimpleType,
-				XmlName = elementName, 
-				ObjectName = objectName
-	        };
-	        return result;
-	    }
-
-	    public static AttributionGroupInfo CreateAttributionGroup(CodeClass parent, string attributionGroupName, IEnumerable<XmlToObjectMap> attributionMaps)
-		{
-		    if (attributionMaps == null)
 		    {
-		        return null;
+		        return !ImportSimpleTypes.IsComplexAsSimpleType(complexElement.ComplexType.ClassName)
+					? $"{ImportSimpleTypes.GetImportComplexElementMethod(complexElement.ComplexType)}(reader, {(haveAttributionImport ? importAttributesActionName : nullString)})"
+					: $"{ImportSimpleTypes.GetImportSimpleElementMethod(null, complexElement.ComplexType.ClassName)}(reader)";
 		    }
 
-			AttributionGroupInfo attributionGroup = new AttributionGroupInfo
-			{
-				XmlName = attributionGroupName,
-				ElementObjectType = GetClassName(parent),
-			};
-		    foreach (XmlToObjectMap attributionMap in attributionMaps)
+		    var simpleElement = element as SimpleElement;
+		    if (simpleElement != null)
 		    {
-				CodeVariable field = FindField(parent, attributionMap.ObjectName);
-		        attributionGroup.Attributions.Add(new AttributionInfo { XmlName = attributionMap.XmlName, ObjectType = field.Type, ObjectName = field.Name });
-		    }
-		    return attributionGroup;
-		}
-
-	    public static ComplexType CreateComplexType(CodeClass codeClass)
-		{
-			ComplexType elementInfo = new ComplexType
-			{
-				ObjectType = GetClassName(codeClass),
-				HaveSubItemsInterface = HaveSubItemsInterface(codeClass),
-			};
-		    return elementInfo;
-		}
-
-	    public static XmlToObjectMap[] GetComplexTypeInfo(string complexTypeName)
-	    {
-			XmlToObjectMap[] result;
-			if (complexTypeName != null && MapInfo.ComplexTypeMaps.TryGetValue(complexTypeName, out result))
-			{
-				return result;
-			}
-			return null;
-	    }
-
-	    public static IEnumerable<XmlToObjectMap> GetAttributions(string attributionGroupName)
-	    {
-	        XmlToObjectMap[] result;
-	        if (attributionGroupName != null && MapInfo.AttributionGroupsMaps.TryGetValue(attributionGroupName, out result))
-	        {
-	            return result;
-	        }
-	        if (!string.IsNullOrEmpty(attributionGroupName))
-	        {
-
-	        }
-	        return null;
-	    }
-
-	    private static string GetManualyAttributionGroup(string attributionGroupName)
-	    {
-	        string result;
-	        if (attributionGroupName != null && MapInfo.ManualyAttributionGroupsMaps.TryGetValue(attributionGroupName, out result))
-	        {
-	            return result;
-	        }
-	        return attributionGroupName;
-	    }
-
-	    private static string GetCollectionItemClassName(string objectType)
-	    {
-	        int start = objectType.IndexOf("<") + 1;
-	        int end = objectType.IndexOf(">");
-	        return objectType.Substring(start, end - start);
-	    }
-
-	    private static bool IsCollection(string objectType)
-	    {
-	        return objectType.Contains("List<");
-	    }
-
-	    private static bool HaveSubItemsInterface(CodeClass codeClass)
-	    {
-	        return codeClass.ImplementedInterfaces.OfType<CodeInterface>().Any(x => x.Name == "IMovedSubItems" || x.Name == "ISubItems");
-	    }
-
-	    public static string GetClassName(string className, string nameSpace)
-	    {
-			return className.Replace($"{nameSpace}.", string.Empty);
-	    }
-
-		public static string GetClassName(CodeClass codeClass)
-		{
-			return codeClass.Name.Replace($"{codeClass.Namespace}.", string.Empty);
-		}
-
-	    private static string GetFieldType(CodeClass codeClass, string propName, string nameSpace)
-	    {
-	        CodeVariable field = FindField(codeClass, propName);
-	        return field == null ? null : GetClassName(field.Type.AsFullName, nameSpace);
-	    }
-
-		private static CodeVariable FindField(CodeClass codeClass, string propName)
-		{
-		    CodeVariable field = codeClass.Members.OfType<CodeVariable>().FirstOrDefault(x => x.Name == propName);
-		    if (field == null)
-		    {
-
-		    }
-			return field;
-		}
-
-		private static Dictionary<string, CodeClass> classCache = new Dictionary<string, CodeClass>();
-		public static CodeClass FindClass(CodeElements elements, string nameSpace, string className)
-		{
-		    CodeClass codeClass;
-		    if (classCache.TryGetValue(className, out codeClass))
-		    {
-		        return codeClass;
+		        return $"{ImportSimpleTypes.GetImportSimpleElementMethod(simpleElement.SimpleType, simpleElement.AsSimpleType)}(reader)";
 		    }
 
-			List<CodeClass> result = new List<CodeClass>();
-			FindClasses(elements,className,nameSpace,result,false);
-			classCache.Add(className, result.FirstOrDefault());
-		    codeClass = result.FirstOrDefault();
-			if (codeClass == null)
-		    {
-
-		    }
-			return codeClass;
+		    throw new NotImplementedException();
 		}
 
-		private static void FindClasses(CodeElements elements, string className,string searchNamespace,List<CodeClass> result,bool isNamespaceOk)
+		private Project GetProject(string projectName)
 		{
-			if (elements == null || result.Any())
-			{
-				return;
-			}
+			// Get DTE
+			var serviceProvider = Host as IServiceProvider;
+			var dte = serviceProvider.GetService(typeof(DTE)) as DTE;
 
-			foreach (CodeElement element in elements)
-			{       
-				if(element is EnvDTE.CodeNamespace)
-				{
-					EnvDTE.CodeNamespace ns = element as EnvDTE.CodeNamespace;
-					if(ns != null)
-					{
-						if (ns.FullName == searchNamespace)
-							FindClasses(ns.Members, className,searchNamespace,result,true);
-						else
-							FindClasses(ns.Members, className,searchNamespace,result,false);
-					}
-				}
-				else if(element is CodeClass && isNamespaceOk)
-				{
-					CodeClass c = element as CodeClass;
-					if (c != null)
-					{
-						if (c.Name.Equals(className))
-						{
-							result.Add(c);
-						}
+			Project project = dte.Solution.Projects.OfType<Project>().FirstOrDefault(x => x.Name == projectName);
 
-						FindClasses(c.Members, className,searchNamespace,result,true);
-					}
-				}
-			}
+			return project;
 		}
-	}
-
-	private Project GetProject(string projectName)
-	{
-		// Get DTE
-		var serviceProvider = Host as IServiceProvider;
-		var dte = serviceProvider.GetService(typeof(DTE)) as DTE;
-
-		Project project = dte.Solution.Projects.OfType<Project>().FirstOrDefault(x => x.Name == projectName);
-
-		return project;
-	}
 
 #>
