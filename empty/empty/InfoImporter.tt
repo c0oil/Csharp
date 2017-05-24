@@ -148,11 +148,7 @@
 	        var complexType = element.ElementSchemaType as XmlSchemaComplexType;
 	        if (complexType != null)
 	        {
-	            if (ImportSimpleTypes.IsComplexAsSimpleType(objectType))
-	            {
-					result = CreatSimpleElement(name, objectFieldName, null, objectType);
-	            }
-	            else if (IsCollection(objectType))
+	            if (IsCollection(objectType))
 	            {
 	                string subItemObjectType = GetCollectionItemClassName(objectType);
 					string attributionGroupName = ImportXsdAttributionGroupName(complexType);
@@ -449,7 +445,7 @@
 			{ typeof(string), nameof(ImportString) },
 		};
 
-	    private static List<string> complexAsSimpleTypes = new List<string>
+	    private static List<string> userDefinedImportMethodsForComplexTypes = new List<string>
 	    {
 			"RaDoubleValue",
 			"RaIntValue",
@@ -543,13 +539,17 @@
             {
                 return true;
             }
-            complexTypes.Add(element.ClassName, GetImportComplexElementMethod(element));
+            complexTypes.Add(element.ClassName, GetComplexElementImportMethod(element));
             return false;
         }
 
-	    public static bool IsComplexAsSimpleType(string objectType)
+	    public static bool HaveUserDefinedImportMethod(string objectType)
 	    {
-	        return complexAsSimpleTypes.Contains(objectType);
+	        if (string.IsNullOrEmpty(objectType))
+	        {
+	            return false;
+	        }
+	        return userDefinedImportMethodsForComplexTypes.Contains(objectType);
 	    }
 
         public static Type GetSimpleType(string objectType)
@@ -557,7 +557,7 @@
             return simpleTypes.Keys.FirstOrDefault(x => EqualsType(x, objectType));
         }
 
-	    public static string GetImportSimpleElementMethod(Type objectType, string simpleElementAsSimpleType)
+	    public static string GetSimpleElementImportMethod(Type objectType, string simpleElementAsSimpleType)
 	    {
 	        var methods = simpleTypes.Where(simpleType => simpleType.Key == objectType);
 
@@ -566,7 +566,12 @@
 				: $"{nameof(ImportSimpleTypes)}.Import{simpleElementAsSimpleType}";;
 	    }
 
-		public static string GetImportComplexElementMethod(ComplexType complexType)
+		public static string GetUserDefinedImportMethod(ComplexType complexType)
+		{
+			return $"{nameof(ImportSimpleTypes)}.Import{complexType?.ClassName}";
+		}
+
+		public static string GetComplexElementImportMethod(ComplexType complexType)
 		{
 			return $"Import{complexType?.ClassName}";
 		}
@@ -579,17 +584,17 @@
 				FirstOrDefault();
 	    }
 
-	    public static string GetImportChildElementsMethod(string element)
+	    public static string GetChildElementsImportMethod(string element)
 	    {
 			return $"Import{FirstCharToUpper(element)}";
 	    }
 
-		public static string GetImportAttributionGroupMethod(AttributionGroupInfo attributionGroup)
+		public static string GetAttributionGroupImportMethod(AttributionGroupInfo attributionGroup)
 		{
 			return $"Import{FirstCharToUpper(attributionGroup.XmlName)}";
 		}
 
-	    public static string GetImportAttributionElementMethod(CodeTypeRef objectType)
+	    public static string GetAttributionElementImportMethod(CodeTypeRef objectType)
 	    {
 	        string className = objectType.AsFullName.Substring(objectType.AsFullName.LastIndexOf(".") + 1);
 			return $"{nameof(ImportSimpleTypes)}.Import{className}";

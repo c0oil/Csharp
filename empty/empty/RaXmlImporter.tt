@@ -126,7 +126,7 @@ namespace empty
 		    }
 
 #>  
-        public static <#= complexType.ClassName #> <#= ImportSimpleTypes.GetImportComplexElementMethod(complexType) #>(XmlReader reader, Action<<#= complexType.ClassName #>> importAttributes)
+        public static <#= complexType.ClassName #> <#= ImportSimpleTypes.GetComplexElementImportMethod(complexType) #>(XmlReader reader, Action<<#= complexType.ClassName #>> importAttributes)
         {
             <#= complexType.ClassName #> result = new <#= complexType.ClassName #>();
 			importAttributes?.Invoke(result);
@@ -159,6 +159,9 @@ namespace empty
 		    {
 		        foreach (ComplexElement complexElement in complexType.ChildElements.OfType<ComplexElement>())
 		        {
+		            if (complexElement.ComplexType != null && ImportSimpleTypes.HaveUserDefinedImportMethod(complexElement.ComplexType.ClassName))
+		                continue;
+
 		            if (complexElement.IsMapElementChildrensToFieldsInCurrentClass)
 		            {
 		                CreateImportMethodForChildElements(complexElement.ComplexType, complexElement.ElementName);
@@ -175,7 +178,7 @@ namespace empty
 		{
 #>
 
-		private static void <#= ImportSimpleTypes.GetImportChildElementsMethod(elementName) #>(XmlReader reader, <#= complexType.ClassName #> result, Action<<#= complexType.ClassName #>> importAttributes)
+		private static void <#= ImportSimpleTypes.GetChildElementsImportMethod(elementName) #>(XmlReader reader, <#= complexType.ClassName #> result, Action<<#= complexType.ClassName #>> importAttributes)
         {
 			importAttributes?.Invoke(result);
 			ForEachSubItems(reader, () =>
@@ -191,7 +194,7 @@ namespace empty
         private void CreateImportMethodForAttributionGroup(AttributionGroupInfo attributionGroup)
         {
 #> 
-		private static void <#= ImportSimpleTypes.GetImportAttributionGroupMethod(attributionGroup) #>(<#= attributionGroup.ClassName #> result, XmlReader reader)
+		private static void <#= ImportSimpleTypes.GetAttributionGroupImportMethod(attributionGroup) #>(<#= attributionGroup.ClassName #> result, XmlReader reader)
 		{
 			if (!reader.MoveToFirstAttribute())
 				return;
@@ -281,7 +284,7 @@ namespace empty
 				{
 					result.<#= attribution.FieldName #> = <#= 
 						ImportSimpleTypes.GetImportSimpleElementMethod(attribution.FieldType) ?? 
-						ImportSimpleTypes.GetImportAttributionElementMethod(attribution.FieldType) #>(reader);
+						ImportSimpleTypes.GetAttributionElementImportMethod(attribution.FieldType) #>(reader);
 				}
 <#+
                 isFirst = false;
@@ -291,20 +294,20 @@ namespace empty
 		private void CreateInitializeActionAttributionGroup(AttributionGroupInfo attribution, string className)
 		{
 #>
-                    Action<<#= className #>> <#= importAttributesActionName #> = (attribution) => <#=ImportSimpleTypes.GetImportAttributionGroupMethod(attribution) #>(attribution, reader);
+                    Action<<#= className #>> <#= importAttributesActionName #> = (attribution) => <#=ImportSimpleTypes.GetAttributionGroupImportMethod(attribution) #>(attribution, reader);
 <#+        
 		}
 
 		private void CreateAttributionGroupMethodInvocation(AttributionGroupInfo attribution)
 		{
 #>
-					<#=ImportSimpleTypes.GetImportAttributionGroupMethod(attribution) #>(result, reader);
+					<#=ImportSimpleTypes.GetAttributionGroupImportMethod(attribution) #>(result, reader);
 <#+        
 		}
 		private void CreateChildElementsMethodInvocation(IElement element, bool haveAttributionImport)
 		{
 #>
-					<#= ImportSimpleTypes.GetImportChildElementsMethod(element.ElementName) #>(reader, result, <#= haveAttributionImport ? importAttributesActionName: nullString #>);
+					<#= ImportSimpleTypes.GetChildElementsImportMethod(element.ElementName) #>(reader, result, <#= haveAttributionImport ? importAttributesActionName: nullString #>);
 <#+        
 		}
 
@@ -325,15 +328,15 @@ namespace empty
 		    var complexElement = element as ComplexElement;
 		    if (complexElement != null)
 		    {
-		        return !ImportSimpleTypes.IsComplexAsSimpleType(complexElement.ComplexType.ClassName)
-					? $"{ImportSimpleTypes.GetImportComplexElementMethod(complexElement.ComplexType)}(reader, {(haveAttributionImport ? importAttributesActionName : nullString)})"
-					: $"{ImportSimpleTypes.GetImportSimpleElementMethod(null, complexElement.ComplexType.ClassName)}(reader)";
+		        return !ImportSimpleTypes.HaveUserDefinedImportMethod(complexElement.ComplexType.ClassName)
+					? $"{ImportSimpleTypes.GetComplexElementImportMethod(complexElement.ComplexType)}(reader, {(haveAttributionImport ? importAttributesActionName : nullString)})"
+					: $"{ImportSimpleTypes.GetUserDefinedImportMethod(complexElement.ComplexType)}(reader)";
 		    }
 
 		    var simpleElement = element as SimpleElement;
 		    if (simpleElement != null)
 		    {
-		        return $"{ImportSimpleTypes.GetImportSimpleElementMethod(simpleElement.SimpleType, simpleElement.AsSimpleType)}(reader)";
+		        return $"{ImportSimpleTypes.GetSimpleElementImportMethod(simpleElement.SimpleType, simpleElement.AsSimpleType)}(reader)";
 		    }
 
 		    throw new NotImplementedException();
