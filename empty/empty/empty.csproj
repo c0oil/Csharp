@@ -100,8 +100,12 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Generator\Generator.csproj">
+      <Project>{a3ca80b8-dfc1-4428-b217-0ca60fbd7283}</Project>
+      <Name>Generator</Name>
+    </ProjectReference>
     <ProjectReference Include="..\RaObjects\RaObjects.csproj">
-      <Project>{DE5C9BCC-C7C9-40F5-8F34-665AC7A265A3}</Project>
+      <Project>{de5c9bcc-c7c9-40f5-8f34-665ac7a265a3}</Project>
       <Name>RaObjects</Name>
     </ProjectReference>
   </ItemGroup>
