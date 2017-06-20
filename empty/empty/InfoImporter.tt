@@ -1,0 +1,611 @@
+﻿<#@ template hostSpecific="true" debug="false" #>
+<#@ assembly name="EnvDTE" #>
+<#@ assembly name="Microsoft.VisualStudio.Shell.11.0" #>
+<#@ assembly name="Microsoft.VisualStudio.Shell.Interop" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data.Linq" #>
+<#@ assembly name="System.Xml" #>
+<#@ assembly name="System.Xml.Linq" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Xml" #>
+<#@ import namespace="System.Xml.Schema" #>
+<#@ import namespace="System.Xml.Serialization" #>
+<#@ import namespace="EnvDTE" #>
+<#@ include file="MapInfo.tt"#>
+<#+
+    #region Structers
+
+    public interface IElement
+	{
+        string ElementName { get; }
+        string FieldName { get; }
+	}
+
+	public class SimpleElement : IElement
+    {
+        public string ElementName { get; set; }
+        public string FieldName { get; set; }
+		public Type SimpleType { get; set; }
+        public string AsSimpleType { get; set; }
+    }
+
+    public class ComplexElement : IElement
+    {
+        public string ElementName { get; set; }
+        public string FieldName { get; set; }
+        public ComplexType ComplexType { get; set; }
+        public AttributionGroupInfo Attribution { get; set; }
+
+        public bool IsMapAttributionsToFieldsInCurrentClass => FieldName == MapInfo.MapAttributionsToFieldsInCurrentClass;
+        public bool IsMapElementChildrensToFieldsInCurrentClass => FieldName == MapInfo.MapElementChildrensToFieldsInCurrentClass;
+    }
+
+    public class ComplexType
+    {
+        public string ClassName { get; set; }
+		
+        public bool IsCollection { get; set; }
+		public bool ClassHaveSubItemsInterface { get; set; }
+        public List<IElement> ChildElements { get; } = new List<IElement>();
+    }
+
+    public class AttributionGroupInfo
+    {
+        public string XmlName { get; set; }
+        public string ClassName { get; set; }
+
+        public List<AttributionInfo> Attributions { get; } = new List<AttributionInfo>();
+    }
+
+    public class AttributionInfo
+    {
+        public string AttributionName { get; set; }
+        public string FieldName { get; set; }
+        public CodeTypeRef FieldType { get; set; }
+    }
+	
+    #endregion
+
+    public static class InfoImporter
+	{
+	    public static ComplexType ImporXsdRootElement(string xsdPath, CodeElements codeElements, string nameSpace)
+	    {
+	        XmlSchema xsd = PrepareSchemaSet(xsdPath);
+
+	        ComplexType root = ImporXsdRootElement(xsd, codeElements, nameSpace);
+
+	        return root;
+	    }
+
+	    private static XmlSchema PrepareSchemaSet(string xsdPath)
+        {
+            XmlSchema xsd;
+            using (FileStream stream = new FileStream(xsdPath, FileMode.Open, FileAccess.Read))
+            {
+                xsd = XmlSchema.Read(stream, null);
+            }
+
+			XmlSchemas xsds = new XmlSchemas { xsd };
+			xsds.Compile(null, true);
+            return xsd;
+        }
+
+	    #region Impor Xsd elements
+
+	    private static ComplexType ImporXsdRootElement(XmlSchema xsd, CodeElements codeElements, string nameSpace)
+	    {
+	        ComplexType opera = ImporXsdOperaElement(xsd, codeElements, nameSpace);
+	        return opera;
+	    }
+
+	    private static ComplexType ImporXsdOperaElement(XmlSchema xsd, CodeElements codeElements, string nameSpace)
+	    {
+	        string rootElement = "opera";
+	        string rootObjectType = "RiskAggregationData";
+
+			XmlSchemaComplexType complexType = xsd.Elements.Values.OfType<XmlSchemaElement>().
+				FirstOrDefault(x => x.Name == rootElement)?.
+				ElementSchemaType as XmlSchemaComplexType;
+
+			return ImporXsdComplexType(complexType, rootElement, rootObjectType, codeElements, nameSpace);
+	    }
+
+	    private static ComplexType ImporXsdComplexType(XmlSchemaComplexType complexType, string elementName, string objectType, CodeElements codeElements, string nameSpace)
+	    {
+	        ElementToFieldMap[] mapInfo = GetComplexTypeInfo(elementName);
+	        if (mapInfo == null)
+	        {
+	            return null;
+	        }
+
+	        CodeClass codeClass = FindClass(codeElements, nameSpace, objectType);
+			ComplexType objectComplexType = CreateComplexType(codeClass);
+
+	        foreach (XmlSchemaElement xsdElement in GetXsdElements(complexType))
+	        {
+	            ElementToFieldMap map = mapInfo.FirstOrDefault(y => y.ElementName == xsdElement.Name);
+	            if (map == null)
+	                continue;
+
+				string elementObjectName = map.FieldName;
+				string elementObjectType = IsMapAttributionsToFieldsInCurrentClass(elementObjectName) || IsMapElementChildrensToFieldsInCurrentClass(elementObjectName)
+					? objectType 
+					: GetFieldType(codeClass, elementObjectName, nameSpace);
+				IElement element = ImportXsdElement(xsdElement, elementObjectType, elementObjectName, codeElements, nameSpace);
+				objectComplexType.ChildElements.Add(element);
+	        }
+
+	        return objectComplexType;
+	    }
+
+	    private static IElement ImportXsdElement(XmlSchemaElement element, string objectType, string objectFieldName, CodeElements codeElements, string nameSpace)
+	    {
+	        IElement result = null;
+	        string name = element.Name;
+
+	        var complexType = element.ElementSchemaType as XmlSchemaComplexType;
+	        if (complexType != null)
+	        {
+	            if (IsCollection(objectType))
+	            {
+	                string subItemObjectType = GetCollectionItemClassName(objectType);
+					string attributionGroupName = ImportXsdAttributionGroupName(complexType);
+					CodeClass codeClass = FindClass(codeElements, nameSpace, subItemObjectType);
+					ComplexType objectComplexType = CreateComplexType(codeClass);
+	                objectComplexType.IsCollection = true;
+					result = CreateComplexElement(name, objectFieldName, subItemObjectType, attributionGroupName, objectComplexType, codeElements, nameSpace);
+	            }
+	            else
+	            {
+	                
+					CodeClass codeClass = FindClass(codeElements, nameSpace, objectType);
+					if (HaveSubItemsInterface(codeClass))
+					{
+						string attributionGroupName = ImportXsdAttributionGroupNameForSubElement(complexType);
+						ComplexType objectComplexType = CreateComplexType(codeClass);
+						result = CreateComplexElement(name, objectFieldName, objectType, attributionGroupName, objectComplexType, codeElements, nameSpace);
+					}
+					else
+					{
+						string attributionGroupName = ImportXsdAttributionGroupName(complexType);
+						ComplexType objectComplexType = ImporXsdComplexType(complexType, name, objectType, codeElements, nameSpace);
+						result = CreateComplexElement(name, objectFieldName, objectType, attributionGroupName, objectComplexType, codeElements, nameSpace);
+					}
+	            }
+	        }
+
+			var simpleType = element.ElementSchemaType as XmlSchemaSimpleType;
+	        if (simpleType != null)
+	        {
+				Type objectSimpleType = ImportSimpleTypes.GetSimpleType(objectType);
+	            result = CreatSimpleElement(name, objectFieldName, objectSimpleType, objectType);
+	        }
+	        return result;
+	    }
+
+	    private static IEnumerable<XmlSchemaElement> GetXsdElements(XmlSchemaComplexType complexType)
+	    {
+	        XmlSchemaSequence sequence = complexType?.Particle as XmlSchemaSequence ??
+										(complexType?.Particle as XmlSchemaGroupRef)?.Particle as XmlSchemaSequence;
+
+	        return sequence?.Items.OfType<XmlSchemaElement>() ?? new List<XmlSchemaElement>();
+	    }
+
+	    private static bool IsContainAttribution(string attributionGroupName)
+	    {
+	        return GetAttributions(attributionGroupName) != null;
+	    }
+
+	    private static string ImportXsdAttributionGroupName(XmlSchemaComplexType complexType)
+	    {
+	        XmlSchemaAttributeGroupRef attributeGroupRef = complexType.Attributes.OfType<XmlSchemaAttributeGroupRef>().FirstOrDefault();
+	        string attributionGroupName = attributeGroupRef != null ? attributeGroupRef.RefName.Name : String.Empty;
+	        return GetManualyAttributionGroup(attributionGroupName);
+	    }
+
+	    private static string ImportXsdAttributionGroupNameForSubElement(XmlSchemaComplexType complexType)
+	    {
+	        string attributionGroupName = ImportXsdAttributionGroupName(complexType);
+	        if (IsContainAttribution(attributionGroupName))
+	        {
+	            return attributionGroupName;
+	        }
+
+	        IEnumerable<XmlSchemaComplexType> subComplexTypes = GetXsdElements(complexType).
+				Select(x => x.ElementSchemaType).
+				OfType<XmlSchemaComplexType>();
+
+	        foreach (XmlSchemaComplexType subComplexType in subComplexTypes)
+	        {
+				attributionGroupName = ImportXsdAttributionGroupNameForSubElement(subComplexType);
+	            if (IsContainAttribution(attributionGroupName))
+	            {
+	                return attributionGroupName;
+	            }
+	        }
+
+	        return null;
+	    }
+		
+	    private static bool IsMapElementChildrensToFieldsInCurrentClass(string objectName)
+	    {
+	        return objectName == MapInfo.MapElementChildrensToFieldsInCurrentClass;
+	    }
+
+	    private static bool IsMapAttributionsToFieldsInCurrentClass(string objectName)
+	    {
+	        return objectName == MapInfo.MapAttributionsToFieldsInCurrentClass;
+	    }
+
+	    #endregion
+
+	    public static ComplexElement CreateComplexElement(string elementName, string objectName, string className, string attributionGroupName,
+			ComplexType objectComplexType, CodeElements codeElements, string nameSpace)
+	    {
+	        CodeClass codeClass = FindClass(codeElements, nameSpace, className);
+	        AttributionGroupInfo attributionGroup = CreateAttributionGroup(codeClass, attributionGroupName, GetAttributions(attributionGroupName));
+	        var result = new ComplexElement
+	        {
+	            ComplexType = objectComplexType, 
+				Attribution = attributionGroup, 
+				ElementName = elementName, 
+				FieldName = objectName,
+	        };
+	        return result;
+	    }
+
+	    public static SimpleElement CreatSimpleElement(string elementName, string objectName, Type objectSimpleType, string objectAsSimpleType)
+	    {
+	        var result = new SimpleElement
+	        {
+	            SimpleType = objectSimpleType,
+				AsSimpleType = objectAsSimpleType,
+				ElementName = elementName, 
+				FieldName = objectName
+	        };
+	        return result;
+	    }
+
+	    public static AttributionGroupInfo CreateAttributionGroup(CodeClass parent, string attributionGroupName, IEnumerable<ElementToFieldMap> attributionMaps)
+		{
+		    if (attributionMaps == null)
+		    {
+		        return null;
+		    }
+
+			AttributionGroupInfo attributionGroup = new AttributionGroupInfo
+			{
+				XmlName = attributionGroupName,
+				ClassName = GetClassName(parent),
+			};
+		    foreach (ElementToFieldMap attributionMap in attributionMaps)
+		    {
+				CodeVariable field = FindField(parent, attributionMap.FieldName);
+		        attributionGroup.Attributions.Add(new AttributionInfo { AttributionName = attributionMap.ElementName, FieldType = field.Type, FieldName = field.Name });
+		    }
+		    return attributionGroup;
+		}
+
+	    public static ComplexType CreateComplexType(CodeClass codeClass)
+		{
+			ComplexType elementInfo = new ComplexType
+			{
+				ClassName = GetClassName(codeClass),
+				ClassHaveSubItemsInterface = HaveSubItemsInterface(codeClass),
+			};
+		    return elementInfo;
+		}
+
+	    public static ElementToFieldMap[] GetComplexTypeInfo(string complexTypeName)
+	    {
+			ElementToFieldMap[] result;
+			if (complexTypeName != null && MapInfo.ComplexTypeMaps.TryGetValue(complexTypeName, out result))
+			{
+				return result;
+			}
+			return null;
+	    }
+
+	    public static IEnumerable<ElementToFieldMap> GetAttributions(string attributionGroupName)
+	    {
+	        ElementToFieldMap[] result;
+	        if (attributionGroupName != null && MapInfo.AttributionGroupsMaps.TryGetValue(attributionGroupName, out result))
+	        {
+	            return result;
+	        }
+	        if (!string.IsNullOrEmpty(attributionGroupName))
+	        {
+
+	        }
+	        return null;
+	    }
+
+	    private static string GetManualyAttributionGroup(string attributionGroupName)
+	    {
+	        string result;
+	        if (attributionGroupName != null && MapInfo.ManualyAttributionGroupsMaps.TryGetValue(attributionGroupName, out result))
+	        {
+	            return result;
+	        }
+	        return attributionGroupName;
+	    }
+
+	    private static string GetCollectionItemClassName(string objectType)
+	    {
+	        int start = objectType.IndexOf("<") + 1;
+	        int end = objectType.IndexOf(">");
+	        return objectType.Substring(start, end - start);
+	    }
+
+	    private static bool IsCollection(string objectType)
+	    {
+	        return objectType.Contains("List<");
+	    }
+
+	    private static bool HaveSubItemsInterface(CodeClass codeClass)
+	    {
+	        return codeClass.ImplementedInterfaces.OfType<CodeInterface>().Any(x => x.Name == "IMovedSubItems" || x.Name == "ISubItems");
+	    }
+
+	    public static string GetClassName(string className, string nameSpace)
+	    {
+			return className.Replace($"{nameSpace}.", string.Empty);
+	    }
+
+		public static string GetClassName(CodeClass codeClass)
+		{
+			return codeClass.Name.Replace($"{codeClass.Namespace}.", string.Empty);
+		}
+
+	    private static string GetFieldType(CodeClass codeClass, string propName, string nameSpace)
+	    {
+	        CodeVariable field = FindField(codeClass, propName);
+	        return field == null ? null : GetClassName(field.Type.AsFullName, nameSpace);
+	    }
+
+		private static CodeVariable FindField(CodeClass codeClass, string propName)
+		{
+		    CodeVariable field = codeClass.Members.OfType<CodeVariable>().FirstOrDefault(x => x.Name == propName);
+		    if (field == null)
+		    {
+
+		    }
+			return field;
+		}
+
+		private static Dictionary<string, CodeClass> classCache = new Dictionary<string, CodeClass>();
+		public static CodeClass FindClass(CodeElements elements, string nameSpace, string className)
+		{
+		    CodeClass codeClass;
+		    if (classCache.TryGetValue(className, out codeClass))
+		    {
+		        return codeClass;
+		    }
+
+			List<CodeClass> result = new List<CodeClass>();
+			FindClasses(elements,className,nameSpace,result,false);
+			classCache.Add(className, result.FirstOrDefault());
+		    codeClass = result.FirstOrDefault();
+			if (codeClass == null)
+		    {
+
+		    }
+			return codeClass;
+		}
+
+		private static void FindClasses(CodeElements elements, string className,string searchNamespace,List<CodeClass> result,bool isNamespaceOk)
+		{
+			if (elements == null || result.Any())
+			{
+				return;
+			}
+
+			foreach (CodeElement element in elements)
+			{       
+				if(element is CodeNamespace)
+				{
+					CodeNamespace ns = element as CodeNamespace;
+					if(ns != null)
+					{
+						if (ns.FullName == searchNamespace)
+							FindClasses(ns.Members, className,searchNamespace,result,true);
+						else
+							FindClasses(ns.Members, className,searchNamespace,result,false);
+					}
+				}
+				else if(element is CodeClass && isNamespaceOk)
+				{
+					CodeClass c = element as CodeClass;
+					if (c != null)
+					{
+						if (c.Name.Equals(className))
+						{
+							result.Add(c);
+						}
+
+						FindClasses(c.Members, className,searchNamespace,result,true);
+					}
+				}
+			}
+		}
+	}
+	
+	// Helpers
+	private static class ImportSimpleTypes
+	{
+	    private static Dictionary<string, string> complexTypes = new Dictionary<string, string>();
+
+		private static Dictionary<Type, string> simpleTypes = new Dictionary<Type, string>
+		{
+		    { typeof(DateTime?), nameof(ImportDateTimeNullable) },
+		    { typeof(long?), nameof(ImportLongNullable) },
+		    { typeof(double?), nameof(ImportDoubleNullable) },
+			{ typeof(string), nameof(ImportString) },
+		};
+
+	    private static List<string> userDefinedImportMethodsForComplexTypes = new List<string>
+	    {
+			"RaDoubleValue",
+			"RaIntValue",
+			"RaStringValue",
+	    };
+
+	    #region Need paste in generator
+
+		public static DateTime? ImportDateTimeNullable(XmlReader reader)
+        {
+            string value = ReadContent(reader);
+			DateTime parsedValue;
+			return string.IsNullOrEmpty(value) || !DateTime.TryParse(value, out parsedValue) ? (DateTime?)null : parsedValue;
+		}
+
+		public static long? ImportLongNullable(XmlReader reader)
+        {
+            double? doubleValue = ImportDoubleNullable(reader);
+			return doubleValue == null ? (Int64?) null : (Int64) Math.Round(doubleValue.Value, MidpointRounding.AwayFromZero);
+		}
+
+		public static double? ImportDoubleNullable(XmlReader reader)
+        {
+            string value = ReadContent(reader);
+			double parsedValue;
+			return string.IsNullOrEmpty(value) || !double.TryParse(value, out parsedValue) ? (double?)null : parsedValue;
+		}
+
+		public static string ImportString(XmlReader reader)
+		{
+            return ReadContent(reader);
+		}
+
+		private static string ReadContent(XmlReader reader)
+        {
+            if (reader.NodeType == XmlNodeType.Element)
+            {
+                return reader.ReadElementContentAsString();
+            }
+            return reader.Value;
+        }
+
+		/*
+
+		public static RaDoubleValue ImportRaDoubleValue(XmlReader reader)
+		{
+			return new RaDoubleValue { Value = ImportDoubleNullable(reader) };
+		}
+
+		public static RaIntValue ImportRaIntValue(XmlReader reader)
+		{
+			return new RaIntValue { Value = ImportLongNullable(reader) };
+		}
+
+		public static RaStringValue ImportRaStringValue(XmlReader reader)
+		{
+			return new RaStringValue { Value = ImportString(reader) };
+		}
+
+		*/
+
+	    #endregion
+
+        private static bool EqualsType(Type type, string codeTypeAsFullName)
+        {
+			string typeFullName = type.FullName;
+			if (type.IsGenericType && type.FullName.Contains("Nullable"))
+	        {
+	            typeFullName = $"System.Nullable<{type.GenericTypeArguments.First().FullName}>";
+	        }
+	        return string.Equals(typeFullName, codeTypeAsFullName, StringComparison.InvariantCultureIgnoreCase);
+        }
+
+	    private static bool EqualsType(Type type, CodeTypeRef codeType)
+	    {
+			string typeFullName = type.FullName;
+			if (type.IsGenericType && type.FullName.Contains("Nullable"))
+	        {
+	            typeFullName = $"System.Nullable<{type.GenericTypeArguments.First().FullName}>";
+	        }
+	        return string.Equals(typeFullName, codeType.AsFullName, StringComparison.InvariantCultureIgnoreCase);
+	    }
+
+        public static bool CheckImportMethod(ComplexType element)
+        {
+            if (element?.ClassName == null)
+            {
+                return true;
+            }
+            if (complexTypes.ContainsKey(element.ClassName))
+            {
+                return true;
+            }
+            complexTypes.Add(element.ClassName, GetComplexElementImportMethod(element));
+            return false;
+        }
+
+	    public static bool HaveUserDefinedImportMethod(string objectType)
+	    {
+	        if (string.IsNullOrEmpty(objectType))
+	        {
+	            return false;
+	        }
+	        return userDefinedImportMethodsForComplexTypes.Contains(objectType);
+	    }
+
+        public static Type GetSimpleType(string objectType)
+        {
+            return simpleTypes.Keys.FirstOrDefault(x => EqualsType(x, objectType));
+        }
+
+	    public static string GetSimpleElementImportMethod(Type objectType, string simpleElementAsSimpleType)
+	    {
+	        var methods = simpleTypes.Where(simpleType => simpleType.Key == objectType);
+
+	        return methods.Any() 
+				? $"{nameof(ImportSimpleTypes)}.{methods.FirstOrDefault().Value}" 
+				: $"{nameof(ImportSimpleTypes)}.Import{simpleElementAsSimpleType}";;
+	    }
+
+		public static string GetUserDefinedImportMethod(ComplexType complexType)
+		{
+			return $"{nameof(ImportSimpleTypes)}.Import{complexType?.ClassName}";
+		}
+
+		public static string GetComplexElementImportMethod(ComplexType complexType)
+		{
+			return $"Import{complexType?.ClassName}";
+		}
+
+	    public static string GetImportSimpleElementMethod(CodeTypeRef objectType)
+	    {
+	        return simpleTypes.
+				Where(simpleType => EqualsType(simpleType.Key, objectType)).
+				Select(simpleType => $"{nameof(ImportSimpleTypes)}.{simpleType.Value}").
+				FirstOrDefault();
+	    }
+
+	    public static string GetChildElementsImportMethod(string element)
+	    {
+			return $"Import{FirstCharToUpper(element)}";
+	    }
+
+		public static string GetAttributionGroupImportMethod(AttributionGroupInfo attributionGroup)
+		{
+			return $"Import{FirstCharToUpper(attributionGroup.XmlName)}";
+		}
+
+	    public static string GetAttributionElementImportMethod(CodeTypeRef objectType)
+	    {
+	        string className = objectType.AsFullName.Substring(objectType.AsFullName.LastIndexOf(".") + 1);
+			return $"{nameof(ImportSimpleTypes)}.Import{className}";
+	    }
+
+		public static string FirstCharToUpper(string input)
+		{
+			if (String.IsNullOrEmpty(input))
+				return input;
+			return input.First().ToString().ToUpper() + input.Substring(1);
+		}
+    }
+
+#>

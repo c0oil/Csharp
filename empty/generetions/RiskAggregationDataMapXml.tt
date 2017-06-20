@@ -1,0 +1,143 @@
+﻿<#@ template hostSpecific="true" debug="false" #>
+<#@ assembly name="EnvDTE" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data.Linq" #>
+<#@ assembly name="System.Xml" #>
+<#@ assembly name="System.Xml.Linq" #>
+<#@ import namespace="Microsoft.CSharp" #>
+<#@ import namespace="System.CodeDom" #>
+<#@ import namespace="System.CodeDom.Compiler" #>
+<#@ import namespace="System.Collections" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Reflection" #>
+<#@ import namespace="System.Xml" #>
+<#@ import namespace="System.Xml.Schema" #>
+<#@ import namespace="System.Xml.Serialization" #>
+<#@ import namespace="empty" #>
+
+<#@ assembly name="$(TargetPath)" #>
+
+<#
+	// identify the path to the xsd
+		
+    //string currentDir = Assembly.GetAssembly(typeof(empty)).Location;
+	string xsdFileName = "open-protocol-schema.xsd";
+	string path = @"C:\alternativesoft(vs2015)\Sources\AlternativeSoft";
+	string xsdPath = Path.Combine(path, xsdFileName);
+
+    CodeNamespace codeNamespace = MyGenerator.CreateCodeNamespace(xsdPath);
+	/*
+	// load the xsd
+	XmlSchema xsd;
+	using(FileStream stream = new FileStream(xsdPath, FileMode.Open, FileAccess.Read))
+	{
+		xsd = XmlSchema.Read(stream, null);
+	}
+
+	XmlSchemas xsds = new XmlSchemas { xsd };
+	xsds.Compile(null, true);
+	XmlSchemaImporter schemaImporter = new XmlSchemaImporter(xsds);
+
+	// create the codedom
+	CodeNamespace codeNamespace = new CodeNamespace("empty");
+	XmlCodeExporter codeExporter = new XmlCodeExporter(codeNamespace, null, CodeGenerationOptions.None);
+	
+	List<XmlTypeMapping> maps = new List<XmlTypeMapping>();
+
+    foreach (XmlSchemaType schemaType in xsd.SchemaTypes.Values)
+    {
+	    AddAnnotationLabelsAsElements(schemaType);
+    }
+    foreach (XmlSchemaElement schemaElement in xsd.Elements.Values)
+    {
+	    AddAnnotationLabelsAsElements(schemaElement.SchemaType);
+    }
+
+	foreach(XmlSchemaType x in xsd.SchemaTypes.Values)
+	{
+		maps.Add(schemaImporter.ImportSchemaType(x.QualifiedName));
+	}
+	foreach(XmlSchemaElement x in xsd.Elements.Values)
+	{
+		maps.Add(schemaImporter.ImportTypeMapping(x.QualifiedName));
+	}
+
+	foreach(XmlTypeMapping map in maps)
+	{
+		codeExporter.ExportTypeMapping(map);
+	}
+
+	//RemoveAttributes(codeNamespace);
+	*/
+
+	// Check for invalid characters in identifiers
+	CodeGenerator.ValidateIdentifiers(codeNamespace);
+
+	// output the C# code
+	CSharpCodeProvider codeProvider = new CSharpCodeProvider();
+
+	using(StringWriter writer = new StringWriter(GenerationEnvironment))
+	{
+		codeProvider.GenerateCodeFromNamespace(codeNamespace, writer, new CodeGeneratorOptions());
+	}
+        #>
+<#+
+
+    private void AddAnnotationLabelsAsElements(XmlSchemaType schemaType)
+    {
+        XmlSchemaSequence sequence = (schemaType as XmlSchemaComplexType)?.Particle as XmlSchemaSequence;
+        if (sequence == null)
+        {
+			return;
+        }
+
+		var labels = new List<Tuple<XmlQualifiedName,XmlNode>>();
+        foreach (XmlSchemaElement element in sequence.Items.OfType<XmlSchemaElement>())
+        {
+            this.AddAnnotationLabelsAsElements(element.SchemaType);
+            XmlNode label = element.Annotation.Items.OfType<XmlSchemaAppInfo>().FirstOrDefault()?.Markup.FirstOrDefault();
+            if (label != null)
+            {
+                labels.Add(new Tuple<XmlQualifiedName, XmlNode>(element.QualifiedName, label));
+            }
+        }
+
+        foreach (Tuple<XmlQualifiedName, XmlNode> label in labels)
+        {
+            sequence.Items.Add(ConvertLabelToElement(label));
+        }
+    }
+
+    private static  XmlSchemaElement ConvertLabelToElement(Tuple<XmlQualifiedName,XmlNode> label)
+    {
+        return new XmlSchemaElement
+                   {
+                       Name = label.Item1.Name + "Label",
+					   FixedValue = label.Item2.InnerText,
+					   SchemaTypeName = new XmlQualifiedName("string", "http://www.w3.org/2001/XMLSchema")
+                   };
+    }
+	
+	// Remove all the attributes from each type in the CodeNamespace, except System.Xml.Serialization.XmlTypeAttribute
+	private void RemoveAttributes(CodeNamespace codeNamespace)
+	{
+		foreach(CodeTypeDeclaration codeType in codeNamespace.Types)
+		{
+			CodeAttributeDeclaration xmlTypeAttribute = null;
+			foreach(CodeAttributeDeclaration codeAttribute in codeType.CustomAttributes)
+			{
+				if(codeAttribute.Name == "System.Xml.Serialization.XmlTypeAttribute")
+				{
+					xmlTypeAttribute = codeAttribute;
+				}
+			}
+			codeType.CustomAttributes.Clear();
+			if(xmlTypeAttribute != null)
+			{
+				codeType.CustomAttributes.Add(xmlTypeAttribute);
+			}
+		}
+	}
+    #>

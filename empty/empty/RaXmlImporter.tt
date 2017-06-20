@@ -1,0 +1,356 @@
+﻿<#@ template hostSpecific="true" debug="false" #>
+<#@ assembly name="EnvDTE" #>
+<#@ assembly name="Microsoft.VisualStudio.Shell.11.0" #>
+<#@ assembly name="Microsoft.VisualStudio.Shell.Interop" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data.Linq" #>
+<#@ assembly name="System.Xml" #>
+<#@ assembly name="System.Xml.Linq" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Xml" #>
+<#@ import namespace="System.Xml.Schema" #>
+<#@ import namespace="System.Xml.Serialization" #>
+<#@ import namespace="EnvDTE" #>
+<#@ include file="InfoImporter.tt"#>
+using System;
+using System.Globalization;
+using System.Xml;
+using RaObjects.Objects;
+
+namespace empty
+{
+    public class RaXmlImportGenerator
+	{
+<#
+    string xsdFileName = "open-protocol-schema.xsd";
+    string path = @"D:\GitHub\empty\empty";
+    string xsdPath = Path.Combine(path, xsdFileName);
+
+    string nameProject = "RaObjects";
+    string nameSpace = "RaObjects.Objects";
+	Project project = GetProject(nameProject);
+    CodeElements codeElements = project.CodeModel.CodeElements;
+
+    ComplexType root = InfoImporter.ImporXsdRootElement(xsdPath, codeElements, nameSpace);
+	
+	CreateImportMethodForElement(root);
+	
+    foreach (AttributionGroupInfo groupInfo in existingsAttributionGroups.Values)
+    {
+        CreateImportMethodForAttributionGroup(groupInfo);
+    }
+	
+#>
+				
+        private static void ForEachSubItems(XmlReader reader, Action doAction)
+        {
+            if (reader.IsEmptyElement)
+            {
+                return;
+            }
+
+            reader.Read();
+            int depth = reader.Depth;
+            do
+            {
+                if (reader.Depth == depth && reader.IsStartElement() && reader.NodeType == XmlNodeType.Element)
+                {
+                    doAction();
+                }
+            } while (reader.Read() && reader.Depth >= depth);
+        }
+		
+		private static class ImportSimpleTypes
+		{
+			public static DateTime? ImportDateTimeNullable(XmlReader reader)
+            {
+                string value = ReadContent(reader);
+				DateTime parsedValue;
+				return string.IsNullOrEmpty(value) || !DateTime.TryParse(value, out parsedValue) ? (DateTime?)null : parsedValue;
+			}
+
+			public static long? ImportLongNullable(XmlReader reader)
+            {
+                double? doubleValue = ImportDoubleNullable(reader);
+				return doubleValue == null ? (Int64?) null : (Int64) Math.Round(doubleValue.Value, MidpointRounding.AwayFromZero);
+			}
+
+			public static double? ImportDoubleNullable(XmlReader reader)
+            {
+                string value = ReadContent(reader);
+				double parsedValue;
+				return string.IsNullOrEmpty(value) || !double.TryParse(value, out parsedValue) ? (double?)null : parsedValue;
+			}
+
+			public static string ImportString(XmlReader reader)
+			{
+                return ReadContent(reader);
+			}
+
+		    private static string ReadContent(XmlReader reader)
+            {
+                if (reader.NodeType == XmlNodeType.Element)
+                {
+                    return reader.ReadElementContentAsString();
+                }
+                return reader.Value;
+            }
+
+			public static RaDoubleValue ImportRaDoubleValue(XmlReader reader)
+			{
+				return new RaDoubleValue { Value = ImportDoubleNullable(reader) };
+			}
+
+			public static RaStringValue ImportRaStringValue(XmlReader reader)
+			{
+				return new RaStringValue { Value = ImportString(reader) };
+			}
+
+			public static RaIntValue ImportRaIntValue(XmlReader reader)
+			{
+				return new RaIntValue { Value = ImportLongNullable(reader) };
+			}
+		}
+	}
+}
+<#+
+		private Dictionary<string, AttributionGroupInfo> existingsAttributionGroups = new Dictionary<string, AttributionGroupInfo>();
+
+		private void CreateImportMethodForElement(ComplexType complexType)
+		{
+		    if (ImportSimpleTypes.CheckImportMethod(complexType))
+		    {
+				return;
+		    }
+
+#>  
+        public static <#= complexType.ClassName #> <#= ImportSimpleTypes.GetComplexElementImportMethod(complexType) #>(XmlReader reader, Action<<#= complexType.ClassName #>> importAttributes)
+        {
+            <#= complexType.ClassName #> result = new <#= complexType.ClassName #>();
+			importAttributes?.Invoke(result);
+<#+
+		    if (complexType.ClassHaveSubItemsInterface)
+		    {
+#>
+			ForEachSubItems(reader, () =>
+            {
+				result.SubItems.Add(Import<#= complexType.ClassName #>(reader, importAttributes));
+            });
+<#+ 
+		    }
+		    else if(complexType.ChildElements.Any())
+		    {
+#>
+			ForEachSubItems(reader, () =>
+            {
+<#+
+				CreateIfStatments(complexType.ChildElements);
+#>
+            });
+<#+
+		    }
+#>
+            return result;
+        }
+<#+
+		    if (!complexType.ClassHaveSubItemsInterface)
+		    {
+		        foreach (ComplexElement complexElement in complexType.ChildElements.OfType<ComplexElement>())
+		        {
+		            if (complexElement.ComplexType != null && ImportSimpleTypes.HaveUserDefinedImportMethod(complexElement.ComplexType.ClassName))
+		                continue;
+
+		            if (complexElement.IsMapElementChildrensToFieldsInCurrentClass)
+		            {
+		                CreateImportMethodForChildElements(complexElement.ComplexType, complexElement.ElementName);
+		            }
+		            else
+		            {
+						CreateImportMethodForElement(complexElement.ComplexType);
+		            }
+		        }
+		    }
+		}
+
+		private void CreateImportMethodForChildElements(ComplexType complexType, string elementName)
+		{
+#>
+
+		private static void <#= ImportSimpleTypes.GetChildElementsImportMethod(elementName) #>(XmlReader reader, <#= complexType.ClassName #> result, Action<<#= complexType.ClassName #>> importAttributes)
+        {
+			importAttributes?.Invoke(result);
+			ForEachSubItems(reader, () =>
+			{
+<#+
+			CreateIfStatments(complexType.ChildElements);
+#>
+			});
+		}
+<#+
+		}
+
+        private void CreateImportMethodForAttributionGroup(AttributionGroupInfo attributionGroup)
+        {
+#> 
+		private static void <#= ImportSimpleTypes.GetAttributionGroupImportMethod(attributionGroup) #>(<#= attributionGroup.ClassName #> result, XmlReader reader)
+		{
+			if (!reader.MoveToFirstAttribute())
+				return;
+
+			do
+			{
+<#+ 
+
+			CreateIfStatments(attributionGroup.Attributions);
+
+#>
+			} while (reader.MoveToNextAttribute());
+			reader.MoveToElement();
+		}
+<#+
+        }
+
+        private void CreateIfStatments(List<IElement> elements)
+        {
+            bool isFirst = true;
+            foreach (IElement element in elements)
+            {
+#>
+				<#= GetIfExpresion(element.ElementName, isFirst) #>
+				{
+<#+
+                CreateIfBody(element);
+#>
+				}
+<#+
+                isFirst = false;
+            }
+        }
+
+        private string importAttributesActionName = "importElementAttributes";
+        private string nullString = "null";
+
+		private void CreateIfBody(IElement element)
+		{
+            var simple = element as SimpleElement;
+            if (simple != null)
+            {
+				CreateFieldAssign(element, false, false);
+            }
+			
+            var complex = element as ComplexElement;
+            if (complex != null)
+            {
+                bool isInitializedAttributionImport = false;
+                if (complex.Attribution != null)
+                {
+                    AttributionGroupInfo attribution = complex.Attribution;
+                    string key = attribution.XmlName + attribution.ClassName;
+                    if (!existingsAttributionGroups.ContainsKey(key))
+                    {
+                        existingsAttributionGroups[key] = attribution;
+                    }
+					          
+					if (complex.IsMapAttributionsToFieldsInCurrentClass)
+					{
+					    CreateAttributionGroupMethodInvocation(attribution);
+						return;
+                    }
+					
+					isInitializedAttributionImport = true;
+					CreateInitializeActionAttributionGroup(attribution, complex.ComplexType.ClassName);
+                }
+
+				if (complex.IsMapElementChildrensToFieldsInCurrentClass)
+				{
+				    CreateChildElementsMethodInvocation(element, isInitializedAttributionImport);
+				}
+				else if (complex.ComplexType != null)
+				{
+				    CreateFieldAssign(element, isInitializedAttributionImport, complex.ComplexType.IsCollection);				        
+				}
+            }
+		}
+
+        private void CreateIfStatments(List<AttributionInfo> attributions)
+        {
+            bool isFirst = true;
+            foreach (AttributionInfo attribution in attributions)
+            {
+#>
+				<#= GetIfExpresion(attribution.AttributionName, isFirst) #>
+				{
+					result.<#= attribution.FieldName #> = <#= 
+						ImportSimpleTypes.GetImportSimpleElementMethod(attribution.FieldType) ?? 
+						ImportSimpleTypes.GetAttributionElementImportMethod(attribution.FieldType) #>(reader);
+				}
+<#+
+                isFirst = false;
+            }
+        }
+
+		private void CreateInitializeActionAttributionGroup(AttributionGroupInfo attribution, string className)
+		{
+#>
+                    Action<<#= className #>> <#= importAttributesActionName #> = (attribution) => <#=ImportSimpleTypes.GetAttributionGroupImportMethod(attribution) #>(attribution, reader);
+<#+        
+		}
+
+		private void CreateAttributionGroupMethodInvocation(AttributionGroupInfo attribution)
+		{
+#>
+					<#=ImportSimpleTypes.GetAttributionGroupImportMethod(attribution) #>(result, reader);
+<#+        
+		}
+		private void CreateChildElementsMethodInvocation(IElement element, bool haveAttributionImport)
+		{
+#>
+					<#= ImportSimpleTypes.GetChildElementsImportMethod(element.ElementName) #>(reader, result, <#= haveAttributionImport ? importAttributesActionName: nullString #>);
+<#+        
+		}
+
+		private void CreateFieldAssign(IElement element, bool haveAttributionImport, bool isCollection)
+		{
+#>
+					result.<#= element.FieldName ?? String.Empty #><#= isCollection ? ".Add(" : " = " #><#= GetImportMethodInvocation(element, haveAttributionImport) #><#= isCollection ? ")" : string.Empty #>;
+<#+	        
+		}
+
+		private string GetIfExpresion(string xmlName, bool isFirst)
+		{
+		    return $"{(isFirst ? string.Empty : "else ")}if (reader.Name.Equals(\"{xmlName}\"))";
+		}
+
+		private string GetImportMethodInvocation(IElement element, bool haveAttributionImport)
+		{
+		    var complexElement = element as ComplexElement;
+		    if (complexElement != null)
+		    {
+		        return !ImportSimpleTypes.HaveUserDefinedImportMethod(complexElement.ComplexType.ClassName)
+					? $"{ImportSimpleTypes.GetComplexElementImportMethod(complexElement.ComplexType)}(reader, {(haveAttributionImport ? importAttributesActionName : nullString)})"
+					: $"{ImportSimpleTypes.GetUserDefinedImportMethod(complexElement.ComplexType)}(reader)";
+		    }
+
+		    var simpleElement = element as SimpleElement;
+		    if (simpleElement != null)
+		    {
+		        return $"{ImportSimpleTypes.GetSimpleElementImportMethod(simpleElement.SimpleType, simpleElement.AsSimpleType)}(reader)";
+		    }
+
+		    throw new NotImplementedException();
+		}
+
+		private Project GetProject(string projectName)
+		{
+			// Get DTE
+			var serviceProvider = Host as IServiceProvider;
+			var dte = serviceProvider.GetService(typeof(DTE)) as DTE;
+
+			Project project = dte.Solution.Projects.OfType<Project>().FirstOrDefault(x => x.Name == projectName);
+
+			return project;
+		}
+
+#>

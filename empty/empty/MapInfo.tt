@@ -1,0 +1,424 @@
+﻿<#@ template hostSpecific="true" debug="false" #>
+<#@ assembly name="EnvDTE" #>
+<#@ assembly name="Microsoft.VisualStudio.Shell.11.0" #>
+<#@ assembly name="Microsoft.VisualStudio.Shell.Interop" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data.Linq" #>
+<#@ assembly name="System.Xml" #>
+<#@ assembly name="System.Xml.Linq" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Linq" #>
+<#+
+    public class ElementToFieldMap
+    {
+        public string ElementName;
+        public string FieldName;
+    }
+
+	public static class MapInfo
+	{
+		// Attributions map 
+		
+	    private static ElementToFieldMap[] aumPercentageAssetValueAttributes =
+	    {
+			new ElementToFieldMap { ElementName = "aumPercentage", FieldName = "PercentAge"}, 
+			new ElementToFieldMap { ElementName = "assetValue", FieldName = "Amount"},
+	    };
+
+	    private static ElementToFieldMap[] aumPercentageRedemptionAttributes =
+	    {
+			new ElementToFieldMap { ElementName = "aumPercentageRedeemableWithPenalty", FieldName = "PercentWithPenalty"}, 
+			new ElementToFieldMap { ElementName = "aumPercentageRedeemableWithNoPenalty", FieldName = "PercentWithoutPenalty"},
+	    };
+
+	    private static ElementToFieldMap[] nettedNonNettedLongShortAumPercentageAttributes =
+	    {
+			new ElementToFieldMap { ElementName = "nonNettedShortAumPercentage", FieldName = "NonNettedShortAumExposure"}, 
+			new ElementToFieldMap { ElementName = "nonNettedLongAumPercentage", FieldName = "NonNettedLongAumExposure"}, 
+			new ElementToFieldMap { ElementName = "nettedShortAumPercentage", FieldName = "NettedShortAumExposure"}, 
+			new ElementToFieldMap { ElementName = "nettedLongAumPercentage", FieldName = "NettedLongAumExposure"},
+	    };
+
+	    private static ElementToFieldMap[] nettedNonNettedLongShortAssetValueAttributes =
+	    {
+			new ElementToFieldMap { ElementName = "nonNettedShortAssetValue", FieldName = "NonNettedShortAumExposure"}, 
+			new ElementToFieldMap { ElementName = "nonNettedLongAssetValue", FieldName = "NonNettedLongAumExposure"}, 
+			new ElementToFieldMap { ElementName = "nettedShortAssetValue", FieldName = "NettedShortAumExposure"}, 
+			new ElementToFieldMap { ElementName = "nettedLongAssetValue", FieldName = "NettedLongAumExposure"},
+	    };
+
+	    private static ElementToFieldMap[] longShortPositionAttributes =
+	    {
+			new ElementToFieldMap { ElementName = "numberOfLongPositions", FieldName = "NumberOfLongPositions"}, 
+			new ElementToFieldMap { ElementName = "numberOfShortPositions", FieldName = "NumberOfShortPositions"}, 
+	    };
+
+	    private static ElementToFieldMap[] longShortIssuerAttributes =
+	    {
+			new ElementToFieldMap { ElementName = "numberOfLongIssuers", FieldName = "NumberOfLongIssuers"}, 
+			new ElementToFieldMap { ElementName = "numberOfShortIssuers", FieldName = "NumberOfShortIssuers"}, 
+	    };
+	    private static ElementToFieldMap[] valueAtRiskAttributes =
+	    {
+			new ElementToFieldMap { ElementName = "exposurePercentage", FieldName = "PercentExposure"}, 
+			new ElementToFieldMap { ElementName = "varPercentage", FieldName = "VaR"}, 
+			new ElementToFieldMap { ElementName = "cVarPercentage", FieldName = "CvaR"}, 
+	    };
+
+	    private static ElementToFieldMap[] percentageOfExposureInCalculationAttributes =
+	    {
+			new ElementToFieldMap { ElementName = "percentageOfLongExposureInCalculation", FieldName = "LongExposureIncluded"}, 
+			new ElementToFieldMap { ElementName = "percentageOfShortExposureInCalculation", FieldName = "ShortExposureIncluded"},
+	    };
+
+	    private static ElementToFieldMap[] decayFactorAttribute =
+	    {
+			new ElementToFieldMap { ElementName = "decayFactor", FieldName = "DecayFactor"},
+	    };
+
+	    private static ElementToFieldMap[] numberOfDaysAttribute =
+	    {
+			new ElementToFieldMap { ElementName = "numberOfDays", FieldName = "LookbackPeriod"},
+	    };
+
+	    private static ElementToFieldMap[] sensitivityAttributes =
+	    {
+			new ElementToFieldMap { ElementName = "beta", FieldName = "Beta"},
+			new ElementToFieldMap { ElementName = "delta", FieldName = "Delta"},
+			new ElementToFieldMap { ElementName = "gamma", FieldName = "Gamma"},
+			new ElementToFieldMap { ElementName = "vega", FieldName = "Vega"},
+			new ElementToFieldMap { ElementName = "theta", FieldName = "Theta"},
+			new ElementToFieldMap { ElementName = "cs01", FieldName = "Cs01"},
+			new ElementToFieldMap { ElementName = "dv01", FieldName = "Dv01"},
+	    };
+
+	    private static ElementToFieldMap[] stressTestAttributes =
+	    {
+			new ElementToFieldMap { ElementName = "portfolioReturnPercentage", FieldName = "PortfolioReturn"},
+			new ElementToFieldMap { ElementName = "percentageOfLongExposureInCalculation", FieldName = "PercentLongExposure"},
+			new ElementToFieldMap { ElementName = "percentageOfShortExposureInCalculation", FieldName = "PercentShortExposure"},
+	    };
+
+	    private static ElementToFieldMap[] historicalStressTestAttributes =
+	    {
+			new ElementToFieldMap { ElementName = "startDate", FieldName = "StartDate"},
+	    };
+		
+	    private static ElementToFieldMap[] counterpartyNameAttribute =
+	    {
+			new ElementToFieldMap { ElementName = "counterpartyName", FieldName = "Number"},
+	    };
+
+	    private static ElementToFieldMap[] numberOfCustodiansAndCounterpartiesAttribute =
+	    {
+			new ElementToFieldMap { ElementName = "numberOfCustodiansAndCounterparties", FieldName = "Number"},
+	    };
+
+	    private static ElementToFieldMap[] numberOfFinancingAgreementsAttribute =
+	    {
+			new ElementToFieldMap { ElementName = "numberOfFinancingAgreements", FieldName = "Number"},
+	    };
+
+	    private static ElementToFieldMap[] otherAssetValueCounterpartyExposureAttributes =
+	    {
+			new ElementToFieldMap { ElementName = "equity", FieldName = "Equity"},
+			new ElementToFieldMap { ElementName = "longMarketValue", FieldName = "Lmv"},
+			new ElementToFieldMap { ElementName = "shortMarketValue", FieldName = "Smv"},
+			new ElementToFieldMap { ElementName = "cash", FieldName = "Cash"},
+			new ElementToFieldMap { ElementName = "openTradeEquity", FieldName = "OteMmt"},
+			new ElementToFieldMap { ElementName = "availableLiquidity", FieldName = "AvailableLiquidity"},
+			new ElementToFieldMap { ElementName = "requiredMargin", FieldName = "RequiredMargin"},
+			new ElementToFieldMap { ElementName = "longAumPercentage", FieldName = "LongAumExposurePercent"},
+			new ElementToFieldMap { ElementName = "shortAumPercentage", FieldName = "ShortAumExposurePercent"},
+	    };
+
+	    public static Dictionary<string, string> ManualyAttributionGroupsMaps = new Dictionary<string, string>
+	    {
+			{ "betaSensitivityAttribute", "sensitivityAttributes" },
+	        { "deltaSensitivityAttribute", "sensitivityAttributes" },
+	        { "gammaVegaThetaSensitivityAttributes", "sensitivityAttributes" },
+	        { "basisPointChangeSensitivityAttributes", "sensitivityAttributes" },
+
+	    };
+
+	    public static Dictionary<string, ElementToFieldMap[]> AttributionGroupsMaps = new Dictionary<string, ElementToFieldMap[]>
+	    {
+	        //{ "grossNetPercentageAttributes", assetValueMaps },
+	        //{ "nonNegativeAssetValueAttribute", nonNegativeAssetValueAttribute },
+	        { "aumPercentageAssetValueAttributes", aumPercentageAssetValueAttributes },
+	        { "aumPercentageRedemptionAttributes", aumPercentageRedemptionAttributes },
+
+	        { "nettedNonNettedLongShortAssetValueAttributes", nettedNonNettedLongShortAssetValueAttributes },
+	        { "nettedNonNettedLongShortAumPercentageAttributes", nettedNonNettedLongShortAumPercentageAttributes },
+	        { "longShortPositionAttributes", longShortPositionAttributes },
+	        { "longShortIssuerAttributes", longShortIssuerAttributes },
+	        { "longShortAumPercentagePositionAttributes", nettedNonNettedLongShortAumPercentageAttributes.Concat(longShortPositionAttributes).ToArray() },
+	        { "longShortAumPercentageIssuerAttributes", nettedNonNettedLongShortAumPercentageAttributes.Concat(longShortIssuerAttributes).ToArray() },
+
+	        { "valueAtRiskAttributes", valueAtRiskAttributes },
+	        { "percentageOfExposureInCalculationAttributes", percentageOfExposureInCalculationAttributes },
+	        { "decayFactorAttribute", decayFactorAttribute },
+	        { "numberOfDaysAttribute", numberOfDaysAttribute },
+
+	        { "sensitivityAttributes", sensitivityAttributes },
+
+	        { "stressTestAttributes", stressTestAttributes },
+	        { "historicalStressTestAttributes", stressTestAttributes.Concat(historicalStressTestAttributes).ToArray() },
+
+	        { "counterpartyNameCounterpartyExposureAttributes", counterpartyNameAttribute.Concat(otherAssetValueCounterpartyExposureAttributes).ToArray() },
+	        { "counterpartyCountCounterpartyExposureAttributes", numberOfCustodiansAndCounterpartiesAttribute.Concat(otherAssetValueCounterpartyExposureAttributes).ToArray() },
+	        { "agreementCountCounterpartyExposureAttributes", numberOfFinancingAgreementsAttribute.Concat(otherAssetValueCounterpartyExposureAttributes).ToArray() },
+	    };
+
+		// Elements map 
+		
+
+	    public const string MapElementChildrensToFieldsInCurrentClass = "~";
+	    public const string MapAttributionsToFieldsInCurrentClass = ".";
+	    //public const string ManyFields = ".";
+		
+
+	    private static ElementToFieldMap[] fundAndInvestorDetailsMaps =
+	    {
+			new ElementToFieldMap { ElementName = "fundName", FieldName = "FundName"},
+			new ElementToFieldMap { ElementName = "date", FieldName = "Date"},
+			//new XmlToObjectMap { XmlName = "managerDetails", ObjectName = ContainerfObjectName},
+			//new XmlToObjectMap { XmlName = "fundAumDetails", ObjectName = ContainerfObjectName},
+			new ElementToFieldMap { ElementName = "primaryInvestmentStrategy", FieldName = "PrimaryInvStrategy"},
+			//new XmlToObjectMap { XmlName = "reportingShareClass", ObjectName = ContainerfObjectName},
+			//new XmlToObjectMap { XmlName = "performance", ObjectName = "Performance"},
+			new ElementToFieldMap { ElementName = "investorSize", FieldName = MapElementChildrensToFieldsInCurrentClass},
+			new ElementToFieldMap { ElementName = "investorType", FieldName = "InvestorType"},
+			new ElementToFieldMap { ElementName = "investorLiquidity", FieldName = "InvestorLiquidity"},
+			//new XmlToObjectMap { XmlName = "unencumberedCash", ObjectName = "UnencumberedCash"},
+			//new XmlToObjectMap { XmlName = "externalFundInvestment", ObjectName = ContainerfObjectName},
+	    };
+
+	    private static ElementToFieldMap[] equityExposureMaps =
+	    {
+			new ElementToFieldMap { ElementName = "totalAssetValue", FieldName = "TotalExposure"},
+			new ElementToFieldMap { ElementName = "totalAumPercentage", FieldName = "PercentagePortfolio"},
+			new ElementToFieldMap { ElementName = "totalNumberOfPositions", FieldName = "AggregateNumberOfPositions"},
+
+			new ElementToFieldMap { ElementName = "sectorExposure", FieldName = "Sectors"},
+			new ElementToFieldMap { ElementName = "regionExposure", FieldName = "Region"},
+			new ElementToFieldMap { ElementName = "instrumentExposure", FieldName = "Instruments"},
+			new ElementToFieldMap { ElementName = "marketCapitalExposure", FieldName = "MarketCapitalExposure"},
+			new ElementToFieldMap { ElementName = "liquidityExposure", FieldName = "Liquidity"},
+	    };
+
+	    private static ElementToFieldMap[] sovereignInterestRateExposureMaps =
+	    {
+			new ElementToFieldMap { ElementName = "totalAssetValue", FieldName = "TotalExposure"},
+			new ElementToFieldMap { ElementName = "totalAumPercentage", FieldName = "PercentagePortfolio"},
+			new ElementToFieldMap { ElementName = "totalNumberOfPositions", FieldName = "AggregateNumberOfPositions"},
+
+			new ElementToFieldMap { ElementName = "regionExposure", FieldName = "Region"},
+			new ElementToFieldMap { ElementName = "maturityInstrumentExposure", FieldName = "InstrumentsByMaturity"},
+			new ElementToFieldMap { ElementName = "creditRatingExposure", FieldName = "CreditRating"},
+			new ElementToFieldMap { ElementName = "liquidityExposure", FieldName = "Liquidity"},
+	    };
+
+	    private static ElementToFieldMap[] creditExposureMaps =
+	    {
+			new ElementToFieldMap { ElementName = "totalAssetValue", FieldName = "TotalExposure"},
+			new ElementToFieldMap { ElementName = "totalAumPercentage", FieldName = "PercentagePortfolio"},
+			new ElementToFieldMap { ElementName = "totalNumberOfIssuers", FieldName = "AggregateNumberOfParentIssuers"},
+
+			new ElementToFieldMap { ElementName = "sectorExposure", FieldName = "Sectors"},
+			new ElementToFieldMap { ElementName = "regionExposure", FieldName = "Region"},
+			new ElementToFieldMap { ElementName = "creditTypeExposure", FieldName = "CreditType"},
+			new ElementToFieldMap { ElementName = "instrumentExposure", FieldName = "CreditInstrument"},
+			new ElementToFieldMap { ElementName = "priceAndYieldAndSpreadExposure", FieldName = "PriceYieldAndSpread"},
+			new ElementToFieldMap { ElementName = "creditRatingExposure", FieldName = "CreditRating"},
+			new ElementToFieldMap { ElementName = "maturityExposure", FieldName = "MaturityBuckets"},
+			new ElementToFieldMap { ElementName = "ownershipConcentrationExposure", FieldName = "ConcentrationOfOwnership"},
+			new ElementToFieldMap { ElementName = "liquidityExposure", FieldName = "Liquidity"},
+	    };
+
+	    private static ElementToFieldMap[] convertibleBondExposureMaps =
+	    {
+	        new ElementToFieldMap {ElementName = "totalAssetValue", FieldName = "TotalExposure"},
+	        new ElementToFieldMap {ElementName = "totalAumPercentage", FieldName = "PercentagePortfolio"},
+	        new ElementToFieldMap {ElementName = "totalNumberOfIssuers", FieldName = "AggregateNumberOfParentIssuers"},
+
+			new ElementToFieldMap { ElementName = "sectorExposure", FieldName = "Sectors"},
+			new ElementToFieldMap { ElementName = "regionExposure", FieldName = "Region"},
+			new ElementToFieldMap { ElementName = "instrumentExposure", FieldName = "Instrument"},
+			new ElementToFieldMap { ElementName = "derivativeSpecificExposure", FieldName = "Derivative"},
+			new ElementToFieldMap { ElementName = "creditRatingExposure", FieldName = "CreditRating"},
+			new ElementToFieldMap { ElementName = "maturityExposure", FieldName = "MaturityBuckets"},
+			new ElementToFieldMap { ElementName = "ownershipConcentrationExposure", FieldName = "ConcentrationOfOwnership"},
+			new ElementToFieldMap { ElementName = "liquidityExposure", FieldName = "Liquidity"},
+	    };
+
+	    private static ElementToFieldMap[] currencyExposureMaps =
+	    {
+	        new ElementToFieldMap {ElementName = "totalAssetValue", FieldName = "TotalExposure"},
+	        new ElementToFieldMap {ElementName = "totalAumPercentage", FieldName = "PercentagePortfolio"},
+	        new ElementToFieldMap {ElementName = "totalNumberOfPositions", FieldName = "AggregateNumberOfParentIssuers"},
+
+			new ElementToFieldMap { ElementName = "regionCurrencyExposure", FieldName = "RegionalCurrencies"},
+			new ElementToFieldMap { ElementName = "instrumentExposure", FieldName = "Instruments"},
+			new ElementToFieldMap { ElementName = "liquidityExposure", FieldName = "Liquidity"},
+	    };
+
+	    private static ElementToFieldMap[] realAssetExposureMaps =
+	    {
+	        new ElementToFieldMap {ElementName = "totalAssetValue", FieldName = "TotalExposure"},
+	        new ElementToFieldMap {ElementName = "totalAumPercentage", FieldName = "PercentagePortfolio"},
+	        new ElementToFieldMap {ElementName = "totalNumberOfPositions", FieldName = "AggregateNumberOfParentIssuers"},
+
+			new ElementToFieldMap { ElementName = "regionExposure", FieldName = "Region"},
+			new ElementToFieldMap { ElementName = "commodityTypeExposure", FieldName = "CommodityType"},
+			new ElementToFieldMap { ElementName = "commodityInstrumentExposure", FieldName = "CommoditiesInstruments"},
+			new ElementToFieldMap { ElementName = "realEstateExposure", FieldName = "RealEstate"},
+			new ElementToFieldMap { ElementName = "timberlandExposure", FieldName = "Timberland"},
+			new ElementToFieldMap { ElementName = "infrastructureExposure", FieldName = "Infrastructure"},
+			new ElementToFieldMap { ElementName = "liquidityExposure", FieldName = "Liquidity"},
+	    };
+
+	    private static ElementToFieldMap[] valueAtRiskMaps =
+	    {
+			new ElementToFieldMap { ElementName = "calculationMethodology", FieldName = MapElementChildrensToFieldsInCurrentClass},
+
+			new ElementToFieldMap { ElementName = "assetClassValueAtRisk", FieldName = "AssetClass"},
+			new ElementToFieldMap { ElementName = "regionValueAtRisk", FieldName = "Region"},
+			new ElementToFieldMap { ElementName = "sectorValueAtRisk", FieldName = "Sector"},
+
+			new ElementToFieldMap { ElementName = "exposureInCalculation", FieldName = MapAttributionsToFieldsInCurrentClass},
+	    };
+
+	    private static ElementToFieldMap[] sensitivityMaps =
+	    {
+			new ElementToFieldMap { ElementName = "equity", FieldName = "Sensivities"},
+			new ElementToFieldMap { ElementName = "sovereignInterestRate", FieldName = "Sensivities"},
+			new ElementToFieldMap { ElementName = "credit", FieldName = "Sensivities"},
+			new ElementToFieldMap { ElementName = "convertibleBond", FieldName = "Sensivities"},
+			new ElementToFieldMap { ElementName = "currency", FieldName = "Sensivities"},
+			new ElementToFieldMap { ElementName = "realAsset", FieldName = "Sensivities"},
+
+			new ElementToFieldMap { ElementName = "exposureInCalculation", FieldName = MapAttributionsToFieldsInCurrentClass},
+	    };
+
+	    private static ElementToFieldMap[] stressTestMaps =
+	    {
+			new ElementToFieldMap { ElementName = "scenarios", FieldName = "Scenarios"},
+			new ElementToFieldMap { ElementName = "historicalStressEvents", FieldName = "HistoricalStress"},
+			new ElementToFieldMap { ElementName = "historicalStress", FieldName = "HistoricalPortfolioStress"},
+	    };
+
+	    private static ElementToFieldMap[] counterpartyExposureMaps =
+	    {
+			new ElementToFieldMap { ElementName = "tradingAssets", FieldName = "TradingAssets"},
+			new ElementToFieldMap { ElementName = "treasuryAssets", FieldName = "TreasureAssets"},
+			new ElementToFieldMap { ElementName = "otherAssets", FieldName = "OtherAssets"},
+			new ElementToFieldMap { ElementName = "tradingAssetsByCounterpartyAssetSize", FieldName = "TradingAssetsBySize"},
+			new ElementToFieldMap { ElementName = "tradingAssetsByCounterpartyRegion", FieldName = "TradingAssetsByGeography"},
+			new ElementToFieldMap { ElementName = "treasuryAssetsByCounterpartyRegion", FieldName = "TreasureAssetsByGeography"},
+			new ElementToFieldMap { ElementName = "otherAssetsByCounterpartyRegion", FieldName = "OtherAssetsByGeography"},
+			new ElementToFieldMap { ElementName = "tradingAssetsByLockupProfile", FieldName = "TradingAssetsByLockup"},
+
+			new ElementToFieldMap { ElementName = "counterpartyAndFinancingSources", FieldName = MapElementChildrensToFieldsInCurrentClass},
+	    };
+
+	    private static ElementToFieldMap[] otherExposureMaps =
+	    {
+			new ElementToFieldMap { ElementName = "totalAssetValue", FieldName = "TotalInvestment"},
+			new ElementToFieldMap { ElementName = "totalAumPercentage", FieldName = "PercentagePortfolio"},
+			new ElementToFieldMap { ElementName = "totalNumberOfPositions", FieldName = "AggregateNumberOfPositions"},
+	    };
+
+	    private static ElementToFieldMap[] operaMaps =
+	    {
+			new ElementToFieldMap { ElementName = "fundAndInvestorDetails", FieldName = "FundAndInvestorDetails"},
+			new ElementToFieldMap { ElementName = "equityExposure", FieldName = "EquityExposure"},
+			new ElementToFieldMap { ElementName = "sovereignInterestRateExposure", FieldName = "SovereignIntRateExp"},
+			new ElementToFieldMap { ElementName = "creditExposure", FieldName = "Credit"},
+			new ElementToFieldMap { ElementName = "convertibleBondExposure", FieldName = "ConvertibleBondExposure"},
+			new ElementToFieldMap { ElementName = "currencyExposure", FieldName = "CurrencyExposure"},
+			new ElementToFieldMap { ElementName = "realAssetExposure", FieldName = "RealAssetsAndComExposure"},
+			new ElementToFieldMap { ElementName = "valueAtRisk", FieldName = "VaR"},
+			new ElementToFieldMap { ElementName = "sensitivity", FieldName = "Sensivity"},
+			new ElementToFieldMap { ElementName = "stressTest", FieldName = "StressTest"},
+			new ElementToFieldMap { ElementName = "counterpartyExposure", FieldName = "CounterParty"},
+			new ElementToFieldMap { ElementName = "otherExposure", FieldName = "OtherExposure"},
+	    };
+
+	    private static ElementToFieldMap[] calculationMethodologyMaps =
+	    {
+			new ElementToFieldMap { ElementName = "valueAtRiskMethodology", FieldName = "VaRMethodology"},
+			new ElementToFieldMap { ElementName = "otherValueAtRiskMethodologyDetails", FieldName = "MethodologyDetails"},
+			new ElementToFieldMap { ElementName = "decayFactor", FieldName = MapAttributionsToFieldsInCurrentClass},
+			new ElementToFieldMap { ElementName = "lookBackPeriod", FieldName = MapAttributionsToFieldsInCurrentClass},
+	    };
+
+	    private static ElementToFieldMap[] counterpartyAndFinancingSourcesMaps =
+	    {
+			new ElementToFieldMap { ElementName = "unregulatedPercentageOfNetCreditCounterpartyExposure", FieldName = "PercentAggNetCreditCpExp"},
+			new ElementToFieldMap { ElementName = "uncollateralizedPercentageOfFinancing", FieldName = "PercentFinancingUncoll"},
+	    };
+
+	    private static ElementToFieldMap[] managerDetailsMaps =
+	    {
+			new ElementToFieldMap { ElementName = "managerName", FieldName = "InvestmentManagerName"},
+			new ElementToFieldMap { ElementName = "totalFirmAum", FieldName = MapElementChildrensToFieldsInCurrentClass},
+	    };
+
+	    private static ElementToFieldMap[] totalFirmAumMaps =
+	    {
+			new ElementToFieldMap { ElementName = "totalFirmAum", FieldName = "FirmAumDetails"},
+	    };
+
+	    private static ElementToFieldMap[] fundAumDetailsMaps =
+	    {
+			new ElementToFieldMap { ElementName = "aumCalculationMethod", FieldName = "AumCalcMethod"},
+			new ElementToFieldMap { ElementName = "totalFundAum", FieldName = MapElementChildrensToFieldsInCurrentClass},
+	    };
+
+	    private static ElementToFieldMap[] totalFundAumMaps =
+	    {
+			new ElementToFieldMap { ElementName = "totalFundAum", FieldName = "AumDetails"},
+	    };
+
+	    private static ElementToFieldMap[] investorSizeMaps =
+	    {
+			new ElementToFieldMap { ElementName = "topFiveLargestInvestors", FieldName = "TopInvestors"},
+	    };
+		
+	    private static ElementToFieldMap[] externalFundInvestmentMaps =
+	    {
+			new ElementToFieldMap { ElementName = "cashManagementPurpose", FieldName = "InvForCashManagement"},
+			new ElementToFieldMap { ElementName = "nonCashManagementPurpose", FieldName = "InvNonCashManagement"},
+	    };
+
+	    public static Dictionary<string, ElementToFieldMap[]> ComplexTypeMaps = new Dictionary<string, ElementToFieldMap[]>
+	    {
+			{ "opera", operaMaps },
+
+			{ "fundAndInvestorDetails", fundAndInvestorDetailsMaps },
+			{ "equityExposure", equityExposureMaps },
+			{ "sovereignInterestRateExposure", sovereignInterestRateExposureMaps },
+			{ "creditExposure", creditExposureMaps },
+			{ "convertibleBondExposure", convertibleBondExposureMaps },
+			{ "currencyExposure", currencyExposureMaps },
+			{ "realAssetExposure", realAssetExposureMaps },
+			{ "valueAtRisk", valueAtRiskMaps },
+			{ "sensitivity", sensitivityMaps },
+			{ "stressTest", stressTestMaps },
+			{ "counterpartyExposure", counterpartyExposureMaps },
+			{ "otherExposure", otherExposureMaps },
+
+			{ "managerDetails", managerDetailsMaps },
+			{ "fundAumDetails", fundAumDetailsMaps },
+			{ "investorSize", investorSizeMaps },
+			{ "externalFundInvestment", externalFundInvestmentMaps },
+			{ "totalFirmAum", totalFirmAumMaps },
+			{ "totalFundAum", totalFundAumMaps },
+
+			{ "calculationMethodology", calculationMethodologyMaps },
+			{ "counterpartyAndFinancingSources", counterpartyAndFinancingSourcesMaps },
+	    };
+	}
+
+#>
