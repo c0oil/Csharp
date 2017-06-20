@@ -20,7 +20,8 @@
 (шаблон)   Буден найден результат для этой группы";
 
         //public const string SampleFindSetting = "\\{[^\"]*\"([^\"]+)(?:\"[^\"]+\"([^\"]+)\")[^\\}]*\\}";
-        public const string SampleFindSetting = "\\{ ((\"(.+)\"), (\"(.+)\")) \\}";
+        public const string SampleFindSetting = "([\\w\\s]+)\\s+[«\"]([-,\\w\\s]+)[»\"]\\s?([\\w]+\\s+сорт[а]*)?.+\\r\\n";
+        //public const string SampleFindSetting = "\\{ ((\"(.+)\"), (\"(.+)\")) \\}";
         //public const string SampleFindSetting = "((?s:(public).+\\}))";
         //public const string SampleFindSetting = "\"((\\w+)\\s*(\\w*))\"";
         // \{[^"]*"([^"]+)(?:(?:"[^"]+"([^"]+)")|(?:.+Messages(w+)))[^\}]*\}
@@ -28,7 +29,8 @@
         // ([^\t\r\n]+)\t([^\t\r\n]+)
         // (.+)\r\n
 
-        public const string SampleBuildSetting = "\\{\\r\\n\"{0}\", \"{1}\"\\r\\n\\},\\r\\n";
+        //public const string SampleBuildSetting = "\\{\\r\\n\"{0}\", \"{1}\"\\r\\n\\},\\r\\n";
+        public const string SampleBuildSetting = "{0}\\t{1}\\t{2}\\r\\n";
 
         public const string SampleReplaceSeparator = ";";
         public const string SampleReplaceSetting = "({1}|{2}|{3}|{4}|{5})";

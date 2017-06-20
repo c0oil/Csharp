@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Parcer.BaseControls;
@@ -148,7 +149,7 @@ namespace Parcer.Frames
         {
             try
             {
-                action?.Invoke();
+                Task.Factory.StartNew(() => action?.Invoke());
             }
             catch (Exception e)
             {

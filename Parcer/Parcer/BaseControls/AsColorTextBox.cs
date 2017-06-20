@@ -1,8 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Markup;
 using System.Windows.Media;
 using Parcer.BusinesLogic;
 using RichTextBox = System.Windows.Controls.RichTextBox;
@@ -27,7 +32,7 @@ namespace Parcer.BaseControls
             get { return (ColorSource)GetValue(ColorSourceProperty); }
             set { SetValue(ColorSourceProperty, value); }
         }
-
+        
         public AsColorTextBox()
         {
             Style noSpaceStyle = new Style(typeof(Paragraph));
@@ -43,7 +48,21 @@ namespace Parcer.BaseControls
             ColorSource.HighlightWords = null;
         }
 
-        private void UpdateColorSource(ColorSource colorSource)
+        private async void UpdateColorSource(ColorSource colorSource)
+        {
+            MemoryStream result = await Task.Run(() => ToDocumentStream(FillDocument(colorSource)));
+            Document = (FlowDocument)XamlReader.Load(result);
+        }
+
+        private MemoryStream ToDocumentStream(object data)
+        {
+            MemoryStream stream = new MemoryStream();
+            XamlWriter.Save(data, stream);
+            stream.Position = 0;
+            return stream;
+        }
+
+        private static FlowDocument FillDocument(ColorSource colorSource)
         {
             FlowDocument document = GetDefaultDocument();
             TextRange range = new TextRange(document.ContentStart, document.ContentEnd);
@@ -67,7 +86,7 @@ namespace Parcer.BaseControls
             }
 
             document.EndInit();
-            Document = document;
+            return document;
         }
 
         private static void TryAppendText(int start, int length, Color? color, string text, FlowDocument document)
