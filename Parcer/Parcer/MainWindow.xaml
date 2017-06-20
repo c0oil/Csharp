@@ -1,0 +1,18 @@
+﻿<baseControls:AsWindow 
+        x:TypeArguments="local:MainWindowViewModel" 
+        x:Class="Parcer.Frames.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Parcer"
+        xmlns:baseControls="clr-namespace:Parcer.BaseControls"
+        xmlns:frames="clr-namespace:Parcer.Frames"
+        mc:Ignorable="d"
+        Title="Parser" Height="700" Width="850">
+    <Grid>
+        <frames:MainFrame />
+    </Grid>
+    
+</baseControls:AsWindow>
+
