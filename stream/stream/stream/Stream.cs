@@ -39,6 +39,16 @@ namespace stream
             return new Stream<int>(() => StreamItemEnumerable.GetRange(low, high));
         }
 
+        public static Stream<TOut> Select<TIn, TOut>(this Stream<TIn> stream, Func<TIn, TOut> map)
+        {
+            return new Stream<TOut>(() => stream.Chain.Select(map));
+        }
+
+        public static Stream<TOut> Zip<TIn1, TIn2, TOut>(this Stream<TIn1> stream, Stream<TIn2> paramStream, Func<TIn1, TIn2, TOut> map)
+        {
+            return new Stream<TOut>(() => stream.Chain.Zip(paramStream.Chain, map));
+        }
+
         public static Stream<T> Where<T>(this Stream<T> stream, Func<T, bool> predicate)
         {
             return new Stream<T>(() => stream.Chain.Where(predicate));
@@ -52,6 +62,11 @@ namespace stream
         public static Stream<T> Skip<T>(this Stream<T> stream, int count)
         {
             return new Stream<T>(() => stream.Chain.Skip(count));
+        }
+
+        public static T ElementAt<T>(this Stream<T> stream, int index)
+        {
+            return stream.Chain.ElementAt(index);
         }
     }
 
@@ -75,6 +90,26 @@ namespace stream
 
             doAction(stream.Car);
             ForEach(stream.Cdr, doAction);
+        }
+
+        public static StreamItem<TOut> Select<TIn, TOut>(this StreamItem<TIn> stream, Func<TIn, TOut> map)
+        {
+            if (stream.IsEnd())
+            {
+                return GetEnd<TOut>();
+            }
+
+            return new StreamItem<TOut>(map(stream.Car), () => Select(stream.Cdr, map));
+        }
+
+        public static StreamItem<TOut> Zip<TIn1, TIn2, TOut>(this StreamItem<TIn1> stream, StreamItem<TIn2> paramStream, Func<TIn1, TIn2, TOut> map)
+        {
+            if (stream.IsEnd())
+            {
+                return GetEnd<TOut>();
+            }
+
+            return new StreamItem<TOut>(map(stream.Car, paramStream.Car), () => Zip(stream.Cdr, paramStream.Cdr, map));
         }
 
         public static StreamItem<T> Where<T>(this StreamItem<T> stream, Func<T, bool> predicate)
@@ -111,6 +146,18 @@ namespace stream
             return count > 0
                 ? new StreamItem<T>(stream.Car, () => Skip(stream.Cdr, count - 1))
                 : stream.Cdr;
+        }
+
+        public static T ElementAt<T>(this StreamItem<T> stream, int index)
+        {
+            if (stream.IsEnd())
+            {
+                return stream.Car;
+            }
+
+            return index > 0
+                ? ElementAt(stream.Cdr, index - 1)
+                : stream.Car;
         }
 
         private static StreamItem<T> GetEnd<T>()
